@@ -411,7 +411,7 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                         </div>
                       )}
                     </div>
-                    <div style={{ display:'flex', gap:8', flexShrink:0 }}>
+                    <div style={{ display:'flex', gap:8, flexShrink:0 }}>
                       <button onClick={() => toggleOffer(o.id, o.published)}
                         style={{ ...S.btnOutline, fontSize:12 }}>
                         {o.published ? 'Deaktivieren' : 'Aktivieren'}
