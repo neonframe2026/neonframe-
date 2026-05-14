@@ -102,7 +102,7 @@ export default async function AngebotPage({ params }) {
           z-index: 100;
         }
         @media(max-width:900px){ .hdr { padding:0 20px; height:76px; } }
-        .hdr-logo img { height: 72px; display: block; }
+        .hdr-logo img { height: 82px; display: block; }
         .hdr-badge {
           background: rgba(96,200,240,.12);
           border: 1px solid rgba(96,200,240,.3);
@@ -138,8 +138,7 @@ export default async function AngebotPage({ params }) {
           align-items: center;
           justify-content: center;
         }
-        .gallery-img { width:100%; height:100%; object-fit:cover; display:none; position:absolute; inset:0; transition:opacity .2s; }
-        .gallery-img.active { display:block; }
+        .gallery-img { width:100%; height:100%; object-fit:cover; display:none; position:absolute; inset:0; }
         .gallery-ph { color:#ccc; display:flex; flex-direction:column; align-items:center; gap:10px; }
         .gallery-ph svg { width:52px; height:52px; }
 
@@ -199,13 +198,14 @@ export default async function AngebotPage({ params }) {
         /* RIGHT */
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
         .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-        .star { color:#f59e0b; font-size:20px; }
+        .stars-wrap { display:flex; gap:0; letter-spacing:-3px; }
+        .star { color:#f59e0b; font-size:20px; line-height:1; letter-spacing:-2px; }
         .stars-label { font-size:14px; color:#666; font-weight:500; }
-        .made-for { font-size:15px; color:#111; font-weight:700; margin-bottom:22px; }
+        .made-for { font-size:15px; color:#111; font-weight:400; margin-bottom:22px; }
 
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#bbb; display:block; margin-bottom:6px; }
         .cfg-group { margin-bottom:16px; }
-        .cfg-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
+        .cfg-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
         .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:8px 16px; font-size:14px; font-weight:500; color:#333; }
         .color-dot { width:11px; height:11px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
 
@@ -227,7 +227,7 @@ export default async function AngebotPage({ params }) {
         }
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square img { width:148px; height:148px; object-fit:cover; }
-        .img-tt-box.tall img { width:148px; height:200px; object-fit:cover; }
+        .img-tt-box.wide img { width:220px; height:148px; object-fit:cover; }
         .img-tt:hover .img-tt-box { display:block; }
 
         /* Text tooltip */
@@ -250,7 +250,7 @@ export default async function AngebotPage({ params }) {
         .pr-divider td { border-top:1px solid #f0f0f0; padding-top:14px; }
         .pr-total td:first-child { font-size:16px; font-weight:700; color:#111; padding-top:6px; }
         .pr-total td:last-child { font-size:28px; font-weight:800; color:#111; padding-top:6px; letter-spacing:-.02em; }
-        .pr-total-note { font-size:11px; color:#bbb; text-align:right; margin-top:3px; }
+        .pr-total-note { font-size:11px; color:#111; text-align:right; margin-top:3px; }
 
         .ship-box { background:#f0fbff; border:1px solid #b8e8f8; border-radius:13px; padding:15px 18px; display:flex; align-items:flex-start; gap:13px; margin-bottom:8px; }
         .ship-icon { width:22px; height:22px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
@@ -293,21 +293,32 @@ export default async function AngebotPage({ params }) {
 
         function showImg(idx) {
           if (totalImgs === 0) return;
-          currentImg = (idx + totalImgs) % totalImgs;
+          currentImg = ((idx % totalImgs) + totalImgs) % totalImgs;
           document.querySelectorAll('.gallery-img').forEach(function(el, i) {
-            el.classList.toggle('active', i === currentImg);
+            el.style.display = i === currentImg ? 'block' : 'none';
           });
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.classList.toggle('active', i === currentImg);
           });
-          var arrows = document.querySelectorAll('.gallery-arrow');
-          arrows.forEach(function(a) { a.style.display = totalImgs > 1 ? 'flex' : 'none'; });
+          // Smart arrows: hide prev on first, hide next on last
+          var prev = document.querySelector('.gallery-arrow.prev');
+          var next = document.querySelector('.gallery-arrow.next');
+          if (prev) prev.style.display = currentImg === 0 ? 'none' : 'flex';
+          if (next) next.style.display = currentImg === totalImgs - 1 ? 'none' : 'flex';
         }
 
         function prevImg() { showImg(currentImg - 1); }
         function nextImg() { showImg(currentImg + 1); }
 
         window.addEventListener('DOMContentLoaded', function() {
+          // Init all imgs hidden except first
+          document.querySelectorAll('.gallery-img').forEach(function(el, i) {
+            el.style.display = i === 0 ? 'block' : 'none';
+          });
+          // Attach thumb clicks
+          document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
+            el.addEventListener('click', function() { showImg(i); });
+          });
           showImg(0);
         });
 
@@ -372,7 +383,7 @@ export default async function AngebotPage({ params }) {
             {images.length > 1 && (
               <div className="gallery-thumbs">
                 {images.map((src, i) => (
-                  <div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`} onClick={`showImg(${i})`}>
+                  <div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`}>
                     <img src={src} alt={`Vorschau ${i+1}`} />
                   </div>
                 ))}
@@ -398,20 +409,21 @@ export default async function AngebotPage({ params }) {
 
           {/* STARS */}
           <div className="stars-row">
-            <span className="star">★</span>
-            <span className="star">★</span>
-            <span className="star">★</span>
-            <span className="star">★</span>
-            <span style={{position:'relative',display:'inline-block',fontSize:20}}>
-              <span style={{color:'#e5e7eb'}}>★</span>
-              <span style={{color:'#f59e0b',position:'absolute',left:0,top:0,width:'50%',overflow:'hidden'}}>★</span>
-            </span>
+            <div className="stars-wrap">
+              <span className="star">★</span>
+              <span className="star">★</span>
+              <span className="star">★</span>
+              <span className="star">★</span>
+              <span style={{position:'relative',display:'inline-block',fontSize:20,color:'#e5e7eb',letterSpacing:0}}>
+                ★<span style={{color:'#f59e0b',position:'absolute',left:0,top:0,width:'50%',overflow:'hidden',letterSpacing:0}}>★</span>
+              </span>
+            </div>
             <span className="stars-label">4,5/5 Sternen</span>
           </div>
 
           {/* MADE FOR */}
           {offer.project && (
-            <div className="made-for">Individuell angefertigt für {offer.project}</div>
+            <div className="made-for">Individuell angefertigt für <strong>{offer.project}</strong></div>
           )}
 
           {/* MAßE */}
@@ -435,7 +447,7 @@ export default async function AngebotPage({ params }) {
                       <span className="color-dot" style={{background: colorDot(c)}} />
                       {c}
                     </div>
-                    <div className="img-tt-box tall">
+                    <div className="img-tt-box wide">
                       <img src={colorHoverImage} alt="Farbbeispiel" />
                     </div>
                   </div>
