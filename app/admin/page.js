@@ -88,7 +88,13 @@ export default function AdminPage() {
     setF(prev => ({ ...prev, date: today.toLocaleDateString('de-DE'), valid: valid.toLocaleDateString('de-DE') }))
   }, [])
 
-  useEffect(() => { if (authed) renderPreview() }, [f, imgSrcs])
+  const debounceRef = useRef(null)
+  useEffect(() => {
+    if (!authed) return
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => { renderPreview() }, 600)
+    return () => clearTimeout(debounceRef.current)
+  }, [f, imgSrcs])
 
   function renderPreview() {
     if (!iframeRef.current) return
