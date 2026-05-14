@@ -347,10 +347,15 @@ export default async function AngebotPage({ params }) {
 document.querySelectorAll('.gallery-img').forEach(function(el, i) {
   el.classList.toggle('active', i === 0);
 });
-          // Attach thumb clicks
+// Attach thumb clicks
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
-            el.addEventListener('click', function() { showImg(i); });
+            el.addEventListener('click', function() { window.showImg(i); });
           });
+          // Attach arrow clicks
+          var prevBtn = document.getElementById('gallery-prev');
+          var nextBtn = document.getElementById('gallery-next');
+          if (prevBtn) prevBtn.addEventListener('click', function() { window.prevImg(); });
+          if (nextBtn) nextBtn.addEventListener('click', function() { window.nextImg(); });
           window.showImg(0);
         });
 
@@ -394,10 +399,10 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
                   ))}
                   {images.length > 1 && (
                     <>
-                      <button className="gallery-arrow prev" onClick={() => window.prevImg()} aria-label="Vorheriges Bild">
+                      <button className="gallery-arrow prev" id="gallery-prev" aria-label="Vorheriges Bild">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                       </button>
-                      <button className="gallery-arrow next" onClick={() => window.nextImg()} aria-label="Nächstes Bild">
+                      <button className="gallery-arrow next" id="gallery-next" aria-label="Nächstes Bild">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                       </button>
                     </>
@@ -415,7 +420,7 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
             {images.length > 1 && (
               <div className="gallery-thumbs">
                 {images.map((src, i) => (
-<div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`} onClick={() => window.showImg(i)}>
+<div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`}>
   <img src={src} alt={`Vorschau ${i+1}`} />
 </div>
                 ))}
