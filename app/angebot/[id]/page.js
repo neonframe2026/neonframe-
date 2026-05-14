@@ -359,7 +359,7 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
           showImg(0);
         });
 
-        async function sendContact() {
+        window.sendContact = async function() {
           var msg = document.getElementById('contact-msg').value.trim();
           var btn = document.getElementById('contact-btn');
           var status = document.getElementById('contact-status');
@@ -444,7 +444,11 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
             <div className="contact-title">Noch Fragen oder Änderungswünsche?</div>
             <div className="contact-sub">Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</div>
             <textarea id="contact-msg" className="contact-textarea" placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} />
-            <button id="contact-btn" className="contact-btn" onClick="sendContact()">
+            <button
+  id="contact-btn"
+  className="contact-btn"
+  onClick={() => window.sendContact()}
+>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:16,height:16}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
               Per E-Mail senden
             </button>
