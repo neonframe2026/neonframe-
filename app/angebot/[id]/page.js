@@ -243,10 +243,8 @@ export default async function AngebotPage({ params }) {
 } object-fit:cover; }
 .img-tt-box.wide img {
   width: 300px;
-  max-width: 92vw;
   height: auto;
   object-fit: contain;
-  display: block;
 
   /* links leicht abschneiden */
   object-position: 16px center;
