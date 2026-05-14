@@ -244,7 +244,7 @@ export default async function AngebotPage({ params }) {
 }
 
 .img-tt-box.wide img {
-  width:220px;
+  width:450px;
   height:auto;
   object-fit:contain;
 }
