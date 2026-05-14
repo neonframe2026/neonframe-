@@ -408,41 +408,54 @@ export default async function AngebotPage({ params }) {
           <h1 className="prod-title">Individuelles LED-Neon-Schild –<br/>personalisiert nach Wunsch</h1>
 
           {/* STARS */}
-          <div className="stars-row">
-            <div className="stars-wrap">
-              <span className="star">★</span>
-              <span className="star">★</span>
-              <span className="star">★</span>
-              <span className="star">★</span>
-<span
-  style={{
-    position:'relative',
-    display:'inline-flex',
-    alignItems:'center',
-    fontSize:20,
-    lineHeight:1,
-    color:'#e5e7eb'
-  }}
->
-  ★
-  <span
+<div className="stars-row">
+  <div
+    className="stars-wrap"
     style={{
-      color:'#f59e0b',
-      position:'absolute',
-      left:0,
-      top:'50%',
-      transform:'translateY(-50%)',
-      width:'50%',
-      overflow:'hidden',
-      lineHeight:1
+      display:'flex',
+      alignItems:'center',
+      gap:'4px'
     }}
   >
-    ★
-  </span>
-</span>
-            </div>
-            <span className="stars-label">4,5/5 Sternen</span>
-          </div>
+    <span className="star">★</span>
+    <span className="star">★</span>
+    <span className="star">★</span>
+    <span className="star">★</span>
+
+    {/* Halber Stern */}
+    <span
+      style={{
+        position:'relative',
+        display:'inline-flex',
+        alignItems:'center',
+        justifyContent:'center',
+        width:'20px',
+        height:'20px',
+        fontSize:'20px',
+        lineHeight:'20px',
+        color:'#e5e7eb'
+      }}
+    >
+      ★
+
+      <span
+        style={{
+          position:'absolute',
+          left:0,
+          top:0,
+          width:'50%',
+          height:'100%',
+          overflow:'hidden',
+          color:'#f59e0b'
+        }}
+      >
+        ★
+      </span>
+    </span>
+  </div>
+
+  <span className="stars-label">4,5/5 Sternen</span>
+</div>
 
           {/* MADE FOR */}
           {offer.project && (
