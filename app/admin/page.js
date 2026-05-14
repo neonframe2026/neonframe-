@@ -74,7 +74,7 @@ export default function AdminPage() {
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
     delivery: '', note: '', valid: '', url: '',
   })
-  const [imgSrc, setImgSrc] = useState(null)
+  const [imgSrcs, setImgSrcs] = useState([null, null, null])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
@@ -88,7 +88,7 @@ export default function AdminPage() {
     setF(prev => ({ ...prev, date: today.toLocaleDateString('de-DE'), valid: valid.toLocaleDateString('de-DE') }))
   }, [])
 
-  useEffect(() => { if (authed) renderPreview() }, [f, imgSrc])
+  useEffect(() => { if (authed) renderPreview() }, [f, imgSrcs])
 
   function renderPreview() {
     if (!iframeRef.current) return
@@ -152,7 +152,7 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
 <div class="wrap">
   <div>
     <div class="img-box">
-      ${imgSrc ? `<img src="${imgSrc}">` : '<div style="color:#ccc;text-align:center;font-size:13px">Vorschau-Bild</div>'}
+      ${imgSrcs[0] ? `<img src="${imgSrcs[0]}">` : '<div style="color:#ccc;text-align:center;font-size:13px">Vorschau-Bild</div>'}
     </div>
     <div class="contact-card">
       <h3>Noch Fragen oder Änderungswünsche?</h3>
@@ -227,9 +227,9 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     }
   }
 
-  function handleImage(e) {
+  function handleImage(e, idx) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = ev => setImgSrc(ev.target.result); r.readAsDataURL(file)
+    const r = new FileReader(); r.onload = ev => setImgSrcs(prev => { const next=[...prev]; next[idx]=ev.target.result; return next; }); r.readAsDataURL(file)
   }
 
   async function publish() {
@@ -244,14 +244,17 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
         net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
         delivery: f.delivery, note: f.note, valid_until: f.valid,
-        checkout_url: f.url, preview_image: null, published: true,
+        checkout_url: f.url, preview_image: null, preview_image_2: null, preview_image_3: null, published: true,
       }
-      if (imgSrc?.startsWith('data:')) {
-        const blob = await (await fetch(imgSrc)).blob()
-        const fd = new FormData(); fd.append('file', blob, `offer-${Date.now()}.jpg`); fd.append('offerId', f.num || 'new')
-        const up = await fetch('/api/upload', { method: 'POST', body: fd })
-        const upData = await up.json()
-        if (upData.url) payload.preview_image = upData.url
+      const imgFields = ['preview_image', 'preview_image_2', 'preview_image_3']
+      for (let i = 0; i < 3; i++) {
+        if (imgSrcs[i]?.startsWith('data:')) {
+          const blob = await (await fetch(imgSrcs[i])).blob()
+          const fd = new FormData(); fd.append('file', blob, `offer-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'new')
+          const up = await fetch('/api/upload', { method: 'POST', body: fd })
+          const upData = await up.json()
+          if (upData.url) payload[imgFields[i]] = upData.url
+        }
       }
       const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
@@ -319,7 +322,7 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     input: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 12px',color:'#111',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%',transition:'.15s'},
     select: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 12px',color:'#111',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%',cursor:'pointer'},
     row2: {display:'grid',gridTemplateColumns:'1fr 1fr',gap:10},
-    uploadRow: {display:'grid',gridTemplateColumns:'1fr 1fr',gap:10},
+    uploadRow: {display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8},
     uploadZone: {border:'1px dashed #e5e7eb',borderRadius:10,padding:'14px 10px',textAlign:'center',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:6,position:'relative',background:'#fafafa'},
     status: (t) => ({fontSize:12,padding:'8px 12px',borderRadius:8,marginTop:8,background:t==='ok'?'#f0fdf4':t==='warn'?'#fffbeb':'#fef2f2',border:`1px solid ${t==='ok'?'#bbf7d0':t==='warn'?'#fde68a':'#fecaca'}`,color:t==='ok'?'#166534':t==='warn'?'#92400e':'#991b1b'}),
     publishArea: {padding:'16px 20px',marginTop:'auto',borderTop:'1px solid #e5e7eb'},
@@ -415,14 +418,20 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span style={{fontSize:11,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>PDF hochladen</span>
               </label>
-              <label style={S.uploadZone}>
-                <input type="file" accept="image/*" onChange={handleImage} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}} />
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span style={{fontSize:11,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>Vorschau-Bild</span>
-              </label>
+              {[0,1,2].map(idx => (
+                <label key={idx} style={{...S.uploadZone, opacity: idx > 0 && !imgSrcs[idx-1] ? 0.4 : 1}}>
+                  <input type="file" accept="image/*" onChange={e=>handleImage(e,idx)} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}} disabled={idx > 0 && !imgSrcs[idx-1]} />
+                  {imgSrcs[idx]
+                    ? <img src={imgSrcs[idx]} alt="" style={{width:'100%',height:60,objectFit:'cover',borderRadius:6,display:'block'}} />
+                    : <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span style={{fontSize:10,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>Bild {idx+1}</span>
+                      </>
+                  }
+                </label>
+              ))}
             </div>
             {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
-            {imgSrc && <img src={imgSrc} alt="" style={{width:'100%',aspectRatio:'16/9',objectFit:'cover',borderRadius:8,marginTop:10,display:'block'}} />}
           </div>
 
           {/* ANGEBOTSDATEN */}
