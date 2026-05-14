@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW || 'neonframe2025'
 
@@ -45,7 +45,6 @@ async function extractPdfText(file) {
 
 function parsePdfFields(txt) {
   const get = (patterns) => { for (const p of patterns) { const m = txt.match(p); if (m) return (m[1] || m[0]).trim() } return '' }
-  const date = get([/Angebotsdatum[:\s•]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i, /(\d{1,2}\.\d{1,2}\.\d{4})/])
   const num = get([/Angebots(?:nummer|nr\.?|#)[:\s•#]+([A-Z0-9\-]{3,20})/i])
   const project = get([/(?:Projekt|Project)[:\s•]+([^\n•|]{2,60}?)(?:\s*[•|\n]|$)/i, /(?:Kunde|für)[:\s]+([^\n]{2,50})/i])
   let w = '', h = ''
@@ -53,7 +52,7 @@ function parsePdfFields(txt) {
   const colors = get([/Farbe[n]?\s*[\(\)a-z]*\s*[•:\-]\s*([^\n•]{2,60}?)(?:\s*(?:Gesamt|MwSt|\n))/i])
   let price = ''
   for (const p of [/Gesamt[^€\d]*€\s*([\d.,]+)/i, /€\s*([\d.,]+)\s*(?:netto|zzgl)/i, /(\d{2,6}[.,]\d{2})\s*€/]) { const m = txt.match(p); if (m) { price = m[1].replace(',', '.'); break } }
-  return { date, num, project, w, h, colors, price }
+  return { num, project, w, h, colors, price }
 }
 
 const BACKPLATE_OPTIONS = ['Ausgeschnitten', 'Quadratisch', 'Ohne']
@@ -68,11 +67,12 @@ export default function AdminPage() {
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
 
+  // Use a ref-based state to avoid re-render focus loss
   const [f, setF] = useState({
-    date: '', num: '', project: '', w: '', h: '',
+    num: '', project: '', w: '', h: '',
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
-    delivery: '', note: '', valid: '', url: '',
+    delivery: '', url: '',
   })
   const [imgSrcs, setImgSrcs] = useState([null, null, null])
   const [parseStatus, setParseStatus] = useState(null)
@@ -80,106 +80,125 @@ export default function AdminPage() {
   const [publishedLink, setPublishedLink] = useState(null)
   const iframeRef = useRef(null)
   const prices = calcPrices(f.basePrice, f.discType, f.discVal, f.vat)
-  const upd = (k, v) => setF(prev => ({ ...prev, [k]: v }))
 
-  useEffect(() => {
-    const today = new Date()
-    const valid = new Date(); valid.setDate(today.getDate() + 30)
-    setF(prev => ({ ...prev, date: today.toLocaleDateString('de-DE'), valid: valid.toLocaleDateString('de-DE') }))
+  // ── FIX: use onChange that doesn't cause re-render focus loss ──
+  // We store field values in refs for the debounce, but keep controlled inputs
+  const upd = useCallback((k, v) => {
+    setF(prev => ({ ...prev, [k]: v }))
   }, [])
 
   const debounceRef = useRef(null)
   useEffect(() => {
     if (!authed) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { renderPreview() }, 600)
+    debounceRef.current = setTimeout(() => { renderPreview() }, 400)
     return () => clearTimeout(debounceRef.current)
-  }, [f, imgSrcs])
+  }, [f, imgSrcs, authed])
 
   function renderPreview() {
     if (!iframeRef.current) return
     const colors = f.color.split(',').map(c => c.trim()).filter(Boolean)
-    const colorPills = colors.map(c => `<div style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #eee;border-radius:20px;padding:7px 14px;font-size:13px;color:#333;margin-right:6px;margin-bottom:6px"><span style="width:10px;height:10px;border-radius:50%;background:${colorDot(c)};display:inline-block;flex-shrink:0;border:1px solid rgba(0,0,0,.08)"></span>${c}</div>`).join('')
+
+    const colorPills = colors.map(c => `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #eee;border-radius:20px;padding:7px 13px;font-size:13px;color:#333;margin-right:6px;margin-bottom:6px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${colorDot(c)};display:inline-block;border:1px solid rgba(0,0,0,.08)"></span>${c}
+      </div>`).join('')
+
+    const p = prices
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111;background:#fff;font-size:15px}
-.hdr{background:#0a0a0a;padding:0 32px;height:80px;display:flex;align-items:center;justify-content:space-between}
-.logo img{height:52px;display:block}
-.badge{background:rgba(96,200,240,.12);border:1px solid rgba(96,200,240,.3);color:#60c8f0;font-size:13px;font-weight:600;padding:8px 18px;border-radius:20px}
-.wrap{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;padding:40px 32px;max-width:1200px}
-.img-box{border-radius:16px;overflow:hidden;background:#f5f5f5;border:1px solid #eee;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
-.img-box img{width:100%;height:100%;object-fit:cover;display:block}
-.contact-card{margin-top:18px;background:#fff;border:1px solid #eee;border-radius:14px;padding:20px}
-.contact-card h3{font-size:15px;font-weight:700;margin-bottom:4px}
-.contact-card p{font-size:13px;color:#999;margin-bottom:12px;line-height:1.5}
-.contact-card textarea{width:100%;background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:11px 13px;font-size:13px;resize:vertical;min-height:72px;font-family:inherit;outline:none;margin-bottom:10px;display:block}
-.contact-card button{background:#0a0a0a;color:#fff;border:none;border-radius:8px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:10px}
-.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.stars{color:#f59e0b;font-size:18px}
-.stars-lbl{font-size:13px;color:#666}
-.made-for{font-size:14px;color:#888;margin-bottom:20px}
-.made-for strong{color:#60c8f0;font-weight:700}
-.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#bbb;display:block;margin-bottom:5px}
-.pill{display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #eee;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:500;color:#333}
-.cfg-group{margin-bottom:14px}
-.cfg-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end}
-.checks{margin-bottom:20px;display:flex;flex-direction:column;gap:9px}
-.ck{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:#555;line-height:1.5}
-.ck-icon{color:#60c8f0;font-size:15px;flex-shrink:0;margin-top:2px}
-.price-box{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:20px;margin-bottom:16px}
-.pr{display:flex;justify-content:space-between;font-size:13px;color:#ccc;padding:3px 0}
-.pr-d{display:flex;justify-content:space-between;font-size:13px;color:#16a34a;padding:3px 0;font-weight:600}
-.pr-n{display:flex;justify-content:space-between;font-size:13px;color:#111;padding:3px 0}
-.pr-g{display:flex;justify-content:space-between;font-size:13px;color:#999;padding:3px 0}
-.divider{border-top:1px solid #f0f0f0;margin:10px 0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111;background:#fff;font-size:14px}
+.hdr{background:#0a0a0a;padding:0 28px;height:76px;display:flex;align-items:center;justify-content:space-between}
+.badge{background:rgba(96,200,240,.12);border:1px solid rgba(96,200,240,.3);color:#60c8f0;font-size:12px;font-weight:600;padding:7px 16px;border-radius:20px}
+.wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;padding:32px 28px;max-width:1100px}
+.img-box{border-radius:14px;overflow:hidden;background:#f5f5f5;border:1px solid #eee;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+.img-box img{width:100%;height:100%;object-fit:contain;display:block}
+.contact-card{margin-top:16px;background:#fff;border:1px solid #eee;border-radius:14px;padding:18px}
+.contact-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.contact-hdr img{width:48px;height:48px;border-radius:12px;object-fit:cover;flex-shrink:0}
+.contact-hdr h3{font-size:14px;font-weight:700;margin-bottom:3px}
+.contact-hdr p{font-size:12px;color:#999;line-height:1.4}
+.contact-card textarea{width:100%;background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:10px 12px;font-size:12px;resize:vertical;min-height:66px;font-family:inherit;outline:none;margin-bottom:8px;display:block}
+.contact-card button{background:#0a0a0a;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+h1{font-size:24px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:8px}
+.stars-row{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.stars{color:#f59e0b;font-size:17px}
+.stars-lbl{font-size:12px;color:#666}
+.badge-made{display:inline-flex;align-items:center;gap:9px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:10px;padding:7px 13px;margin-bottom:16px}
+.badge-made .star-icon{width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid #c9a84c;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+.badge-made .label{font-size:12px;color:#666}
+.badge-made .name{font-size:12px;font-weight:700;color:#111}
+.sz-color-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-start}
+.cfg-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#111;display:block;margin-bottom:4px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #eee;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:500;color:#333}
+.cfg-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;align-items:flex-end}
+.checks{margin-bottom:16px;display:flex;flex-direction:column;gap:8px}
+.ck{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#555;line-height:1.5}
+.ck-icon{color:#22c55e;font-size:14px;flex-shrink:0;margin-top:1px}
+.price-box{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:16px;margin-bottom:12px}
+.pr{display:flex;justify-content:space-between;font-size:12px;color:#999;padding:3px 0}
+.pr-d{display:flex;justify-content:space-between;font-size:12px;color:#16a34a;padding:3px 0;font-weight:600}
+.pr-n{display:flex;justify-content:space-between;font-size:12px;color:#111;padding:3px 0}
+.pr-g{display:flex;justify-content:space-between;font-size:12px;color:#999;padding:3px 0}
+.divider{border-top:1px solid #f0f0f0;margin:8px 0}
 .total{display:flex;justify-content:space-between;align-items:baseline}
-.tlbl{font-size:14px;font-weight:700;color:#111}
-.tval{font-size:26px;font-weight:800;color:#111;letter-spacing:-.02em}
-.tnote{font-size:11px;color:#bbb;text-align:right;margin-top:3px}
-.prnote{font-size:11px;color:#bbb;margin-top:8px}
-.ship{background:#f0fbff;border:1px solid #b8e8f8;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.ship-icon{color:#60c8f0;font-size:20px}
-.ship strong{display:block;font-size:14px;font-weight:700;color:#111;margin-bottom:2px}
-.ship span{font-size:12px;color:#888}
-.cta{width:100%;background:#16a34a;color:#fff;border:none;border-radius:12px;padding:17px;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0;cursor:pointer;font-family:inherit}
-.feats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.feat{background:#fff;border:1px solid #eee;border-radius:10px;padding:13px;display:flex;align-items:flex-start;gap:10px}
-.feat-icon{width:34px;height:34px;background:#f0fbff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #d0f0fc;color:#60c8f0;font-size:14px}
-.feat strong{display:block;font-size:12px;font-weight:700;margin-bottom:2px}
-.feat span{font-size:11px;color:#888;line-height:1.4}
+.tlbl{font-size:13px;font-weight:700;color:#111}
+.tval{font-size:22px;font-weight:800;color:#111;letter-spacing:-.02em}
+.tnote{font-size:10px;color:#aaa;text-align:right;margin-top:2px}
+.ship{background:#f0fbff;border:1px solid #b8e8f8;border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ship-icon{color:#60c8f0;font-size:16px}
+.ship strong{display:block;font-size:12px;font-weight:700;color:#111;margin-bottom:1px}
+.ship span{font-size:11px;color:#888}
+.cta{width:100%;background:#16a34a;color:#fff;border:none;border-radius:11px;padding:15px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px;margin:12px 0;cursor:pointer;font-family:inherit}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.feat{background:#fff;border:1px solid #eee;border-radius:10px;padding:11px;display:flex;align-items:flex-start;gap:9px}
+.feat-icon{width:30px;height:30px;background:#f0fbff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #d0f0fc;color:#60c8f0;font-size:13px}
+.feat strong{display:block;font-size:11px;font-weight:700;margin-bottom:2px}
+.feat span{font-size:10px;color:#888;line-height:1.4}
 </style></head><body>
 <div class="hdr">
-  <div class="logo"><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame"></div>
+  <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style="height:56px">
   ${f.num ? `<div class="badge">Angebot #${f.num}</div>` : ''}
 </div>
 <div class="wrap">
   <div>
     <div class="img-box">
-      ${imgSrcs[0] ? `<img src="${imgSrcs[0]}">` : '<div style="color:#ccc;text-align:center;font-size:13px">Vorschau-Bild</div>'}
+      ${imgSrcs[0] ? `<img src="${imgSrcs[0]}">` : '<span style="color:#ccc;font-size:12px">Vorschau-Bild</span>'}
     </div>
     <div class="contact-card">
-      <h3>Noch Fragen oder Änderungswünsche?</h3>
-      <p>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</p>
+      <div class="contact-hdr">
+        <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280" alt="Support">
+        <div>
+          <h3>Noch Fragen oder Änderungswünsche?</h3>
+          <p>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</p>
+        </div>
+      </div>
       <textarea placeholder="z.B. Kann die Farbe noch angepasst werden?"></textarea>
-      <button>Per E-Mail senden</button>
+      <button>✉ Per E-Mail senden</button>
     </div>
   </div>
   <div>
     <h1>Individuelles LED-Neon-Schild –<br>personalisiert nach Wunsch</h1>
     <div class="stars-row">
-      <div class="stars">★★★★½</div>
+      <div class="stars">★★★★<span style="color:#e5e7eb">★</span></div>
       <span class="stars-lbl">4,5 / 5 Sternen</span>
     </div>
-    ${f.project ? `<div class="made-for">Individuell angefertigt für <strong>${f.project}</strong></div>` : ''}
-    ${f.w && f.h ? `<div class="cfg-group"><span class="lbl">Maße (Breite × Höhe)</span><div class="pill" style="margin-top:4px">${f.w} × ${f.h} cm</div></div>` : ''}
-    ${colors.length > 0 ? `<div class="cfg-group"><span class="lbl">Farbe</span><div style="margin-top:4px">${colorPills}</div></div>` : ''}
+    ${f.project ? `
+    <div class="badge-made">
+      <div class="star-icon">⭐</div>
+      <span class="label">Individuell angefertigt für</span>
+      <span class="name">${f.project}</span>
+    </div>` : ''}
+    <div class="sz-color-row">
+      ${f.w && f.h ? `<div><span class="cfg-lbl">Maße (Breite × Höhe)</span><div class="pill" style="margin-top:3px">${f.w} × ${f.h} cm</div></div>` : ''}
+      ${colors.length > 0 ? `<div><span class="cfg-lbl">Farbe</span><div style="margin-top:3px">${colorPills}</div></div>` : ''}
+    </div>
     <div class="cfg-row">
-      ${f.backplate ? `<div><span class="lbl">Rückwandform</span><div class="pill" style="margin-top:4px">${f.backplate}</div></div>` : ''}
-      ${f.backplate_color ? `<div><span class="lbl">Rückwandfarbe</span><div class="pill" style="margin-top:4px">${f.backplate_color}</div></div>` : ''}
-      ${f.usage ? `<div><span class="lbl">Verwendungszweck</span><div class="pill" style="margin-top:4px">${f.usage}</div></div>` : ''}
+      ${f.backplate ? `<div><span class="cfg-lbl">Rückwandform</span><div class="pill" style="margin-top:3px">${f.backplate}</div></div>` : ''}
+      ${f.backplate_color ? `<div><span class="cfg-lbl">Rückwandfarbe</span><div class="pill" style="margin-top:3px">${f.backplate_color}</div></div>` : ''}
+      ${f.usage ? `<div><span class="cfg-lbl">Verwendungszweck</span><div class="pill" style="margin-top:3px">${f.usage}</div></div>` : ''}
     </div>
     <div class="checks">
       <div class="ck"><span class="ck-icon">✓</span><span>Einfach zu installieren mit dem mitgelieferten Montagematerial</span></div>
@@ -188,13 +207,12 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     </div>
     <div class="price-box">
       ${parseFloat(f.basePrice) > 0 ? `<div class="pr"><span>Listenpreis (netto)</span><span>€ ${parseFloat(f.basePrice).toFixed(2)}</span></div>` : ''}
-      ${prices.discAmt > 0 ? `<div class="pr-d"><span>− Rabatt (${f.discType === 'pct' ? f.discVal + '%' : '€ ' + parseFloat(f.discVal).toFixed(2)})</span><span>− € ${prices.discAmt.toFixed(2)}</span></div>` : ''}
-      ${prices.net > 0 ? `<div class="pr-n"><span>Netto-Preis nach Rabatt</span><span>€ ${prices.net.toFixed(2)}</span></div>` : ''}
-      ${prices.vatAmt > 0 ? `<div class="pr-g"><span>+ MwSt. (${f.vat}%)</span><span>+ € ${prices.vatAmt.toFixed(2)}</span></div>` : ''}
+      ${p.discAmt > 0 ? `<div class="pr-d"><span>− Rabatt (${f.discType === 'pct' ? f.discVal + '%' : '€ ' + parseFloat(f.discVal).toFixed(2)})</span><span>− € ${p.discAmt.toFixed(2)}</span></div>` : ''}
+      ${p.net > 0 ? `<div class="pr-n"><span>Netto-Preis nach Rabatt</span><span>€ ${p.net.toFixed(2)}</span></div>` : ''}
+      ${p.vatAmt > 0 ? `<div class="pr-g"><span>+ MwSt. (${f.vat}%)</span><span>+ € ${p.vatAmt.toFixed(2)}</span></div>` : ''}
       <div class="divider"></div>
-      <div class="total"><span class="tlbl">Gesamtbetrag</span><span class="tval">${prices.total > 0 ? '€ ' + prices.total.toFixed(2) : '–'}</span></div>
-      ${prices.total > 0 ? '<div class="tnote">(inkl. MwSt.)</div>' : ''}
-      <div class="prnote">Kostenloser Versand nach Deutschland</div>
+      <div class="total"><span class="tlbl">Gesamtbetrag</span><span class="tval">${p.total > 0 ? '€ ' + p.total.toFixed(2) : '–'}</span></div>
+      ${p.total > 0 ? '<div class="tnote">(inkl. MwSt.)</div>' : ''}
     </div>
     <div class="ship">
       <div class="ship-icon">🚚</div>
@@ -222,7 +240,7 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       const p = parsePdfFields(txt)
       setF(prev => ({
         ...prev,
-        date: p.date || prev.date, num: p.num || prev.num,
+        num: p.num || prev.num,
         project: p.project || prev.project, w: p.w || prev.w, h: p.h || prev.h,
         color: p.colors || prev.color, basePrice: p.price || prev.basePrice,
       }))
@@ -242,14 +260,14 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     setPublishing(true)
     try {
       const payload = {
-        offer_num: f.num, offer_date: f.date, project: f.project,
+        offer_num: f.num, project: f.project,
         width: f.w, height: f.h,
         backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
         colors: f.color,
         base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
         disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
         net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-        delivery: f.delivery, note: f.note, valid_until: f.valid,
+        delivery: f.delivery,
         checkout_url: f.url, preview_image: null, preview_image_2: null, preview_image_3: null, published: true,
       }
       const imgFields = ['preview_image', 'preview_image_2', 'preview_image_3']
@@ -379,7 +397,6 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                         {o.width && o.height && <span>{o.width} × {o.height} cm</span>}
                         {o.colors && <span>{o.colors}</span>}
                         {o.final_price > 0 && <span style={{fontWeight:600,color:'#374151'}}>€ {parseFloat(o.final_price).toFixed(2)}</span>}
-                        {o.offer_date && <span>{o.offer_date}</span>}
                       </div>
                       {o.published && (
                         <div style={{marginTop:8,display:'flex',alignItems:'center',gap:8}}>
@@ -412,23 +429,19 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         </div>
         <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
       </div>
+
       <div style={S.main}>
         <div style={S.left}>
 
-          {/* UPLOADS */}
+          {/* BILDER */}
           <div style={S.section}>
             <div style={S.sTitle}>Dateien hochladen</div>
             <div style={S.uploadRow}>
-              <label style={S.uploadZone}>
-                <input type="file" accept=".pdf" onChange={handlePDF} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}} />
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <span style={{fontSize:11,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>PDF hochladen</span>
-              </label>
               {[0,1,2].map(idx => (
-                <label key={idx} style={{...S.uploadZone, opacity: idx > 0 && !imgSrcs[idx-1] ? 0.4 : 1}}>
-                  <input type="file" accept="image/*" onChange={e=>handleImage(e,idx)} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}} disabled={idx > 0 && !imgSrcs[idx-1]} />
+                <label key={idx} style={S.uploadZone} htmlFor={`img-${idx}`}>
+                  <input id={`img-${idx}`} type="file" accept="image/*" style={{display:'none'}} onChange={e => handleImage(e, idx)} />
                   {imgSrcs[idx]
-                    ? <img src={imgSrcs[idx]} alt="" style={{width:'100%',height:60,objectFit:'cover',borderRadius:6,display:'block'}} />
+                    ? <img src={imgSrcs[idx]} style={{width:'100%',height:60,objectFit:'cover',borderRadius:6}} alt="" />
                     : <>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         <span style={{fontSize:10,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>Bild {idx+1}</span>
@@ -437,23 +450,31 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                 </label>
               ))}
             </div>
+            <label style={{...S.uploadZone,marginTop:8,flexDirection:'row',padding:'10px 14px',justifyContent:'flex-start',gap:10}} htmlFor="pdf-upload">
+              <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span style={{fontSize:12,color:'#9ca3af'}}>PDF hochladen (automatisch ausfüllen)</span>
+            </label>
             {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
           </div>
 
-          {/* ANGEBOTSDATEN */}
+          {/* ANGEBOTSDATEN — ohne Datum */}
           <div style={S.section}>
             <div style={S.sTitle}>Angebotsdaten</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <Field label="Angebotsnummer">
+                <input style={S.input} value={f.num} onChange={e => upd('num', e.target.value)} placeholder="NF-1001" />
+              </Field>
+              <Field label="Projekt / Kundenname">
+                <input style={S.input} value={f.project} onChange={e => upd('project', e.target.value)} placeholder="z.B. esskultur – Max Mustermann" />
+              </Field>
               <div style={S.row2}>
-                <Field label="Datum"><input style={S.input} value={f.date} onChange={e=>upd('date',e.target.value)} /></Field>
-                <Field label="Angebotsnummer"><input style={S.input} value={f.num} onChange={e=>upd('num',e.target.value)} placeholder="NF-1001" /></Field>
+                <Field label="Breite (cm)"><input style={S.input} type="number" value={f.w} onChange={e => upd('w', e.target.value)} /></Field>
+                <Field label="Höhe (cm)"><input style={S.input} type="number" value={f.h} onChange={e => upd('h', e.target.value)} /></Field>
               </div>
-              <Field label="Projekt / Kundenname"><input style={S.input} value={f.project} onChange={e=>upd('project',e.target.value)} placeholder="z.B. esskultur – Max Mustermann" /></Field>
-              <div style={S.row2}>
-                <Field label="Breite (cm)"><input style={S.input} type="number" value={f.w} onChange={e=>upd('w',e.target.value)} /></Field>
-                <Field label="Höhe (cm)"><input style={S.input} type="number" value={f.h} onChange={e=>upd('h',e.target.value)} /></Field>
-              </div>
-              <Field label="Farbe(n) – kommagetrennt"><input style={S.input} value={f.color} onChange={e=>upd('color',e.target.value)} placeholder="z.B. Soft Orange, Pink" /></Field>
+              <Field label="Farbe(n) – kommagetrennt">
+                <input style={S.input} value={f.color} onChange={e => upd('color', e.target.value)} placeholder="z.B. Soft Orange, Pink" />
+              </Field>
             </div>
           </div>
 
@@ -462,17 +483,17 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             <div style={S.sTitle}>Konfiguration</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <Field label="Rückwandform">
-                <select style={S.select} value={f.backplate} onChange={e=>upd('backplate',e.target.value)}>
+                <select style={S.select} value={f.backplate} onChange={e => upd('backplate', e.target.value)}>
                   {BACKPLATE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </Field>
               <Field label="Rückwandfarbe">
-                <select style={S.select} value={f.backplate_color} onChange={e=>upd('backplate_color',e.target.value)}>
+                <select style={S.select} value={f.backplate_color} onChange={e => upd('backplate_color', e.target.value)}>
                   {BACKPLATE_COLOR_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </Field>
               <Field label="Verwendungszweck">
-                <select style={S.select} value={f.usage} onChange={e=>upd('usage',e.target.value)}>
+                <select style={S.select} value={f.usage} onChange={e => upd('usage', e.target.value)}>
                   {USAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </Field>
@@ -483,14 +504,26 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="PDF-Preis (netto)"><input style={S.input} type="number" step="0.01" value={f.basePrice} onChange={e=>upd('basePrice',e.target.value)} placeholder="0.00" /></Field>
+              <Field label="Listenpreis (netto)">
+                <input style={S.input} type="number" step="0.01" value={f.basePrice} onChange={e => upd('basePrice', e.target.value)} placeholder="0.00" />
+              </Field>
               <div style={S.row2}>
-                <Field label="Rabatt-Typ"><select style={S.select} value={f.discType} onChange={e=>upd('discType',e.target.value)}><option value="pct">Prozent (%)</option><option value="eur">Euro (€)</option></select></Field>
-                <Field label={`Rabatt (${f.discType==='pct'?'%':'€'})`}><input style={S.input} type="number" step="0.01" value={f.discVal} onChange={e=>upd('discVal',e.target.value)} /></Field>
+                <Field label="Rabatt-Typ">
+                  <select style={S.select} value={f.discType} onChange={e => upd('discType', e.target.value)}>
+                    <option value="pct">Prozent (%)</option><option value="eur">Euro (€)</option>
+                  </select>
+                </Field>
+                <Field label={`Rabatt (${f.discType==='pct'?'%':'€'})`}>
+                  <input style={S.input} type="number" step="0.01" value={f.discVal} onChange={e => upd('discVal', e.target.value)} />
+                </Field>
               </div>
               <div style={S.row2}>
-                <Field label="MwSt. (%)"><input style={S.input} type="number" step="0.1" value={f.vat} onChange={e=>upd('vat',e.target.value)} /></Field>
-                <Field label="Checkout-URL"><input style={S.input} value={f.url} onChange={e=>upd('url',e.target.value)} placeholder="https://..." /></Field>
+                <Field label="MwSt. (%)">
+                  <input style={S.input} type="number" step="0.1" value={f.vat} onChange={e => upd('vat', e.target.value)} />
+                </Field>
+                <Field label="Checkout-URL">
+                  <input style={S.input} value={f.url} onChange={e => upd('url', e.target.value)} placeholder="https://..." />
+                </Field>
               </div>
               <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
                 {[['Netto',prices.net>0?`€ ${prices.net.toFixed(2)}`:'–',false],['+ MwSt.',prices.vatAmt>0?`€ ${prices.vatAmt.toFixed(2)}`:'–',false],['Endpreis',prices.total>0?`€ ${prices.total.toFixed(2)}`:'–',true]].map(([l,v,a])=>(
@@ -500,13 +533,13 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* WEITERE */}
+          {/* WEITERE — nur Lieferdatum + URL */}
           <div style={S.section}>
             <div style={S.sTitle}>Weitere Einstellungen</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Lieferdatum"><input style={S.input} value={f.delivery} onChange={e=>upd('delivery',e.target.value)} placeholder="z.B. 27. Mai und 3. Juni" /></Field>
-              <Field label="Gültig bis"><input style={S.input} value={f.valid} onChange={e=>upd('valid',e.target.value)} /></Field>
-              <Field label="Notiz für Kunden"><textarea style={{...S.input,minHeight:60,resize:'vertical',lineHeight:1.5}} value={f.note} onChange={e=>upd('note',e.target.value)} placeholder="z.B. Wie besprochen..." /></Field>
+              <Field label="Lieferdatum">
+                <input style={S.input} value={f.delivery} onChange={e => upd('delivery', e.target.value)} placeholder="z.B. 27. Mai und 3. Juni" />
+              </Field>
             </div>
           </div>
 
@@ -520,7 +553,6 @@ h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
               </div>
             )}
           </div>
-
         </div>
 
         {/* PREVIEW */}
