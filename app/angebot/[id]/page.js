@@ -220,7 +220,7 @@ export default async function AngebotPage({ params }) {
           background:#fff;
           border:1px solid #eee;
           border-radius:12px;
-          padding:6px;
+          padding:6px 6px 6px 2px;
           box-shadow:0 8px 30px rgba(0,0,0,.12);
           z-index:200;
           pointer-events:none;
@@ -235,7 +235,7 @@ export default async function AngebotPage({ params }) {
   display: block;
 
   /* links leicht abschneiden */
-  object-position: 32px center;
+  object-position: 16px center;
 }
         .img-tt:hover .img-tt-box { display:block; }
 
