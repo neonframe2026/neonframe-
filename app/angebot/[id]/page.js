@@ -206,15 +206,15 @@ export default async function AngebotPage({ params }) {
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#bbb; display:block; margin-bottom:6px; }
         .cfg-group { margin-bottom:16px; }
         .cfg-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
-        .cfg-pill {
+.cfg-pill {
   display:inline-flex;
   align-items:center;
   gap:7px;
   background:#f5f5f5;
   border:1px solid #e8e8e8;
-  border-radius:24px;
-  padding:12px 22px;
-  font-size:16px;
+  border-radius:20px;
+  padding:8px 16px;
+  font-size:14px;
   font-weight:500;
   color:#333;
 }
