@@ -414,9 +414,32 @@ export default async function AngebotPage({ params }) {
               <span className="star">★</span>
               <span className="star">★</span>
               <span className="star">★</span>
-              <span style={{position:'relative',display:'inline-block',fontSize:20,color:'#e5e7eb',letterSpacing:0}}>
-                ★<span style={{color:'#f59e0b',position:'absolute',left:0,top:0,width:'50%',overflow:'hidden',letterSpacing:0}}>★</span>
-              </span>
+<span
+  style={{
+    position:'relative',
+    display:'inline-flex',
+    alignItems:'center',
+    fontSize:20,
+    lineHeight:1,
+    color:'#e5e7eb'
+  }}
+>
+  ★
+  <span
+    style={{
+      color:'#f59e0b',
+      position:'absolute',
+      left:0,
+      top:'50%',
+      transform:'translateY(-50%)',
+      width:'50%',
+      overflow:'hidden',
+      lineHeight:1
+    }}
+  >
+    ★
+  </span>
+</span>
             </div>
             <span className="stars-label">4,5/5 Sternen</span>
           </div>
