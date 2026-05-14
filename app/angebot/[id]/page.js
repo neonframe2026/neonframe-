@@ -438,13 +438,14 @@ color:'#e5e7eb'
 
       <span
         style={{
-          position:'absolute',
-          left:0,
-          top:0,
-          width:'50%',
-          height:'100%',
-          overflow:'hidden',
-          color:'#f59e0b'
+position:'absolute',
+left:0,
+top:0,
+width:'50%',
+height:'100%',
+overflow:'hidden',
+color:'#f59e0b',
+lineHeight:'20px'
         }}
       >
         ★
