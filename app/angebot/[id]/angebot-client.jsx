@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 function colorDot(s = '') {
   const c = s.toLowerCase()
@@ -42,31 +42,37 @@ function getTooltipImg(val, map) {
   return map[lower] || map[Object.keys(map).find(k => lower.includes(k))] || null
 }
 
-// ─── GALLERY ────────────────────────────────────────────────────────────────
+// ─── GALLERY with real left/right slide ──────────────────────────────────────
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
-  const [dir, setDir] = useState(null)
+  const [next, setNext] = useState(null)       // index of incoming image
+  const [slideDir, setSlideDir] = useState(null) // 'left' | 'right'
   const [animating, setAnimating] = useState(false)
   const [lightbox, setLightbox] = useState(false)
   const total = images.length
+  const DURATION = 320
 
-  const goTo = useCallback((idx, direction) => {
+  const goTo = useCallback((idx, dir) => {
+    if (animating) return
     const nxt = ((idx % total) + total) % total
-    if (nxt === current || animating) return
-    setDir(direction); setAnimating(true)
-    setTimeout(() => { setCurrent(nxt); setAnimating(false); setDir(null) }, 260)
+    if (nxt === current) return
+    setNext(nxt)
+    setSlideDir(dir)
+    setAnimating(true)
+    setTimeout(() => {
+      setCurrent(nxt)
+      setNext(null)
+      setSlideDir(null)
+      setAnimating(false)
+    }, DURATION)
   }, [current, total, animating])
 
-  const prev = useCallback((e) => { e?.stopPropagation(); goTo(current - 1, 'right') }, [current, goTo])
-  const next = useCallback((e) => { e?.stopPropagation(); goTo(current + 1, 'left') }, [current, goTo])
+  const goPrev = useCallback((e) => { e?.stopPropagation(); goTo(current - 1, 'right') }, [current, goTo])
+  const goNext = useCallback((e) => { e?.stopPropagation(); goTo(current + 1, 'left') }, [current, goTo])
 
-  // lock body scroll when lightbox open
   useEffect(() => {
-    if (lightbox) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    if (lightbox) { document.body.style.overflow = 'hidden' }
+    else { document.body.style.overflow = '' }
     return () => { document.body.style.overflow = '' }
   }, [lightbox])
 
@@ -78,26 +84,27 @@ function Gallery({ images }) {
         if (e.key === 'ArrowRight' && current < total - 1) setCurrent(c => c + 1)
         return
       }
-      if (e.key === 'ArrowLeft') prev()
-      if (e.key === 'ArrowRight') next()
+      if (e.key === 'ArrowLeft') goPrev()
+      if (e.key === 'ArrowRight') goNext()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [lightbox, current, total, prev, next])
+  }, [lightbox, current, total, goPrev, goNext])
 
+  // Touch swipe
+  const touchStart = useRef(0)
   useEffect(() => {
     const el = document.getElementById('gallery-main')
     if (!el) return
-    let startX = 0
-    const onStart = (e) => { startX = e.touches[0].clientX }
+    const onStart = (e) => { touchStart.current = e.touches[0].clientX }
     const onEnd = (e) => {
-      const dx = e.changedTouches[0].clientX - startX
-      if (Math.abs(dx) > 40) dx < 0 ? next() : prev()
+      const dx = e.changedTouches[0].clientX - touchStart.current
+      if (Math.abs(dx) > 40) dx < 0 ? goNext() : goPrev()
     }
     el.addEventListener('touchstart', onStart, { passive: true })
     el.addEventListener('touchend', onEnd, { passive: true })
     return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchend', onEnd) }
-  }, [prev, next])
+  }, [goPrev, goNext])
 
   if (total === 0) return (
     <div style={{ borderRadius: 18, background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -105,41 +112,18 @@ function Gallery({ images }) {
     </div>
   )
 
-  const imgStyle = {
-    width: '100%', height: '100%', objectFit: 'contain', display: 'block',
-    transform: animating ? (dir === 'left' ? 'translateX(-5%)' : 'translateX(5%)') : 'translateX(0)',
-    opacity: animating ? 0 : 1,
-    transition: 'transform 0.26s ease, opacity 0.26s ease',
-  }
+  // Slide directions: going 'left' means new image enters from right, current exits left
+  const currentOut = animating ? (slideDir === 'left' ? 'translateX(-100%)' : 'translateX(100%)') : 'translateX(0)'
+  const nextIn     = slideDir === 'left' ? 'translateX(0)' : 'translateX(0)'
+  const nextStart  = slideDir === 'left' ? 'translateX(100%)' : 'translateX(-100%)'
 
   return (
     <>
-      {/* ── LIGHTBOX: fixed, z-index 99999, covers header + everything ── */}
+      {/* LIGHTBOX */}
       {lightbox && (
-        <div
-          onClick={() => setLightbox(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 99999,
-            background: 'rgba(0,0,0,0.96)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'zoom-out',
-          }}
-        >
-          {/* Close button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setLightbox(false) }}
-            style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 38, cursor: 'pointer', lineHeight: 1, opacity: 0.75, zIndex: 100000 }}
-          >×</button>
-
-          {/* Image only */}
-          <img
-            src={images[current]}
-            alt="Vollbild"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 6, display: 'block', userSelect: 'none' }}
-          />
-
-          {/* Arrows inside lightbox */}
+        <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+          <button onClick={(e) => { e.stopPropagation(); setLightbox(false) }} style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 38, cursor: 'pointer', lineHeight: 1, opacity: 0.75 }}>×</button>
+          <img src={images[current]} alt="Vollbild" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 6, display: 'block', userSelect: 'none' }} />
           {total > 1 && current > 0 && (
             <button onClick={(e) => { e.stopPropagation(); setCurrent(c => c - 1) }} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
@@ -150,33 +134,54 @@ function Gallery({ images }) {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           )}
-          {/* Counter */}
-          {total > 1 && (
-            <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{current + 1} / {total}</div>
-          )}
+          {total > 1 && <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{current + 1} / {total}</div>}
         </div>
       )}
 
-      {/* ── MAIN GALLERY IMAGE ── */}
-      <div
-        id="gallery-main"
-        onClick={() => setLightbox(true)}
-        style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in' }}
-      >
-        <img key={current} src={images[current]} alt={`Neon Sign ${current + 1}`} style={imgStyle} />
+      {/* MAIN GALLERY with overflow:hidden for slide */}
+      <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', cursor: 'zoom-in' }}>
+        {/* Current image sliding out */}
+        <img
+          src={images[current]}
+          alt={`Neon Sign ${current + 1}`}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block',
+            transform: currentOut,
+            transition: animating ? `transform ${DURATION}ms ease` : 'none',
+            zIndex: 1,
+          }}
+        />
+        {/* Next image sliding in */}
+        {animating && next !== null && (
+          <img
+            src={images[next]}
+            alt={`Neon Sign ${next + 1}`}
+            style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block',
+              transform: nextIn,
+              animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} ${DURATION}ms ease forwards`,
+              zIndex: 2,
+            }}
+          />
+        )}
+        <style>{`
+          @keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
+          @keyframes slideInLeft  { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+        `}</style>
+
         {total > 1 && current > 0 && (
-          <button onClick={prev} aria-label="Vorheriges Bild" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <button onClick={goPrev} aria-label="Vorheriges Bild" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         )}
         {total > 1 && current < total - 1 && (
-          <button onClick={next} aria-label="Nächstes Bild" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <button onClick={goNext} aria-label="Nächstes Bild" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
         )}
       </div>
 
-      {/* ── THUMBNAILS ── */}
+      {/* THUMBNAILS */}
       {total > 1 && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           {images.map((src, i) => (
@@ -209,12 +214,11 @@ function ContactCard({ displayId, projectName }) {
 
   return (
     <div style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
-      {/* Header with support icon */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <img
-          src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_18_51_03_800x800.png?v=1778777532"
+          src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280"
           alt="Support"
-          style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }}
+          style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }}
         />
         <div>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 3 }}>Noch Fragen oder Änderungswünsche?</div>
@@ -232,34 +236,91 @@ function ContactCard({ displayId, projectName }) {
   )
 }
 
-// ─── DROPDOWN ROW for Produktbeschreibung ────────────────────────────────────
+// ─── PRODUKTBESCHREIBUNG ROW (always open, no arrow) ─────────────────────────
 function DescRow({ icon, title, children }) {
-  const [open, setOpen] = useState(false)
   return (
     <div style={{ borderBottom: '1px solid #f0f0f0' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '18px 32px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .12s' }}
-        onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
-        onMouseLeave={e => e.currentTarget.style.background = 'none'}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 32px' }}>
         <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff' }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="#60c8f0" strokeWidth="2" style={{ width: 16, height: 16 }}>{icon}</svg>
         </div>
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: '#111' }}>{title}</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" style={{ width: 16, height: 16, flexShrink: 0, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9" /></svg>
-      </button>
-      {open && (
-        <div style={{ padding: '0 32px 20px 82px', fontSize: 14, color: '#555', lineHeight: 1.8 }}>
-          {children}
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{title}</span>
+      </div>
+      <div style={{ padding: '0 32px 20px 82px', fontSize: 14, color: '#555', lineHeight: 1.8 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// ─── PRODUKTBESCHREIBUNG POPUP ────────────────────────────────────────────────
+function ProdDescPopup({ onClose }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 99998, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 860, maxHeight: '85vh', overflowY: 'auto', padding: '32px 0 0' }}>
+        <div style={{ padding: '0 32px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#111' }}>Produktbeschreibung</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, cursor: 'pointer', color: '#aaa', lineHeight: 1 }}>×</button>
         </div>
-      )}
+
+        <DescRow icon={<><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></>} title="Premium-Beleuchtung">
+          <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
+        </DescRow>
+        <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
+          <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
+          <ul style={{ paddingLeft: 20, marginTop: 8 }}>
+            <li style={{ marginBottom: 6 }}><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern.</li>
+            <li style={{ marginBottom: 6 }}><strong>Quadratische Rückplatte:</strong> Rahmt das gesamte Design für einen klassischen Look.</li>
+            <li><strong>Ohne Rückplatte:</strong> Vollständig schwebender Effekt.</li>
+          </ul>
+          <p style={{ marginTop: 10 }}>Standardmäßig transparent – auf Wunsch auch in Schwarz oder Weiß erhältlich.</p>
+        </DescRow>
+        <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>} title="Farben & UV-Druck">
+          <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>. Unsere Farbpalette: Warmweiß, Eisblau, Soft Orange, Pink, Lila, Rot, Grün, Gelb und viele mehr.</p>
+          <p style={{ marginTop: 10 }}>Mit unserem <strong>UV-Druck</strong> drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte – ideal für Logos mit Farbverläufen. Lichtecht, kratzfest und wetterfest.</p>
+        </DescRow>
+        <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>} title="Verwendung – Innen & Außen">
+          <ul style={{ paddingLeft: 20 }}>
+            <li style={{ marginBottom: 6 }}><strong>Innen (Standard):</strong> Für alle Innenräume geeignet.</li>
+            <li><strong>Außen IP65:</strong> Vollständig wasserdicht und UV-beständig.</li>
+          </ul>
+        </DescRow>
+        <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
+          <p><strong>2 Jahre</strong> auf Innen · <strong>1 Jahr</strong> auf Außen-Neon-Schilder (IP65).</p>
+        </DescRow>
+        <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
+          <ul style={{ paddingLeft: 20 }}>
+            <li style={{ marginBottom: 4 }}>Handgefertigtes LED-Neon-Schild</li>
+            <li style={{ marginBottom: 4 }}>Netzteil · Dimmer · Fernbedienung</li>
+            <li style={{ marginBottom: 4 }}>Stromkabel 300 cm</li>
+            <li>Montagematerial (Schrauben, Dübel, Abstandshalter)</li>
+          </ul>
+        </DescRow>
+        <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
+          <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – Wir antworten in der Regel innerhalb von 24 Stunden.</p>
+        </DescRow>
+
+        {/* Weniger anzeigen */}
+        <div style={{ padding: '20px 32px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'center' }}>
+          <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: '1.5px solid #60c8f0', color: '#60c8f0', borderRadius: 24, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
+            Weniger anzeigen
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function AngebotPage({ offer }) {
+  const [showDescPopup, setShowDescPopup] = useState(false)
+
   const net = parseFloat(offer.net_price) || 0
   const vatPct = parseFloat(offer.vat_pct) || 19
   const final = parseFloat(offer.final_price) || 0
@@ -290,12 +351,32 @@ export default function AngebotPage({ offer }) {
         @media(max-width:900px){ .hdr { padding:0 20px; height:76px; } }
         .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 22px; border-radius:20px; }
         .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:64px; align-items:start; }
-        @media(max-width:960px){ .page-wrap { grid-template-columns:1fr; gap:32px; padding:28px 20px; } }
-        .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:6px; }
-        .cfg-group { margin-bottom:16px; }
-        .cfg-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
-        .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:8px 16px; font-size:14px; font-weight:500; color:#333; }
-        .color-dot { width:11px; height:11px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
+        @media(max-width:960px){
+          .page-wrap { grid-template-columns:1fr; gap:0; padding:16px 16px 0; }
+          .col-right { display:flex; flex-direction:column; padding-bottom:8px; }
+          /* Hide desktop left col on mobile */
+          .col-left { display:none; }
+          /* Show mobile gallery (order 4) */
+          .mob-gallery { display:block; order:4; margin-bottom:20px; }
+          /* Individual element order on mobile */
+          .mob-title { order:1; }
+          .mob-stars { order:2; }
+          .mob-badge { order:3; }
+          .mob-cfg { order:5; }
+          .mob-checks { order:6; }
+          .mob-price { order:7; }
+          .mob-cta { order:8; }
+          .mob-ship { order:9; }
+          .mob-express { order:10; }
+          .mob-features { order:11; }
+          .mob-contact { order:12; display:block !important; }
+        }
+        /* Desktop: hide mobile-only elements */
+        .mob-gallery { display:none; }
+        .mob-contact { display:none; }
+        .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:5px; }
+        .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:500; color:#333; }
+        .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
         .img-tt { position:relative; display:inline-flex; }
         .img-tt-box { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; }
         .img-tt-box img { display:block; border-radius:8px; }
@@ -308,44 +389,53 @@ export default function AngebotPage({ offer }) {
         .tt-box::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#111; }
         .tt:hover .tt-box { display:block; }
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
-        .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
-        .checks { margin-bottom:24px; display:flex; flex-direction:column; gap:10px; }
-        .check-row { display:flex; align-items:flex-start; gap:10px; font-size:15px; color:#555; line-height:1.5; }
-        .check-icon { width:20px; height:20px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
-        .price-section { background:#fff; border:1px solid #e8e8e8; border-radius:16px; padding:24px; margin-bottom:18px; }
+        .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+        .checks { margin-bottom:20px; display:flex; flex-direction:column; gap:9px; }
+        .check-row { display:flex; align-items:flex-start; gap:10px; font-size:14px; color:#555; line-height:1.5; }
+        .check-icon { width:18px; height:18px; flex-shrink:0; margin-top:2px; color:#22c55e; }
+        .price-section { background:#fff; border:1px solid #e8e8e8; border-radius:14px; padding:18px 20px; margin-bottom:14px; }
         .price-table { width:100%; border-collapse:collapse; }
-        .price-table td { padding:6px 0; font-size:15px; vertical-align:middle; color:#111; }
+        .price-table td { padding:4px 0; font-size:14px; vertical-align:middle; color:#111; }
         .price-table td:last-child { text-align:right; font-weight:500; }
         .pr-disc td { color:#16a34a !important; font-weight:600; }
-        .pr-divider td { border-top:1px solid #f0f0f0; padding-top:14px; }
-        .pr-total td:first-child { font-size:16px; font-weight:700; color:#111; padding-top:6px; }
-        .pr-total td:last-child { font-size:28px; font-weight:800; color:#111; padding-top:6px; letter-spacing:-.02em; }
-        .pr-total-note { font-size:11px; color:#111; text-align:right; margin-top:3px; }
-        .ship-box { background:#f0fbff; border:1px solid #b8e8f8; border-radius:13px; padding:15px 18px; display:flex; align-items:flex-start; gap:13px; margin-bottom:8px; }
-        .ship-icon { width:22px; height:22px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
-        .ship-text strong { display:block; font-size:15px; font-weight:700; color:#111; margin-bottom:3px; }
-        .ship-text span { font-size:13px; color:#888; }
-        .express-row { display:flex; align-items:center; gap:7px; font-size:14px; color:#999; margin-bottom:22px; margin-top:8px; }
-        .express-icon { width:16px; height:16px; color:#f59e0b; flex-shrink:0; }
-        .cta-btn { width:100%; background:#16a34a; color:#fff; border:none; border-radius:13px; padding:19px; font-size:18px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; font-family:inherit; transition:background .15s, transform .1s; text-decoration:none; }
+        .pr-divider td { border-top:1px solid #f0f0f0; padding-top:10px; }
+        .pr-total td:first-child { font-size:15px; font-weight:700; color:#111; padding-top:4px; }
+        .pr-total td:last-child { font-size:24px; font-weight:800; color:#111; padding-top:4px; letter-spacing:-.02em; }
+        .pr-total-note { font-size:11px; color:#111; text-align:right; margin-top:2px; }
+        .ship-box { background:#f0fbff; border:1px solid #b8e8f8; border-radius:13px; padding:13px 16px; display:flex; align-items:flex-start; gap:12px; margin-bottom:7px; }
+        .ship-icon { width:20px; height:20px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
+        .ship-text strong { display:block; font-size:14px; font-weight:700; color:#111; margin-bottom:2px; }
+        .ship-text span { font-size:12px; color:#888; }
+        .express-row { display:flex; align-items:center; gap:7px; font-size:13px; color:#999; margin-bottom:18px; margin-top:6px; }
+        .express-icon { width:14px; height:14px; color:#f59e0b; flex-shrink:0; }
+        .cta-btn { width:100%; background:#16a34a; color:#fff; border:none; border-radius:13px; padding:18px; font-size:17px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; font-family:inherit; transition:background .15s, transform .1s; text-decoration:none; }
         .cta-btn:hover { background:#15803d; transform:translateY(-1px); }
-        .cta-btn svg { width:22px; height:22px; }
-        .features { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
-        .feat { background:#fff; border:1px solid #eee; border-radius:12px; padding:16px; display:flex; align-items:flex-start; gap:12px; transition:border-color .15s; }
+        .cta-btn svg { width:20px; height:20px; }
+        .features { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+        .feat { background:#fff; border:1px solid #eee; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:11px; transition:border-color .15s; }
         .feat:hover { border-color:#b8e8f8; }
-        .feat-icon-wrap { width:38px; height:38px; background:#f0fbff; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid #d0f0fc; }
-        .feat-icon-wrap svg { width:20px; height:20px; color:#60c8f0; }
-        .feat-title { display:block; font-size:14px; font-weight:700; color:#111; margin-bottom:4px; }
-        .feat-sub { font-size:12px; color:#888; line-height:1.5; }
+        .feat-icon-wrap { width:36px; height:36px; background:#f0fbff; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid #d0f0fc; }
+        .feat-icon-wrap svg { width:18px; height:18px; color:#60c8f0; }
+        .feat-title { display:block; font-size:13px; font-weight:700; color:#111; margin-bottom:3px; }
+        .feat-sub { font-size:11px; color:#888; line-height:1.5; }
         .desc-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
         @media(max-width:960px){ .desc-section { padding:0 20px 60px; } }
         .desc-wrap { border:1px solid #eee; border-radius:18px; overflow:hidden; }
-        .desc-header { padding:24px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; display:flex; align-items:center; justify-content:space-between; }
+        .desc-header { padding:22px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; display:flex; align-items:center; justify-content:space-between; }
         .desc-header h2 { font-size:20px; font-weight:800; color:#111; }
-        .desc-badge-pill { font-size:12px; color:#888; background:#fff; border:1px solid #eee; border-radius:20px; padding:5px 14px; white-space:nowrap; }
+        .desc-badge-pill { font-size:12px; color:#888; background:#fff; border:1px solid #eee; border-radius:20px; padding:5px 14px; }
+        /* Premium-Beleuchtung text fade */
+        .pb-text-wrap { position:relative; }
+        .pb-text-fade { max-height:72px; overflow:hidden; position:relative; }
+        .pb-text-fade::after { content:''; position:absolute; bottom:0; left:0; right:0; height:36px; background:linear-gradient(to bottom, transparent, #fff); pointer-events:none; }
+        /* Mehr anzeigen button */
+        .mehr-btn { display:inline-flex; align-items:center; gap:7px; background:none; border:1.5px solid #60c8f0; color:#60c8f0; border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:12px; transition:background .15s, color .15s; }
+        .mehr-btn:hover { background:#60c8f0; color:#fff; }
       `}</style>
 
-      {/* HEADER — not sticky */}
+      {showDescPopup && <ProdDescPopup onClose={() => setShowDescPopup(false)} />}
+
+      {/* HEADER */}
       <header className="hdr">
         <a href="https://neonframe.de">
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 72, display: 'block' }} />
@@ -354,93 +444,92 @@ export default function AngebotPage({ offer }) {
       </header>
 
       <div className="page-wrap">
-        {/* LEFT — NOT sticky */}
-        <div>
+        {/* LEFT — hidden on mobile, shown on desktop */}
+        <div className="col-left">
           <Gallery images={images} />
           <ContactCard displayId={displayId} projectName={offer.project || ''} />
         </div>
 
-        {/* RIGHT */}
-        <div>
-          <h1 className="prod-title">Individuelles LED-Neon-Schild –<br />personalisiert nach Wunsch</h1>
+        {/* RIGHT — on mobile: flex column with mob-* order classes */}
+        <div className="col-right">
+          <h1 className="prod-title mob-title">Individuelles LED-Neon-Schild –<br />personalisiert nach Wunsch</h1>
 
-          {/* STERNE — 4 voll + halber fünfter */}
-          <div className="stars-row">
+          {/* STERNE — 4 voll + halber */}
+          <div className="stars-row mob-stars">
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {[...Array(4)].map((_, i) => (
-                <span key={i} style={{ color: '#f59e0b', fontSize: 20, lineHeight: 1 }}>★</span>
-              ))}
-              {/* halber Stern */}
+              {[...Array(4)].map((_, i) => <span key={i} style={{ color: '#f59e0b', fontSize: 20, lineHeight: 1 }}>★</span>)}
               <span style={{ position: 'relative', display: 'inline-block', width: 20, height: 20, fontSize: 20, lineHeight: '20px', color: '#e5e7eb' }}>
-                ★
-                <span style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', overflow: 'hidden', color: '#f59e0b', lineHeight: '20px' }}>★</span>
+                ★<span style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', overflow: 'hidden', color: '#f59e0b', lineHeight: '20px' }}>★</span>
               </span>
             </div>
             <span style={{ fontSize: 14, color: '#666', fontWeight: 500 }}>4,5/5 Sternen</span>
           </div>
 
-          {/* BADGE — hellgrauer Hintergrund, "Individuell angefertigt für" schwarz, Name gold, alles in einer Reihe */}
+          {/* BADGE — kompakt, hellgrau, Name fett schwarz */}
           {offer.project && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: '#f3f3f3', border: '1px solid #e8e8e8', borderRadius: 12, padding: '11px 18px', marginBottom: 22 }}>
-              <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <div className="mob-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>Individuell angefertigt für</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#c9a84c', letterSpacing: '.01em' }}>{offer.project}</span>
-              </div>
+              <span style={{ fontSize: 13, color: '#666' }}>Individuell angefertigt für</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>{offer.project}</span>
             </div>
           )}
 
-          {/* MAßE */}
-          {(offer.width || offer.height) && (
-            <div className="cfg-group">
-              <span className="cfg-label">Maße (Breite × Höhe)</span>
-              <div className="cfg-pill" style={{ display: 'inline-flex', marginTop: 2 }}>
-                {offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}
-              </div>
-            </div>
-          )}
+          {/* MOBILE-ONLY gallery — hidden on desktop via CSS */}
+          <div className="mob-gallery">
+            <Gallery images={images} />
+          </div>
 
-          {/* FARBEN */}
-          {colors.length > 0 && (
-            <div className="cfg-group">
-              <span className="cfg-label">Farbe</span>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
-                {colors.map((c, i) => (
-                  <div key={i} className="img-tt">
-                    <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
-                    <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
-                  </div>
-                ))}
+          {/* MAßE + FARBEN nebeneinander */}
+          <div className="mob-cfg" style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 14, alignItems: 'flex-start' }}>
+            {(offer.width || offer.height) && (
+              <div>
+                <span className="cfg-label">Maße (Breite × Höhe)</span>
+                <div className="cfg-pill" style={{ marginTop: 4 }}>
+                  {offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+            {colors.length > 0 && (
+              <div>
+                <span className="cfg-label">Farbe</span>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                  {colors.map((c, i) => (
+                    <div key={i} className="img-tt">
+                      <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
+                      <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* RÜCKWAND */}
-          <div className="cfg-row" style={{ marginBottom: 22 }}>
+          <div className="mob-cfg" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20, alignItems: 'flex-end' }}>
             {offer.backplate && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div>
                 <span className="cfg-label">Rückwandform</span>
-                <div className="img-tt">
+                <div className="img-tt" style={{ marginTop: 4 }}>
                   <div className="cfg-pill">{offer.backplate}</div>
                   {backplateImg && <div className="img-tt-box square"><img src={backplateImg} alt={offer.backplate} /></div>}
                 </div>
               </div>
             )}
             {offer.backplate_color && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div>
                 <span className="cfg-label">Rückwandfarbe</span>
-                <div className="img-tt">
+                <div className="img-tt" style={{ marginTop: 4 }}>
                   <div className="cfg-pill">{offer.backplate_color}</div>
                   {backplateColorImg && <div className="img-tt-box square"><img src={backplateColorImg} alt={offer.backplate_color} /></div>}
                 </div>
               </div>
             )}
             {offer.usage && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div>
                 <span className="cfg-label">Verwendungszweck</span>
-                <div className="img-tt">
+                <div className="img-tt" style={{ marginTop: 4 }}>
                   <div className="cfg-pill">{offer.usage}</div>
                   {usageImg && <div className="img-tt-box square"><img src={usageImg} alt={offer.usage} /></div>}
                 </div>
@@ -448,10 +537,10 @@ export default function AngebotPage({ offer }) {
             )}
           </div>
 
-          {/* CHECKS */}
-          <div className="checks">
+          {/* CHECKS — grüne Haken */}
+          <div className="checks mob-checks">
             {[
-              <>Einfach zu installieren mit dem mitgelieferten <span className="tt"><span className="tt-t">Montagematerial</span><span className="tt-box">Inklusive Schrauben, Dübel und Abstandhalter.<br />(Aufhängkabel auf Anfrage)</span></span></>,
+              <>Einfach zu installieren mit dem mitgelieferten <span className="tt"><span className="tt-t">Montagematerial</span><span className="tt-box">Inklusive Schrauben, Dübel und Abstandhalter.</span></span></>,
               <>Inklusive Fernbedienung, 3 Meter Stromkabel, Adapter und Dimmer</>,
               <>Entwickelt für eine langlebige und hochwertige Nutzung</>,
             ].map((text, i) => (
@@ -462,19 +551,13 @@ export default function AngebotPage({ offer }) {
             ))}
           </div>
 
-          {/* CTA — sofort sichtbar, vor Preis */}
-          <a href={offer.checkout_url || '#'} className="cta-btn" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-            Angebot annehmen
-          </a>
-
-          {/* PRICE */}
-          <div className="price-section">
+          {/* PRICE — kompakter */}
+          <div className="price-section mob-price">
             <table className="price-table">
               <tbody>
                 {base > 0 && <tr><td>Listenpreis (netto)</td><td>€ {base.toFixed(2)}</td></tr>}
-                {discAmt > 0 && <tr className="pr-disc"><td style={{ paddingTop: 8 }}>− Rabatt ({discDisplay})</td><td style={{ paddingTop: 8 }}>− € {discAmt.toFixed(2)}</td></tr>}
-                {net > 0 && <tr><td style={{ paddingTop: 6 }}>Netto-Preis nach Rabatt</td><td style={{ paddingTop: 6 }}>€ {net.toFixed(2)}</td></tr>}
+                {discAmt > 0 && <tr className="pr-disc"><td style={{ paddingTop: 6 }}>− Rabatt ({discDisplay})</td><td style={{ paddingTop: 6 }}>− € {discAmt.toFixed(2)}</td></tr>}
+                {net > 0 && <tr><td style={{ paddingTop: 4 }}>Netto-Preis nach Rabatt</td><td style={{ paddingTop: 4 }}>€ {net.toFixed(2)}</td></tr>}
                 {vatAmt > 0 && <tr><td>+ MwSt. ({vatPct}%)</td><td>+ € {vatAmt.toFixed(2)}</td></tr>}
                 <tr className="pr-divider"><td colSpan={2}></td></tr>
                 <tr className="pr-total"><td>Gesamtbetrag</td><td>{final > 0 ? `€ ${final.toFixed(2)}` : '–'}</td></tr>
@@ -484,25 +567,31 @@ export default function AngebotPage({ offer }) {
           </div>
 
           {/* SHIPPING */}
-          <div className="ship-box">
+          <div className="ship-box mob-ship">
             <svg className="ship-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
             <div className="ship-text">
               <strong>Kostenloser Versand</strong>
               <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
             </div>
           </div>
-          <div className="express-row">
+          <div className="express-row mob-express">
             <svg className="express-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
             <span className="tt"><span className="tt-t">Expressversand anfordern</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
           </div>
 
+          {/* CTA */}
+          <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+            Angebot annehmen
+          </a>
+
           {/* FEATURES */}
-          <div className="features">
+          <div className="features mob-features">
             {[
               [<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, 'Qualitätsgarantie', 'Hochwertige LED-Neonfertigung mit präziser Handarbeit'],
-              [<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, 'Komplettpaket', 'Inklusive Netzteil, Dimmer, Fernbedienung und Montagematerial'],
+              [<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, 'Komplettpaket', 'Inklusive Netzteil, Dimmer, Fernbedienung'],
               [<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>, 'Einfache Installation', 'Montieren Sie Ihr Neon Sign in wenigen Minuten'],
-              [<><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>, 'Extrem langlebig', 'Energieeffiziente LEDs mit bis zu 100.000 Stunden Lebensdauer'],
+              [<><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>, 'Extrem langlebig', 'Bis zu 100.000 Stunden Lebensdauer'],
             ].map(([pathEl, title, sub], i) => (
               <div key={i} className="feat">
                 <div className="feat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">{pathEl}</svg></div>
@@ -510,10 +599,15 @@ export default function AngebotPage({ offer }) {
               </div>
             ))}
           </div>
+
+          {/* MOBILE-ONLY contact card */}
+          <div className="mob-contact">
+            <ContactCard displayId={displayId} projectName={offer.project || ''} />
+          </div>
         </div>
       </div>
 
-      {/* ── PRODUKTBESCHREIBUNG — Design B mit Dropdowns + vollem Text ── */}
+      {/* PRODUKTBESCHREIBUNG — always open, first section faded with Mehr anzeigen */}
       <div className="desc-section">
         <div className="desc-wrap">
           <div className="desc-header">
@@ -521,9 +615,22 @@ export default function AngebotPage({ offer }) {
             <div className="desc-badge-pill">PowerLEDs™ Technologie</div>
           </div>
 
-          <DescRow icon={<><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></>} title="Premium-Beleuchtung">
-            <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
-          </DescRow>
+          {/* Premium-Beleuchtung: faded preview + Mehr anzeigen */}
+          <div style={{ borderBottom: '1px solid #f0f0f0', padding: '18px 32px 20px 32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#60c8f0" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>Premium-Beleuchtung</span>
+            </div>
+            <div className="pb-text-fade" style={{ fontSize: 14, color: '#555', lineHeight: 1.8 }}>
+              <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
+            </div>
+            <button className="mehr-btn" onClick={() => setShowDescPopup(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+              Mehr anzeigen
+            </button>
+          </div>
 
           <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
             <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
