@@ -319,7 +319,7 @@ export default async function AngebotPage({ params }) {
         .desc-body a { color:#60c8f0; text-decoration:none; }
       `}</style>
 
-      <script dangerouslySetInnerHTML={{__html:`
+<script dangerouslySetInnerHTML={{__html:`
         var currentImg = 0;
         var totalImgs = ${images.length};
 
@@ -332,7 +332,6 @@ export default async function AngebotPage({ params }) {
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.classList.toggle('active', i === currentImg);
           });
-          // Smart arrows: hide prev on first, hide next on last
           var prev = document.querySelector('.gallery-arrow.prev');
           var next = document.querySelector('.gallery-arrow.next');
           if (prev) prev.style.display = currentImg === 0 ? 'none' : 'flex';
@@ -342,22 +341,23 @@ export default async function AngebotPage({ params }) {
         window.prevImg = function() { window.showImg(currentImg - 1); }
         window.nextImg = function() { window.showImg(currentImg + 1); }
 
-        window.addEventListener('DOMContentLoaded', function() {
-          // Init all imgs hidden except first
-document.querySelectorAll('.gallery-img').forEach(function(el, i) {
-  el.classList.toggle('active', i === 0);
-});
-// Attach thumb clicks
+        function initGallery() {
+          var prevBtn = document.getElementById('gallery-prev');
+          var nextBtn = document.getElementById('gallery-next');
+          if (!prevBtn && !nextBtn && totalImgs <= 1) return;
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.addEventListener('click', function() { window.showImg(i); });
           });
-          // Attach arrow clicks
-          var prevBtn = document.getElementById('gallery-prev');
-          var nextBtn = document.getElementById('gallery-next');
           if (prevBtn) prevBtn.addEventListener('click', function() { window.prevImg(); });
           if (nextBtn) nextBtn.addEventListener('click', function() { window.nextImg(); });
           window.showImg(0);
-        });
+        }
+
+        if (document.readyState === 'loading') {
+          window.addEventListener('DOMContentLoaded', initGallery);
+        } else {
+          initGallery();
+        }
 
         async function sendContact() {
           var msg = document.getElementById('contact-msg').value.trim();
