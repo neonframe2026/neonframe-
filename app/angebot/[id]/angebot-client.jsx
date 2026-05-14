@@ -521,11 +521,11 @@ export default function AngebotPage({ offer }) {
             <div className="desc-badge-pill">PowerLEDs™ Technologie</div>
           </div>
 
-          <DescRow icon={<><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />}</>} title="Premium-Beleuchtung">
+          <DescRow icon={<><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></>} title="Premium-Beleuchtung">
             <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
           </DescRow>
 
-          <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />}</>} title="Rückplatte & Finish">
+          <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
             <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
             <ul style={{ paddingLeft: 20, marginTop: 8 }}>
               <li style={{ marginBottom: 6 }}><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern. Ideal für organische Logos und Schriftzüge.</li>
@@ -535,24 +535,24 @@ export default function AngebotPage({ offer }) {
             <p style={{ marginTop: 10 }}>Standardmäßig transparent – auf Wunsch auch in Schwarz oder Weiß erhältlich. UV-Beständig und kratzfest.</p>
           </DescRow>
 
-          <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" />}</>} title="Farben & UV-Druck">
+          <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>} title="Farben & UV-Druck">
             <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>. Unsere Farbpalette umfasst unter anderem: Warmweiß, Eisblau, Soft Orange, Pink, Lila, Rot, Grün, Gelb und viele mehr.</p>
             <p style={{ marginTop: 10 }}>Mit unserem <strong>UV-Druck</strong> drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte – ideal für Logos mit Farbverläufen, Fotos oder komplexe Grafiken. Der UV-Druck ist lichtecht, kratzfest und wetterfest.</p>
           </DescRow>
 
-          <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />}</>} title="Verwendung – Innen & Außen">
+          <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>} title="Verwendung – Innen & Außen">
             <ul style={{ paddingLeft: 20 }}>
               <li style={{ marginBottom: 6 }}><strong>Innen (Standard):</strong> Für alle Innenräume geeignet – Wohnzimmer, Büro, Restaurant, Eventlocation. Normaler IP-Schutz.</li>
               <li><strong>Außen IP65:</strong> Vollständig wasserdicht und UV-beständig. Geeignet für Außenfassaden, Schaufenster, Terrassen und wettergeschützte Außenbereiche.</li>
             </ul>
           </DescRow>
 
-          <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />}</>} title="Garantie">
+          <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
             <p><strong>2 Jahre Garantie</strong> auf Innen-Neon-Schilder – wir stehen für die Qualität unserer Produkte.</p>
             <p style={{ marginTop: 8 }}><strong>1 Jahr Garantie</strong> auf Außen-Neon-Schilder (IP65). Bei Defekten innerhalb der Garantiezeit ersetzen wir das Schild oder die betroffenen Komponenten kostenlos.</p>
           </DescRow>
 
-          <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" />}</>} title="Was ist in der Box?">
+          <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
             <ul style={{ paddingLeft: 20 }}>
               <li style={{ marginBottom: 4 }}>Handgefertigtes, maßgeschneidertes LED-Neon-Schild</li>
               <li style={{ marginBottom: 4 }}>Netzteil (passend für Ihr Land)</li>
@@ -563,7 +563,7 @@ export default function AngebotPage({ offer }) {
             </ul>
           </DescRow>
 
-          <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />}</>} title="Weitere Informationen & Kontakt">
+          <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Weitere Informationen & Kontakt">
             <p>Haben Sie Fragen zu Ihrem individuellen Neon-Schild? Wir helfen Ihnen gerne weiter und beraten Sie persönlich zu Ihrem Wunschdesign, Farben, Maßen und Optionen.</p>
             <p style={{ marginTop: 10 }}>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', textDecoration: 'none', fontWeight: 600 }}>info@neonframe.de</a></p>
             <p style={{ marginTop: 6, color: '#888', fontSize: 13 }}>Wir melden uns in der Regel innerhalb von 24 Stunden bei Ihnen.</p>
