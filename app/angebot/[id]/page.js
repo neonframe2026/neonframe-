@@ -228,11 +228,14 @@ export default async function AngebotPage({ params }) {
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square img { width:148px; height:148px; object-fit:cover; }
 .img-tt-box.wide img {
-  width: 340px;
-  max-width: 90vw;
+  width: 400px;
+  max-width: 92vw;
   height: auto;
   object-fit: contain;
   display: block;
+
+  /* links leicht abschneiden */
+  object-position: 12px center;
 }
         .img-tt:hover .img-tt-box { display:block; }
 
