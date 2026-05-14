@@ -42,11 +42,11 @@ function getTooltipImg(val, map) {
   return map[lower] || map[Object.keys(map).find(k => lower.includes(k))] || null
 }
 
-// ─── GALLERY with real left/right slide ──────────────────────────────────────
+// ─── GALLERY ─────────────────────────────────────────────────────────────────
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
-  const [next, setNext] = useState(null)       // index of incoming image
-  const [slideDir, setSlideDir] = useState(null) // 'left' | 'right'
+  const [next, setNext] = useState(null)
+  const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
   const [lightbox, setLightbox] = useState(false)
   const total = images.length
@@ -56,23 +56,16 @@ function Gallery({ images }) {
     if (animating) return
     const nxt = ((idx % total) + total) % total
     if (nxt === current) return
-    setNext(nxt)
-    setSlideDir(dir)
-    setAnimating(true)
-    setTimeout(() => {
-      setCurrent(nxt)
-      setNext(null)
-      setSlideDir(null)
-      setAnimating(false)
-    }, DURATION)
+    setNext(nxt); setSlideDir(dir); setAnimating(true)
+    setTimeout(() => { setCurrent(nxt); setNext(null); setSlideDir(null); setAnimating(false) }, DURATION)
   }, [current, total, animating])
 
   const goPrev = useCallback((e) => { e?.stopPropagation(); goTo(current - 1, 'right') }, [current, goTo])
   const goNext = useCallback((e) => { e?.stopPropagation(); goTo(current + 1, 'left') }, [current, goTo])
 
   useEffect(() => {
-    if (lightbox) { document.body.style.overflow = 'hidden' }
-    else { document.body.style.overflow = '' }
+    if (lightbox) document.body.style.overflow = 'hidden'
+    else document.body.style.overflow = ''
     return () => { document.body.style.overflow = '' }
   }, [lightbox])
 
@@ -91,7 +84,6 @@ function Gallery({ images }) {
     return () => window.removeEventListener('keydown', handler)
   }, [lightbox, current, total, goPrev, goNext])
 
-  // Touch swipe
   const touchStart = useRef(0)
   useEffect(() => {
     const el = document.getElementById('gallery-main')
@@ -111,11 +103,6 @@ function Gallery({ images }) {
       <span style={{ fontSize: 14, color: '#ccc' }}>Vorschau-Bild</span>
     </div>
   )
-
-  // Slide directions: going 'left' means new image enters from right, current exits left
-  const currentOut = animating ? (slideDir === 'left' ? 'translateX(-100%)' : 'translateX(100%)') : 'translateX(0)'
-  const nextIn     = slideDir === 'left' ? 'translateX(0)' : 'translateX(0)'
-  const nextStart  = slideDir === 'left' ? 'translateX(100%)' : 'translateX(-100%)'
 
   return (
     <>
@@ -138,47 +125,15 @@ function Gallery({ images }) {
         </div>
       )}
 
-      {/* MAIN GALLERY with overflow:hidden for slide */}
+      {/* MAIN */}
       <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', cursor: 'zoom-in' }}>
-        {/* Current image sliding out */}
-        <img
-          src={images[current]}
-          alt={`Neon Sign ${current + 1}`}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block',
-            transform: currentOut,
-            transition: animating ? `transform ${DURATION}ms ease` : 'none',
-            zIndex: 1,
-          }}
-        />
-        {/* Next image sliding in */}
+        <img src={images[current]} alt={`Neon Sign ${current + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: animating ? (slideDir === 'left' ? 'translateX(-100%)' : 'translateX(100%)') : 'translateX(0)', transition: animating ? `transform ${DURATION}ms ease` : 'none', zIndex: 1 }} />
         {animating && next !== null && (
-          <img
-            src={images[next]}
-            alt={`Neon Sign ${next + 1}`}
-            style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block',
-              transform: nextIn,
-              animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} ${DURATION}ms ease forwards`,
-              zIndex: 2,
-            }}
-          />
+          <img src={images[next]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} ${DURATION}ms ease forwards`, zIndex: 2 }} />
         )}
-        <style>{`
-          @keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
-          @keyframes slideInLeft  { from { transform: translateX(-100%) } to { transform: translateX(0) } }
-        `}</style>
-
-        {total > 1 && current > 0 && (
-          <button onClick={goPrev} aria-label="Vorheriges Bild" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-        )}
-        {total > 1 && current < total - 1 && (
-          <button onClick={goNext} aria-label="Nächstes Bild" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-          </button>
-        )}
+        <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes slideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
+        {total > 1 && current > 0 && <button onClick={goPrev} style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg></button>}
+        {total > 1 && current < total - 1 && <button onClick={goNext} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg></button>}
       </div>
 
       {/* THUMBNAILS */}
@@ -215,11 +170,8 @@ function ContactCard({ displayId, projectName }) {
   return (
     <div style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-        <img
-          src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280"
-          alt="Support"
-          style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }}
-        />
+        {/* bigger support icon: 64px */}
+        <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280" alt="Support" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 3 }}>Noch Fragen oder Änderungswünsche?</div>
           <div style={{ fontSize: 14, color: '#999', lineHeight: 1.4 }}>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</div>
@@ -236,90 +188,24 @@ function ContactCard({ displayId, projectName }) {
   )
 }
 
-// ─── PRODUKTBESCHREIBUNG ROW (always open, no arrow) ─────────────────────────
+// ─── DESC ROW (always open) ───────────────────────────────────────────────────
 function DescRow({ icon, title, children }) {
   return (
     <div style={{ borderBottom: '1px solid #f0f0f0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 32px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 32px 10px' }}>
         <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff' }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="#60c8f0" strokeWidth="2" style={{ width: 16, height: 16 }}>{icon}</svg>
         </div>
         <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{title}</span>
       </div>
-      <div style={{ padding: '0 32px 20px 82px', fontSize: 14, color: '#555', lineHeight: 1.8 }}>
-        {children}
-      </div>
-    </div>
-  )
-}
-
-// ─── PRODUKTBESCHREIBUNG POPUP ────────────────────────────────────────────────
-function ProdDescPopup({ onClose }) {
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
-
-  return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 99998, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 860, maxHeight: '85vh', overflowY: 'auto', padding: '32px 0 0' }}>
-        <div style={{ padding: '0 32px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#111' }}>Produktbeschreibung</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 28, cursor: 'pointer', color: '#aaa', lineHeight: 1 }}>×</button>
-        </div>
-
-        <DescRow icon={<><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></>} title="Premium-Beleuchtung">
-          <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
-        </DescRow>
-        <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
-          <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
-          <ul style={{ paddingLeft: 20, marginTop: 8 }}>
-            <li style={{ marginBottom: 6 }}><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern.</li>
-            <li style={{ marginBottom: 6 }}><strong>Quadratische Rückplatte:</strong> Rahmt das gesamte Design für einen klassischen Look.</li>
-            <li><strong>Ohne Rückplatte:</strong> Vollständig schwebender Effekt.</li>
-          </ul>
-          <p style={{ marginTop: 10 }}>Standardmäßig transparent – auf Wunsch auch in Schwarz oder Weiß erhältlich.</p>
-        </DescRow>
-        <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>} title="Farben & UV-Druck">
-          <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>. Unsere Farbpalette: Warmweiß, Eisblau, Soft Orange, Pink, Lila, Rot, Grün, Gelb und viele mehr.</p>
-          <p style={{ marginTop: 10 }}>Mit unserem <strong>UV-Druck</strong> drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte – ideal für Logos mit Farbverläufen. Lichtecht, kratzfest und wetterfest.</p>
-        </DescRow>
-        <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>} title="Verwendung – Innen & Außen">
-          <ul style={{ paddingLeft: 20 }}>
-            <li style={{ marginBottom: 6 }}><strong>Innen (Standard):</strong> Für alle Innenräume geeignet.</li>
-            <li><strong>Außen IP65:</strong> Vollständig wasserdicht und UV-beständig.</li>
-          </ul>
-        </DescRow>
-        <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
-          <p><strong>2 Jahre</strong> auf Innen · <strong>1 Jahr</strong> auf Außen-Neon-Schilder (IP65).</p>
-        </DescRow>
-        <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
-          <ul style={{ paddingLeft: 20 }}>
-            <li style={{ marginBottom: 4 }}>Handgefertigtes LED-Neon-Schild</li>
-            <li style={{ marginBottom: 4 }}>Netzteil · Dimmer · Fernbedienung</li>
-            <li style={{ marginBottom: 4 }}>Stromkabel 300 cm</li>
-            <li>Montagematerial (Schrauben, Dübel, Abstandshalter)</li>
-          </ul>
-        </DescRow>
-        <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
-          <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – Wir antworten in der Regel innerhalb von 24 Stunden.</p>
-        </DescRow>
-
-        {/* Weniger anzeigen */}
-        <div style={{ padding: '20px 32px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'center' }}>
-          <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: '1.5px solid #60c8f0', color: '#60c8f0', borderRadius: 24, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
-            Weniger anzeigen
-          </button>
-        </div>
-      </div>
+      <div style={{ padding: '0 32px 20px 82px', fontSize: 14, color: '#555', lineHeight: 1.8 }}>{children}</div>
     </div>
   )
 }
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function AngebotPage({ offer }) {
-  const [showDescPopup, setShowDescPopup] = useState(false)
+  const [descOpen, setDescOpen] = useState(false)
 
   const net = parseFloat(offer.net_price) || 0
   const vatPct = parseFloat(offer.vat_pct) || 19
@@ -348,32 +234,32 @@ export default function AngebotPage({ offer }) {
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#111; background:#fff; -webkit-font-smoothing:antialiased; }
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; z-index:100; }
-        @media(max-width:900px){ .hdr { padding:0 20px; height:76px; } }
+        @media(max-width:900px){ .hdr { padding:0 20px; height:68px; } }
         .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 22px; border-radius:20px; }
-        .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.15fr 1fr; gap:64px; align-items:start; }
+        /* Desktop layout */
+        .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.3fr 1fr; gap:72px; align-items:start; }
+        /* Mobile layout */
         @media(max-width:960px){
-          .page-wrap { grid-template-columns:1fr; gap:0; padding:16px 16px 0; }
-          .col-right { display:flex; flex-direction:column; padding-bottom:8px; }
-          /* Hide desktop left col on mobile */
+          .page-wrap { grid-template-columns:1fr; gap:0; padding:14px 14px 0; }
           .col-left { display:none; }
-          /* Show mobile gallery (order 4) */
-          .mob-gallery { display:block; order:4; margin-bottom:20px; }
-          /* Individual element order on mobile */
-          .mob-title { order:1; }
-          .mob-stars { order:2; }
-          .mob-badge { order:3; }
-          .mob-cfg { order:5; }
-          .mob-checks { order:6; }
-          .mob-price { order:7; }
-          .mob-cta { order:8; }
-          .mob-ship { order:9; }
+          .col-right { display:flex; flex-direction:column; }
+          .mob-gallery { display:block !important; }
+          .mob-title   { order:1; }
+          .mob-stars   { order:2; }
+          .mob-badge   { order:3; }
+          .mob-gallery { order:4; margin-bottom:16px; }
+          .mob-cfg     { order:5; }
+          .mob-checks  { order:6; }
+          .mob-price   { order:7; }
+          .mob-cta     { order:8; }
+          .mob-ship    { order:9; }
           .mob-express { order:10; }
-          .mob-features { order:11; }
+          .mob-features{ order:11; }
           .mob-contact { order:12; display:block !important; }
         }
-        /* Desktop: hide mobile-only elements */
         .mob-gallery { display:none; }
         .mob-contact { display:none; }
+        /* Config */
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:5px; }
         .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:500; color:#333; }
         .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
@@ -389,10 +275,12 @@ export default function AngebotPage({ offer }) {
         .tt-box::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#111; }
         .tt:hover .tt-box { display:block; }
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
+        @media(max-width:960px){ .prod-title { font-size:24px; } }
         .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
         .checks { margin-bottom:20px; display:flex; flex-direction:column; gap:9px; }
         .check-row { display:flex; align-items:flex-start; gap:10px; font-size:14px; color:#555; line-height:1.5; }
         .check-icon { width:18px; height:18px; flex-shrink:0; margin-top:2px; color:#22c55e; }
+        /* Price */
         .price-section { background:#fff; border:1px solid #e8e8e8; border-radius:14px; padding:18px 20px; margin-bottom:14px; }
         .price-table { width:100%; border-collapse:collapse; }
         .price-table td { padding:4px 0; font-size:14px; vertical-align:middle; color:#111; }
@@ -400,61 +288,64 @@ export default function AngebotPage({ offer }) {
         .pr-disc td { color:#16a34a !important; font-weight:600; }
         .pr-divider td { border-top:1px solid #f0f0f0; padding-top:10px; }
         .pr-total td:first-child { font-size:15px; font-weight:700; color:#111; padding-top:4px; }
-        .pr-total td:last-child { font-size:24px; font-weight:800; color:#111; padding-top:4px; letter-spacing:-.02em; }
-        .pr-total-note { font-size:11px; color:#111; text-align:right; margin-top:2px; }
+        .pr-total td:last-child { font-size:22px; font-weight:800; color:#111; padding-top:4px; letter-spacing:-.02em; white-space:nowrap; }
+        /* Ship */
         .ship-box { background:#f0fbff; border:1px solid #b8e8f8; border-radius:13px; padding:13px 16px; display:flex; align-items:flex-start; gap:12px; margin-bottom:7px; }
         .ship-icon { width:20px; height:20px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
         .ship-text strong { display:block; font-size:14px; font-weight:700; color:#111; margin-bottom:2px; }
         .ship-text span { font-size:12px; color:#888; }
         .express-row { display:flex; align-items:center; gap:7px; font-size:13px; color:#999; margin-bottom:18px; margin-top:6px; }
         .express-icon { width:14px; height:14px; color:#f59e0b; flex-shrink:0; }
+        /* CTA */
         .cta-btn { width:100%; background:#16a34a; color:#fff; border:none; border-radius:13px; padding:18px; font-size:17px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; font-family:inherit; transition:background .15s, transform .1s; text-decoration:none; }
         .cta-btn:hover { background:#15803d; transform:translateY(-1px); }
         .cta-btn svg { width:20px; height:20px; }
+        /* Features */
         .features { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
-        .feat { background:#fff; border:1px solid #eee; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:11px; transition:border-color .15s; }
+        .feat { background:#fff; border:1px solid #eee; border-radius:12px; padding:14px; display:flex; align-items:flex-start; gap:11px; }
         .feat:hover { border-color:#b8e8f8; }
         .feat-icon-wrap { width:36px; height:36px; background:#f0fbff; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid #d0f0fc; }
         .feat-icon-wrap svg { width:18px; height:18px; color:#60c8f0; }
         .feat-title { display:block; font-size:13px; font-weight:700; color:#111; margin-bottom:3px; }
         .feat-sub { font-size:11px; color:#888; line-height:1.5; }
+        /* Produktbeschreibung */
         .desc-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
-        @media(max-width:960px){ .desc-section { padding:0 20px 60px; } }
+        @media(max-width:960px){ .desc-section { padding:0 14px 60px; } }
         .desc-wrap { border:1px solid #eee; border-radius:18px; overflow:hidden; }
         .desc-header { padding:22px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; display:flex; align-items:center; justify-content:space-between; }
         .desc-header h2 { font-size:20px; font-weight:800; color:#111; }
         .desc-badge-pill { font-size:12px; color:#888; background:#fff; border:1px solid #eee; border-radius:20px; padding:5px 14px; }
-        /* Premium-Beleuchtung text fade */
-        .pb-text-wrap { position:relative; }
-        .pb-text-fade { max-height:72px; overflow:hidden; position:relative; }
-        .pb-text-fade::after { content:''; position:absolute; bottom:0; left:0; right:0; height:36px; background:linear-gradient(to bottom, transparent, #fff); pointer-events:none; }
-        /* Mehr anzeigen button */
-        .mehr-btn { display:inline-flex; align-items:center; gap:7px; background:none; border:1.5px solid #60c8f0; color:#60c8f0; border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:12px; transition:background .15s, color .15s; }
+        /* Fade + Mehr anzeigen */
+        .pb-fade { max-height:72px; overflow:hidden; position:relative; font-size:14px; color:#555; line-height:1.8; }
+        .pb-fade::after { content:''; position:absolute; bottom:0; left:0; right:0; height:40px; background:linear-gradient(to bottom,transparent,#fff); pointer-events:none; }
+        .mehr-btn { display:inline-flex; align-items:center; gap:7px; background:none; border:1.5px solid #60c8f0; color:#60c8f0; border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:14px; transition:background .15s,color .15s; }
         .mehr-btn:hover { background:#60c8f0; color:#fff; }
+        .weniger-btn { display:inline-flex; align-items:center; gap:7px; background:none; border:1.5px solid #60c8f0; color:#60c8f0; border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:14px; transition:background .15s,color .15s; }
+        .weniger-btn:hover { background:#60c8f0; color:#fff; }
       `}</style>
-
-      {showDescPopup && <ProdDescPopup onClose={() => setShowDescPopup(false)} />}
 
       {/* HEADER */}
       <header className="hdr">
         <a href="https://neonframe.de">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 72, display: 'block' }} />
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 68, display: 'block' }} />
         </a>
         {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
       </header>
 
       <div className="page-wrap">
-        {/* LEFT — hidden on mobile, shown on desktop */}
+        {/* LEFT col — desktop only */}
         <div className="col-left">
           <Gallery images={images} />
           <ContactCard displayId={displayId} projectName={offer.project || ''} />
         </div>
 
-        {/* RIGHT — on mobile: flex column with mob-* order classes */}
+        {/* RIGHT col — also contains mobile-only elements */}
         <div className="col-right">
+
+          {/* 1 — Titel */}
           <h1 className="prod-title mob-title">Individuelles LED-Neon-Schild –<br />personalisiert nach Wunsch</h1>
 
-          {/* STERNE — 4 voll + halber */}
+          {/* 2 — Sterne */}
           <div className="stars-row mob-stars">
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {[...Array(4)].map((_, i) => <span key={i} style={{ color: '#f59e0b', fontSize: 20, lineHeight: 1 }}>★</span>)}
@@ -465,79 +356,76 @@ export default function AngebotPage({ offer }) {
             <span style={{ fontSize: 14, color: '#666', fontWeight: 500 }}>4,5/5 Sternen</span>
           </div>
 
-          {/* BADGE — kompakt, hellgrau, Name fett schwarz */}
+          {/* 3 — Badge: no gap between "für" and name — use single string */}
           {offer.project && (
-            <div className="mob-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <div className="mob-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 10, padding: '7px 12px', marginBottom: 18, whiteSpace: 'nowrap' }}>
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
               </div>
-              <span style={{ fontSize: 13, color: '#666' }}>Individuell angefertigt für</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>{offer.project}</span>
+              <span style={{ fontSize: 13, color: '#555' }}>Individuell angefertigt für <strong style={{ color: '#111' }}>{offer.project}</strong></span>
             </div>
           )}
 
-          {/* MOBILE-ONLY gallery — hidden on desktop via CSS */}
+          {/* 4 — MOBILE ONLY gallery (order:4) */}
           <div className="mob-gallery">
             <Gallery images={images} />
           </div>
 
-          {/* MAßE + FARBEN nebeneinander */}
-          <div className="mob-cfg" style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 14, alignItems: 'flex-start' }}>
-            {(offer.width || offer.height) && (
-              <div>
-                <span className="cfg-label">Maße (Breite × Höhe)</span>
-                <div className="cfg-pill" style={{ marginTop: 4 }}>
-                  {offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}
+          {/* 5 — Maße + Farben + Rückwand */}
+          <div className="mob-cfg">
+            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12, alignItems: 'flex-start' }}>
+              {(offer.width || offer.height) && (
+                <div>
+                  <span className="cfg-label">Maße (Breite × Höhe)</span>
+                  <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
                 </div>
-              </div>
-            )}
-            {colors.length > 0 && (
-              <div>
-                <span className="cfg-label">Farbe</span>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                  {colors.map((c, i) => (
-                    <div key={i} className="img-tt">
-                      <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
-                      <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
-                    </div>
-                  ))}
+              )}
+              {colors.length > 0 && (
+                <div>
+                  <span className="cfg-label">Farbe</span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    {colors.map((c, i) => (
+                      <div key={i} className="img-tt">
+                        <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
+                        <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 20, alignItems: 'flex-end' }}>
+              {offer.backplate && (
+                <div>
+                  <span className="cfg-label">Rückwandform</span>
+                  <div className="img-tt" style={{ marginTop: 4 }}>
+                    <div className="cfg-pill">{offer.backplate}</div>
+                    {backplateImg && <div className="img-tt-box square"><img src={backplateImg} alt={offer.backplate} /></div>}
+                  </div>
+                </div>
+              )}
+              {offer.backplate_color && (
+                <div>
+                  <span className="cfg-label">Rückwandfarbe</span>
+                  <div className="img-tt" style={{ marginTop: 4 }}>
+                    <div className="cfg-pill">{offer.backplate_color}</div>
+                    {backplateColorImg && <div className="img-tt-box square"><img src={backplateColorImg} alt={offer.backplate_color} /></div>}
+                  </div>
+                </div>
+              )}
+              {offer.usage && (
+                <div>
+                  <span className="cfg-label">Verwendungszweck</span>
+                  <div className="img-tt" style={{ marginTop: 4 }}>
+                    <div className="cfg-pill">{offer.usage}</div>
+                    {usageImg && <div className="img-tt-box square"><img src={usageImg} alt={offer.usage} /></div>}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* RÜCKWAND */}
-          <div className="mob-cfg" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20, alignItems: 'flex-end' }}>
-            {offer.backplate && (
-              <div>
-                <span className="cfg-label">Rückwandform</span>
-                <div className="img-tt" style={{ marginTop: 4 }}>
-                  <div className="cfg-pill">{offer.backplate}</div>
-                  {backplateImg && <div className="img-tt-box square"><img src={backplateImg} alt={offer.backplate} /></div>}
-                </div>
-              </div>
-            )}
-            {offer.backplate_color && (
-              <div>
-                <span className="cfg-label">Rückwandfarbe</span>
-                <div className="img-tt" style={{ marginTop: 4 }}>
-                  <div className="cfg-pill">{offer.backplate_color}</div>
-                  {backplateColorImg && <div className="img-tt-box square"><img src={backplateColorImg} alt={offer.backplate_color} /></div>}
-                </div>
-              </div>
-            )}
-            {offer.usage && (
-              <div>
-                <span className="cfg-label">Verwendungszweck</span>
-                <div className="img-tt" style={{ marginTop: 4 }}>
-                  <div className="cfg-pill">{offer.usage}</div>
-                  {usageImg && <div className="img-tt-box square"><img src={usageImg} alt={offer.usage} /></div>}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* CHECKS — grüne Haken */}
+          {/* 6 — Checks */}
           <div className="checks mob-checks">
             {[
               <>Einfach zu installieren mit dem mitgelieferten <span className="tt"><span className="tt-t">Montagematerial</span><span className="tt-box">Inklusive Schrauben, Dübel und Abstandhalter.</span></span></>,
@@ -551,7 +439,7 @@ export default function AngebotPage({ offer }) {
             ))}
           </div>
 
-          {/* PRICE — kompakter */}
+          {/* 7 — Preis (inkl. MwSt. inline in der Total-Zeile) */}
           <div className="price-section mob-price">
             <table className="price-table">
               <tbody>
@@ -560,13 +448,21 @@ export default function AngebotPage({ offer }) {
                 {net > 0 && <tr><td style={{ paddingTop: 4 }}>Netto-Preis nach Rabatt</td><td style={{ paddingTop: 4 }}>€ {net.toFixed(2)}</td></tr>}
                 {vatAmt > 0 && <tr><td>+ MwSt. ({vatPct}%)</td><td>+ € {vatAmt.toFixed(2)}</td></tr>}
                 <tr className="pr-divider"><td colSpan={2}></td></tr>
-                <tr className="pr-total"><td>Gesamtbetrag</td><td>{final > 0 ? `€ ${final.toFixed(2)}` : '–'}</td></tr>
+                <tr className="pr-total">
+                  <td>Gesamtbetrag</td>
+                  <td>{final > 0 ? `€ ${final.toFixed(2)}` : '–'}{final > 0 && <span style={{ fontSize: 11, fontWeight: 400, color: '#888', marginLeft: 6 }}>(inkl. MwSt.)</span>}</td>
+                </tr>
               </tbody>
             </table>
-            {final > 0 && <div className="pr-total-note">(inkl. MwSt.)</div>}
           </div>
 
-          {/* SHIPPING */}
+          {/* 8 — CTA */}
+          <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+            Angebot annehmen
+          </a>
+
+          {/* 9 — Versand */}
           <div className="ship-box mob-ship">
             <svg className="ship-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
             <div className="ship-text">
@@ -574,24 +470,20 @@ export default function AngebotPage({ offer }) {
               <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
             </div>
           </div>
+
+          {/* 10 — Express */}
           <div className="express-row mob-express">
             <svg className="express-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
             <span className="tt"><span className="tt-t">Expressversand anfordern</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
           </div>
 
-          {/* CTA */}
-          <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-            Angebot annehmen
-          </a>
-
-          {/* FEATURES */}
+          {/* 11 — Features */}
           <div className="features mob-features">
             {[
-              [<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, 'Qualitätsgarantie', 'Hochwertige LED-Neonfertigung mit präziser Handarbeit'],
-              [<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, 'Komplettpaket', 'Inklusive Netzteil, Dimmer, Fernbedienung'],
-              [<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>, 'Einfache Installation', 'Montieren Sie Ihr Neon Sign in wenigen Minuten'],
-              [<><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>, 'Extrem langlebig', 'Bis zu 100.000 Stunden Lebensdauer'],
+              [<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, 'Qualitätsgarantie', 'Hochwertige LED-Neonfertigung'],
+              [<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, 'Komplettpaket', 'Netzteil, Dimmer, Fernbedienung'],
+              [<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>, 'Einfache Installation', 'In wenigen Minuten montiert'],
+              [<><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>, 'Extrem langlebig', 'Bis zu 100.000 Std. Lebensdauer'],
             ].map(([pathEl, title, sub], i) => (
               <div key={i} className="feat">
                 <div className="feat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">{pathEl}</svg></div>
@@ -600,14 +492,15 @@ export default function AngebotPage({ offer }) {
             ))}
           </div>
 
-          {/* MOBILE-ONLY contact card */}
+          {/* 12 — Mobile-only contact */}
           <div className="mob-contact">
             <ContactCard displayId={displayId} projectName={offer.project || ''} />
           </div>
+
         </div>
       </div>
 
-      {/* PRODUKTBESCHREIBUNG — always open, first section faded with Mehr anzeigen */}
+      {/* PRODUKTBESCHREIBUNG — inline expand, no popup */}
       <div className="desc-section">
         <div className="desc-wrap">
           <div className="desc-header">
@@ -615,66 +508,78 @@ export default function AngebotPage({ offer }) {
             <div className="desc-badge-pill">PowerLEDs™ Technologie</div>
           </div>
 
-          {/* Premium-Beleuchtung: faded preview + Mehr anzeigen */}
-          <div style={{ borderBottom: '1px solid #f0f0f0', padding: '18px 32px 20px 32px' }}>
+          {/* Premium-Beleuchtung with fade + inline expand */}
+          <div style={{ borderBottom: descOpen ? 'none' : '1px solid #f0f0f0', padding: '18px 32px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
               <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="#60c8f0" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
               </div>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>Premium-Beleuchtung</span>
             </div>
-            <div className="pb-text-fade" style={{ fontSize: 14, color: '#555', lineHeight: 1.8 }}>
-              <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
-            </div>
-            <button className="mehr-btn" onClick={() => setShowDescPopup(true)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
-              Mehr anzeigen
-            </button>
+            {/* Faded preview when collapsed */}
+            {!descOpen && (
+              <div className="pb-fade">
+                <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
+              </div>
+            )}
+            {/* Full text when expanded */}
+            {descOpen && (
+              <div style={{ fontSize: 14, color: '#555', lineHeight: 1.8 }}>
+                <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
+              </div>
+            )}
+            {/* Toggle button */}
+            {!descOpen ? (
+              <button className="mehr-btn" onClick={() => setDescOpen(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                Mehr anzeigen
+              </button>
+            ) : (
+              <button className="weniger-btn" onClick={() => setDescOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
+                Weniger anzeigen
+              </button>
+            )}
           </div>
 
-          <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
-            <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
-            <ul style={{ paddingLeft: 20, marginTop: 8 }}>
-              <li style={{ marginBottom: 6 }}><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern. Ideal für organische Logos und Schriftzüge.</li>
-              <li style={{ marginBottom: 6 }}><strong>Quadratische Rückplatte:</strong> Rahmt das gesamte Design für einen klassischen, aufgeräumten Look. Besonders beliebt für Wanddekoration.</li>
-              <li><strong>Ohne Rückplatte:</strong> Vollständig schwebender Effekt – das Neon scheint frei in der Luft zu leuchten.</li>
-            </ul>
-            <p style={{ marginTop: 10 }}>Standardmäßig transparent – auf Wunsch auch in Schwarz oder Weiß erhältlich. UV-Beständig und kratzfest.</p>
-          </DescRow>
-
-          <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>} title="Farben & UV-Druck">
-            <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>. Unsere Farbpalette umfasst unter anderem: Warmweiß, Eisblau, Soft Orange, Pink, Lila, Rot, Grün, Gelb und viele mehr.</p>
-            <p style={{ marginTop: 10 }}>Mit unserem <strong>UV-Druck</strong> drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte – ideal für Logos mit Farbverläufen, Fotos oder komplexe Grafiken. Der UV-Druck ist lichtecht, kratzfest und wetterfest.</p>
-          </DescRow>
-
-          <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>} title="Verwendung – Innen & Außen">
-            <ul style={{ paddingLeft: 20 }}>
-              <li style={{ marginBottom: 6 }}><strong>Innen (Standard):</strong> Für alle Innenräume geeignet – Wohnzimmer, Büro, Restaurant, Eventlocation. Normaler IP-Schutz.</li>
-              <li><strong>Außen IP65:</strong> Vollständig wasserdicht und UV-beständig. Geeignet für Außenfassaden, Schaufenster, Terrassen und wettergeschützte Außenbereiche.</li>
-            </ul>
-          </DescRow>
-
-          <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
-            <p><strong>2 Jahre Garantie</strong> auf Innen-Neon-Schilder – wir stehen für die Qualität unserer Produkte.</p>
-            <p style={{ marginTop: 8 }}><strong>1 Jahr Garantie</strong> auf Außen-Neon-Schilder (IP65). Bei Defekten innerhalb der Garantiezeit ersetzen wir das Schild oder die betroffenen Komponenten kostenlos.</p>
-          </DescRow>
-
-          <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
-            <ul style={{ paddingLeft: 20 }}>
-              <li style={{ marginBottom: 4 }}>Handgefertigtes, maßgeschneidertes LED-Neon-Schild</li>
-              <li style={{ marginBottom: 4 }}>Netzteil (passend für Ihr Land)</li>
-              <li style={{ marginBottom: 4 }}>Dimmer – stufenlos einstellbar</li>
-              <li style={{ marginBottom: 4 }}>Fernbedienung – zum Ein-/Ausschalten und für verschiedene Lichteffekte</li>
-              <li style={{ marginBottom: 4 }}>Stromkabel 300 cm (auf Anfrage auch länger erhältlich)</li>
-              <li>Komplettes Montagematerial – Schrauben, Dübel und Abstandshalter (Aufhängkabel auf Anfrage)</li>
-            </ul>
-          </DescRow>
-
-          <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Weitere Informationen & Kontakt">
-            <p>Haben Sie Fragen zu Ihrem individuellen Neon-Schild? Wir helfen Ihnen gerne weiter und beraten Sie persönlich zu Ihrem Wunschdesign, Farben, Maßen und Optionen.</p>
-            <p style={{ marginTop: 10 }}>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', textDecoration: 'none', fontWeight: 600 }}>info@neonframe.de</a></p>
-            <p style={{ marginTop: 6, color: '#888', fontSize: 13 }}>Wir melden uns in der Regel innerhalb von 24 Stunden bei Ihnen.</p>
-          </DescRow>
+          {/* Rest of description — only shown when expanded */}
+          {descOpen && (
+            <>
+              <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
+                <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
+                <ul style={{ paddingLeft: 20, marginTop: 8 }}>
+                  <li style={{ marginBottom: 6 }}><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern. Ideal für organische Logos und Schriftzüge.</li>
+                  <li style={{ marginBottom: 6 }}><strong>Quadratische Rückplatte:</strong> Rahmt das gesamte Design für einen klassischen, aufgeräumten Look.</li>
+                  <li><strong>Ohne Rückplatte:</strong> Vollständig schwebender Effekt.</li>
+                </ul>
+                <p style={{ marginTop: 10 }}>Standardmäßig transparent – auf Wunsch auch in Schwarz oder Weiß. UV-Beständig und kratzfest.</p>
+              </DescRow>
+              <DescRow icon={<><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>} title="Farben & UV-Druck">
+                <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>. Unsere Farbpalette: Warmweiß, Eisblau, Soft Orange, Pink, Lila, Rot, Grün, Gelb und viele mehr.</p>
+                <p style={{ marginTop: 10 }}>Mit unserem <strong>UV-Druck</strong> drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte – lichtecht, kratzfest und wetterfest.</p>
+              </DescRow>
+              <DescRow icon={<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>} title="Verwendung – Innen & Außen">
+                <ul style={{ paddingLeft: 20 }}>
+                  <li style={{ marginBottom: 6 }}><strong>Innen (Standard):</strong> Für alle Innenräume geeignet.</li>
+                  <li><strong>Außen IP65:</strong> Vollständig wasserdicht und UV-beständig.</li>
+                </ul>
+              </DescRow>
+              <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
+                <p><strong>2 Jahre</strong> auf Innen · <strong>1 Jahr</strong> auf Außen-Neon-Schilder (IP65). Bei Defekten ersetzen wir das Schild kostenlos.</p>
+              </DescRow>
+              <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
+                <ul style={{ paddingLeft: 20 }}>
+                  <li style={{ marginBottom: 4 }}>Handgefertigtes LED-Neon-Schild</li>
+                  <li style={{ marginBottom: 4 }}>Netzteil · Dimmer · Fernbedienung</li>
+                  <li style={{ marginBottom: 4 }}>Stromkabel 300 cm (auf Anfrage länger)</li>
+                  <li>Montagematerial – Schrauben, Dübel, Abstandshalter</li>
+                </ul>
+              </DescRow>
+              <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
+                <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – wir antworten innerhalb von 24 Stunden.</p>
+              </DescRow>
+            </>
+          )}
         </div>
       </div>
     </>
