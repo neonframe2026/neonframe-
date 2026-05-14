@@ -206,7 +206,18 @@ export default async function AngebotPage({ params }) {
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#bbb; display:block; margin-bottom:6px; }
         .cfg-group { margin-bottom:16px; }
         .cfg-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
-        .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:8px 16px; font-size:14px; font-weight:500; color:#333; }
+        .cfg-pill {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  background:#f5f5f5;
+  border:1px solid #e8e8e8;
+  border-radius:24px;
+  padding:12px 22px;
+  font-size:16px;
+  font-weight:500;
+  color:#333;
+}
         .color-dot { width:11px; height:11px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
 
         /* Image tooltip */
