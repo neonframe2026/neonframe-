@@ -1,6 +1,5 @@
 'use client'
 
-import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect, useCallback } from 'react'
 
 function colorDot(s = '') {
@@ -43,31 +42,31 @@ function getTooltipImg(val, map) {
   return map[lower] || map[Object.keys(map).find(k => lower.includes(k))] || null
 }
 
-async function getOffer(id) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
-  let { data } = await supabase.from('offers').select('*').eq('custom_id', id).eq('published', true).single()
-  if (!data) {
-    const res = await supabase.from('offers').select('*').eq('id', id).eq('published', true).single()
-    data = res.data
-  }
-  return data || null
-}
-
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
+  const [dir, setDir] = useState(null) // 'left' | 'right'
+  const [animating, setAnimating] = useState(false)
   const [lightbox, setLightbox] = useState(false)
   const total = images.length
 
-  const prev = useCallback((e) => { e?.stopPropagation(); setCurrent(c => (c - 1 + total) % total) }, [total])
-  const next = useCallback((e) => { e?.stopPropagation(); setCurrent(c => (c + 1) % total) }, [total])
+  const goTo = useCallback((idx, direction) => {
+    const next = ((idx % total) + total) % total
+    if (next === current || animating) return
+    setDir(direction)
+    setAnimating(true)
+    setTimeout(() => {
+      setCurrent(next)
+      setAnimating(false)
+      setDir(null)
+    }, 260)
+  }, [current, total, animating])
 
-  // Keyboard
+  const prev = useCallback((e) => { e?.stopPropagation(); goTo(current - 1, 'right') }, [current, goTo])
+  const next = useCallback((e) => { e?.stopPropagation(); goTo(current + 1, 'left') }, [current, goTo])
+
   useEffect(() => {
     const handler = (e) => {
-      if (lightbox && e.key === 'Escape') setLightbox(false)
+      if (lightbox && e.key === 'Escape') { setLightbox(false); return }
       if (!lightbox && e.key === 'ArrowLeft') prev()
       if (!lightbox && e.key === 'ArrowRight') next()
     }
@@ -75,7 +74,6 @@ function Gallery({ images }) {
     return () => window.removeEventListener('keydown', handler)
   }, [lightbox, prev, next])
 
-  // Swipe
   useEffect(() => {
     const el = document.getElementById('gallery-main')
     if (!el) return
@@ -104,66 +102,43 @@ function Gallery({ images }) {
     )
   }
 
+  const imgStyle = {
+    width: '100%', height: '100%', objectFit: 'contain', display: 'block',
+    transform: animating ? (dir === 'left' ? 'translateX(-5%)' : 'translateX(5%)') : 'translateX(0)',
+    opacity: animating ? 0 : 1,
+    transition: 'transform 0.26s ease, opacity 0.26s ease',
+  }
+
   return (
     <>
-      {/* Lightbox */}
+      {/* Lightbox — only image, z-index 9999 covers everything */}
       {lightbox && (
-        <div
-          onClick={() => setLightbox(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}
-        >
-          <button
-            onClick={() => setLightbox(false)}
-            style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 36, cursor: 'pointer', lineHeight: 1, opacity: 0.8 }}
-          >×</button>
-          <img
-            src={images[current]}
-            alt="Vollbild"
-            style={{ maxWidth: '92vw', maxHeight: '92vh', objectFit: 'contain', borderRadius: 8 }}
-            onClick={e => e.stopPropagation()}
-          />
-          {total > 1 && (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); prev() }} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); next() }} style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </>
+        <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+          <button onClick={(e) => { e.stopPropagation(); setLightbox(false) }} style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 36, cursor: 'pointer', lineHeight: 1, opacity: 0.7 }}>×</button>
+          <img src={images[current]} alt="Vollbild" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '92vw', maxHeight: '92vh', objectFit: 'contain', borderRadius: 8, display: 'block' }} />
+          {total > 1 && current > 0 && (
+            <button onClick={(e) => { e.stopPropagation(); setCurrent(c => c - 1) }} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+          {total > 1 && current < total - 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setCurrent(c => c + 1) }} style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
           )}
         </div>
       )}
 
-      {/* Main image */}
-      <div
-        id="gallery-main"
-        onClick={() => setLightbox(true)}
-        style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in' }}
-      >
-        {images.map((src, i) => (
-          <img
-            key={i}
-            src={src}
-            alt={`Neon Sign ${i + 1}`}
-            style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'absolute', inset: 0, opacity: i === current ? 1 : 0, transition: 'opacity 0.2s ease' }}
-          />
-        ))}
+      {/* Main gallery */}
+      <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in' }}>
+        <img key={current} src={images[current]} alt={`Neon Sign ${current + 1}`} style={imgStyle} />
         {total > 1 && current > 0 && (
-          <button
-            onClick={prev}
-            aria-label="Vorheriges Bild"
-            style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-          >
+          <button onClick={prev} aria-label="Vorheriges Bild" style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
         )}
         {total > 1 && current < total - 1 && (
-          <button
-            onClick={next}
-            aria-label="Nächstes Bild"
-            style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-          >
+          <button onClick={next} aria-label="Nächstes Bild" style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
         )}
@@ -173,11 +148,7 @@ function Gallery({ images }) {
       {total > 1 && (
         <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           {images.map((src, i) => (
-            <div
-              key={i}
-              onClick={() => setCurrent(i)}
-              style={{ width: 80, height: 60, borderRadius: 10, overflow: 'hidden', border: `2px solid ${i === current ? '#60c8f0' : 'transparent'}`, cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0, background: '#f5f5f5' }}
-            >
+            <div key={i} onClick={() => goTo(i, i > current ? 'left' : 'right')} style={{ width: 80, height: 60, borderRadius: 10, overflow: 'hidden', border: `2px solid ${i === current ? '#60c8f0' : 'transparent'}`, cursor: 'pointer', transition: 'border-color 0.15s', flexShrink: 0, background: '#f5f5f5' }}>
               <img src={src} alt={`Vorschau ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </div>
           ))}
@@ -189,25 +160,17 @@ function Gallery({ images }) {
 
 function ContactCard({ displayId, projectName }) {
   const [msg, setMsg] = useState('')
-  const [status, setStatus] = useState(null) // null | 'ok' | 'err'
+  const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(false)
 
   const send = async () => {
     if (!msg.trim()) { setStatus('err'); return }
-    setLoading(true)
-    setStatus(null)
+    setLoading(true); setStatus(null)
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, offerNum: displayId, customerName: projectName })
-      })
+      const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, offerNum: displayId, customerName: projectName }) })
       const data = await res.json()
-      if (data.success) { setStatus('ok'); setMsg('') }
-      else throw new Error(data.error)
-    } catch {
-      setStatus('err')
-    }
+      if (data.success) { setStatus('ok'); setMsg('') } else throw new Error()
+    } catch { setStatus('err') }
     setLoading(false)
   }
 
@@ -215,18 +178,8 @@ function ContactCard({ displayId, projectName }) {
     <div style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
       <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 5 }}>Noch Fragen oder Änderungswünsche?</div>
       <div style={{ fontSize: 14, color: '#999', marginBottom: 14, lineHeight: 1.5 }}>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</div>
-      <textarea
-        value={msg}
-        onChange={e => setMsg(e.target.value)}
-        placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..."
-        rows={3}
-        style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }}
-      />
-      <button
-        onClick={send}
-        disabled={loading}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}
-      >
+      <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }} />
+      <button onClick={send} disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
         {loading ? 'Wird gesendet...' : 'Per E-Mail senden'}
       </button>
@@ -286,10 +239,9 @@ export default function AngebotPage({ offer }) {
         .tt-box::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#111; }
         .tt:hover .tt-box { display:block; }
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
-        .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+        .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
         .star { color:#f59e0b; font-size:20px; line-height:1; }
         .stars-label { font-size:14px; color:#666; font-weight:500; }
-        .made-for { font-size:15px; color:#111; font-weight:400; margin-bottom:22px; }
         .checks { margin-bottom:24px; display:flex; flex-direction:column; gap:10px; }
         .check-row { display:flex; align-items:flex-start; gap:10px; font-size:15px; color:#555; line-height:1.5; }
         .check-icon { width:20px; height:20px; flex-shrink:0; margin-top:2px; color:#60c8f0; }
@@ -320,21 +272,19 @@ export default function AngebotPage({ offer }) {
         .feat-sub { font-size:12px; color:#888; line-height:1.5; }
         .desc-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
         @media(max-width:960px){ .desc-section { padding:0 20px 60px; } }
-        .desc-inner { border:1px solid #eee; border-radius:18px; overflow:hidden; }
-        .desc-header { padding:28px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; }
-        .desc-header h2 { font-size:20px; font-weight:800; color:#111; margin-bottom:10px; }
-        .desc-header p { font-size:15px; color:#666; line-height:1.7; }
-        .desc-body { padding:28px 32px; background:#fff; }
-        .desc-body h3 { font-size:15px; font-weight:700; color:#111; margin:24px 0 8px; padding-bottom:6px; border-bottom:1px solid #f5f5f5; }
-        .desc-body h3:first-child { margin-top:0; }
-        .desc-body p { font-size:15px; color:#555; line-height:1.8; margin-bottom:10px; }
-        .desc-body ul { padding-left:20px; margin-bottom:12px; }
-        .desc-body li { font-size:15px; color:#555; line-height:1.9; }
-        .desc-body strong { font-weight:700; color:#333; }
-        .desc-body a { color:#60c8f0; text-decoration:none; }
+        .desc-wrap { border:1px solid #eee; border-radius:18px; overflow:hidden; }
+        .desc-header { padding:24px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; display:flex; align-items:center; justify-content:space-between; }
+        .desc-header h2 { font-size:20px; font-weight:800; color:#111; }
+        .desc-badge { font-size:12px; color:#888; background:#fff; border:1px solid #eee; border-radius:20px; padding:5px 14px; white-space:nowrap; }
+        .desc-row { display:flex; align-items:center; gap:16px; padding:18px 32px; border-bottom:1px solid #f5f5f5; }
+        .desc-row:last-child { border-bottom:none; }
+        .desc-row:hover { background:#fafafa; }
+        .desc-icon-circle { width:34px; height:34px; border-radius:50%; border:1px solid #eee; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:#fff; }
+        .desc-icon-circle svg { width:16px; height:16px; color:#60c8f0; }
+        .desc-text strong { display:block; font-size:14px; font-weight:700; color:#111; margin-bottom:3px; }
+        .desc-text span { font-size:13px; color:#888; line-height:1.6; }
       `}</style>
 
-      {/* HEADER */}
       <header className="hdr">
         <a href="https://neonframe.de">
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 72, display: 'block' }} />
@@ -343,36 +293,36 @@ export default function AngebotPage({ offer }) {
       </header>
 
       <div className="page-wrap">
-        {/* LEFT */}
         <div className="left-col">
           <Gallery images={images} />
           <ContactCard displayId={displayId} projectName={offer.project || ''} />
         </div>
 
-        {/* RIGHT */}
         <div>
           <h1 className="prod-title">Individuelles LED-Neon-Schild –<br />personalisiert nach Wunsch</h1>
 
-          {/* STARS */}
+          {/* 4 volle Sterne, kein halber */}
           <div className="stars-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span className="star">★</span>
-              <span className="star">★</span>
-              <span className="star">★</span>
-              <span className="star">★</span>
-              <span style={{ position: 'relative', display: 'inline-block', width: 20, height: 20, fontSize: 20, lineHeight: '20px', color: '#e5e7eb' }}>
-                ★
-                <span style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', overflow: 'hidden', color: '#f59e0b', lineHeight: '20px' }}>★</span>
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              {[...Array(4)].map((_, i) => <span key={i} className="star">★</span>)}
+              <span style={{ fontSize: 20, color: '#e5e7eb' }}>★</span>
             </div>
             <span className="stars-label">4,5/5 Sternen</span>
           </div>
 
+          {/* BADGE A — gold premium */}
           {offer.project && (
-            <div className="made-for">Individuell angefertigt für <strong>{offer.project}</strong></div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14, background: '#0f0c00', border: '1px solid rgba(201,168,76,0.27)', borderRadius: 14, padding: '14px 20px', marginBottom: 24 }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#1a1400', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#a08030', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 3 }}>Individuell angefertigt für</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: '#c9a84c', letterSpacing: '.02em' }}>{offer.project}</div>
+              </div>
+            </div>
           )}
 
-          {/* MAßE */}
           {(offer.width || offer.height) && (
             <div className="cfg-group">
               <span className="cfg-label">Maße (Breite × Höhe)</span>
@@ -382,27 +332,20 @@ export default function AngebotPage({ offer }) {
             </div>
           )}
 
-          {/* FARBEN */}
           {colors.length > 0 && (
             <div className="cfg-group">
               <span className="cfg-label">Farbe</span>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
                 {colors.map((c, i) => (
                   <div key={i} className="img-tt">
-                    <div className="cfg-pill">
-                      <span className="color-dot" style={{ background: colorDot(c) }} />
-                      {c}
-                    </div>
-                    <div className="img-tt-box wide">
-                      <img src={colorHoverImage} alt="Farbbeispiel" />
-                    </div>
+                    <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
+                    <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* RÜCKWAND / FARBE / VERWENDUNG */}
           <div className="cfg-row" style={{ marginBottom: 22 }}>
             {offer.backplate && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -433,7 +376,6 @@ export default function AngebotPage({ offer }) {
             )}
           </div>
 
-          {/* CHECKS */}
           <div className="checks">
             {[
               <>Einfach zu installieren mit dem mitgelieferten <span className="tt"><span className="tt-t">Montagematerial</span><span className="tt-box">Inklusive Schrauben, Dübel und Abstandhalter.<br />(Aufhängkabel auf Anfrage)</span></span></>,
@@ -447,7 +389,6 @@ export default function AngebotPage({ offer }) {
             ))}
           </div>
 
-          {/* PRICE */}
           <div className="price-section">
             <table className="price-table">
               <tbody>
@@ -462,7 +403,6 @@ export default function AngebotPage({ offer }) {
             {final > 0 && <div className="pr-total-note">(inkl. MwSt.)</div>}
           </div>
 
-          {/* SHIPPING */}
           <div className="ship-box">
             <svg className="ship-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
             <div className="ship-text">
@@ -475,13 +415,11 @@ export default function AngebotPage({ offer }) {
             <span className="tt"><span className="tt-t">Expressversand anfordern</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
           </div>
 
-          {/* CTA */}
           <a href={offer.checkout_url || '#'} className="cta-btn" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
             Angebot annehmen
           </a>
 
-          {/* FEATURES */}
           <div className="features">
             {[
               [<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, 'Qualitätsgarantie', 'Hochwertige LED-Neonfertigung mit präziser Handarbeit'],
@@ -498,47 +436,34 @@ export default function AngebotPage({ offer }) {
         </div>
       </div>
 
-      {/* DESCRIPTION */}
+      {/* PRODUKTBESCHREIBUNG — Design B */}
       <div className="desc-section">
-        <div className="desc-inner">
+        <div className="desc-wrap">
           <div className="desc-header">
             <h2>Produktbeschreibung</h2>
-            <p>Unsere maßgeschneiderten Neon-Schilder werden vollständig individuell mit hochwertiger PowerLEDs™ Beleuchtung produziert. Jedes Schild wird speziell für Sie entworfen – ganz nach Ihren Wünschen auf Basis Ihres Textes, Logos oder Designs angefertigt.</p>
+            <div className="desc-badge">PowerLEDs™ Technologie</div>
           </div>
-          <div className="desc-body">
-            <h3>Premium-Beleuchtung</h3>
-            <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch.</p>
-            <h3>Rückplatte &amp; Finish</h3>
-            <p>Das Neon-Schild wird auf einer stabilen Acryl-Rückplatte montiert. Je nach Design wählen Sie zwischen:</p>
-            <ul>
-              <li><strong>Ausgeschnittene Rückplatte:</strong> Folgt exakt der Form Ihres Designs – minimalistisch und modern.</li>
-              <li><strong>Quadratische Rückplatte:</strong> Rahmt das gesamte Design für einen klassischen Look.</li>
-              <li><strong>Ohne Rückplatte:</strong> Vollständig schwebender Effekt.</li>
-            </ul>
-            <p>Standardmäßig transparent – auf Wunsch in jeder Farbe erhältlich.</p>
-            <h3>Farben</h3>
-            <p>Wählen Sie aus einer Vielzahl von Farben oder entscheiden Sie sich für die <strong>Full Color Option (+15%)</strong>.</p>
-            <h3>UV-Druck</h3>
-            <p>Mit UV-Druck drucken wir Ihr Design haarscharf direkt auf die Acryl-Rückplatte.</p>
-            <h3>Verwendung</h3>
-            <ul>
-              <li><strong>Innen</strong> – für alle Innenräume geeignet</li>
-              <li><strong>Außen</strong> – IP65 wasserdicht und UV-beständig</li>
-            </ul>
-            <h3>Fernbedienung</h3>
-            <p>Jedes Neon-Schild wird mit einer Fernbedienung geliefert: dimmen, ein-/ausschalten und verschiedene Effekte wählen.</p>
-            <h3>Garantie</h3>
-            <p>2 Jahre Garantie auf Innen-Neon-Schilder · 1 Jahr auf Außen-Neon-Schilder.</p>
-            <h3>Was ist in der Box?</h3>
-            <ul>
-              <li>Handgefertigtes, maßgeschneidertes Neon-Schild</li>
-              <li>Netzteil · Dimmer · Fernbedienung</li>
-              <li>Stromkabel 300 cm (optional länger auf Anfrage)</li>
-              <li>Montagematerial – Schrauben, Dübel, Abstandshalter</li>
-            </ul>
-            <h3>Weitere Informationen</h3>
-            <p>Kontaktieren Sie uns unter <a href="mailto:info@neonframe.de">info@neonframe.de</a> – wir helfen Ihnen gerne weiter.</p>
-          </div>
+          {[
+            { icon: <><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></>, title: 'Premium-Beleuchtung', text: 'Gleichmäßiges LED-Neon ohne Flackern. Energieeffizient mit bis zu 100.000 Stunden Lebensdauer.' },
+            { icon: <><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>, title: 'Rückplatte & Finish', text: 'Ausgeschnitten, quadratisch oder ohne Rückplatte – in Schwarz, Weiß oder transparent.' },
+            { icon: <><circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="4" r="1" /><circle cx="6" cy="17" r="3" /><path d="M12 20h9M4.2 19.8l1.4-1.4" /></>, title: 'Farben & UV-Druck', text: 'Viele Farben inkl. Full Color Option (+15%). UV-Druck direkt auf die Acryl-Rückplatte.' },
+            { icon: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, title: 'Garantie', text: '2 Jahre auf Innen-Neon-Schilder · 1 Jahr auf Außen-Neon-Schilder (IP65).' },
+            { icon: <><path d="M5 8h14M5 8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v.01A2 2 0 0 1 19 8M5 8l1 11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2L19 8" /></>, title: 'Was ist in der Box?', text: 'Neon-Schild · Netzteil · Dimmer · Fernbedienung · 3m Stromkabel · Montagematerial' },
+            { icon: <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, title: 'Kontakt', text: null, link: true },
+          ].map(({ icon, title, text, link }, i) => (
+            <div key={i} className="desc-row">
+              <div className="desc-icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16, color: '#60c8f0' }}>{icon}</svg>
+              </div>
+              <div className="desc-text">
+                <strong>{title}</strong>
+                {link
+                  ? <span>Kontaktieren Sie uns unter <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', textDecoration: 'none' }}>info@neonframe.de</a> – wir helfen Ihnen gerne weiter.</span>
+                  : <span>{text}</span>
+                }
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </>
