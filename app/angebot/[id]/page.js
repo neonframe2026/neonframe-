@@ -138,7 +138,19 @@ export default async function AngebotPage({ params }) {
           align-items: center;
           justify-content: center;
         }
-        .gallery-img { width:100%; height:100%; object-fit:cover; display:none; position:absolute; inset:0; }
+        .gallery-img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity .2s ease;
+}
+
+.gallery-img.active {
+  opacity:1;
+}
         .gallery-ph { color:#ccc; display:flex; flex-direction:column; align-items:center; gap:10px; }
         .gallery-ph svg { width:52px; height:52px; }
 
@@ -315,7 +327,7 @@ export default async function AngebotPage({ params }) {
           if (totalImgs === 0) return;
           currentImg = ((idx % totalImgs) + totalImgs) % totalImgs;
           document.querySelectorAll('.gallery-img').forEach(function(el, i) {
-            el.style.display = i === currentImg ? 'block' : 'none';
+            el.classList.toggle('active', i === currentImg);
           });
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.classList.toggle('active', i === currentImg);
