@@ -243,9 +243,6 @@ export default async function AngebotPage({ params }) {
   width: 300px;
   height: auto;
   object-fit: contain;
-
-  /* links leicht abschneiden */
-  object-position: 16px center;
 }
         .img-tt:hover .img-tt-box { display:block; }
 
