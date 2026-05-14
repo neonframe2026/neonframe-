@@ -220,7 +220,7 @@ export default async function AngebotPage({ params }) {
           background:#fff;
           border:1px solid #eee;
           border-radius:12px;
-          padding:6px 6px 6px 2px;
+          padding:6px 6px 6px 0px;
           box-shadow:0 8px 30px rgba(0,0,0,.12);
           z-index:200;
           pointer-events:none;
