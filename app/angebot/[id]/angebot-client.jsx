@@ -567,18 +567,18 @@ export default function AngebotPage({ offer }) {
                 </ul>
               </DescRow>
               <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
-                <p><strong>2 Jahre</strong> auf Innen · <strong>1 Jahr</strong> auf Außen-Neon-Schilder (IP65). Bei Defekten ersetzen wir das Schild kostenlos.</p>
+                <p>Wir bieten standardmäßig 2 Jahre Garantie auf alle unsere Innen-Neon-Schilder; für Außen-Neon-Schilder beträgt die Garantie 1 Jahr.</p>
               </DescRow>
               <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
                 <ul style={{ paddingLeft: 20 }}>
                   <li style={{ marginBottom: 4 }}>Handgefertigtes LED-Neon-Schild</li>
                   <li style={{ marginBottom: 4 }}>Netzteil · Dimmer · Fernbedienung</li>
                   <li style={{ marginBottom: 4 }}>Stromkabel 300 cm (auf Anfrage länger)</li>
-                  <li>Montagematerial – Schrauben, Dübel, Abstandshalter</li>
+                  <li>Montagematerial – Schrauben, Dübel, Abstandshalter (Aufhängeseile auf Anfrage)</li>
                 </ul>
               </DescRow>
               <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
-                <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – wir antworten innerhalb von 24 Stunden.</p>
+                <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – Unser Team antwortet dir in der Regel innerhalb weniger Stunden.</p>
               </DescRow>
               {/* Weniger anzeigen — ganz unten */}
               <div style={{ padding: '8px 32px 24px', display: 'flex', justifyContent: 'center', borderTop: '1px solid #f5f5f5' }}>
