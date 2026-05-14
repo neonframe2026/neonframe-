@@ -227,7 +227,13 @@ export default async function AngebotPage({ params }) {
         }
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square img { width:148px; height:148px; object-fit:cover; }
-        .img-tt-box.wide img { width:220px; height:148px; object-fit:cover; }
+.img-tt-box.wide img {
+  width: 340px;
+  max-width: 90vw;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
         .img-tt:hover .img-tt-box { display:block; }
 
         /* Text tooltip */
