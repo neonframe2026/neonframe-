@@ -323,7 +323,7 @@ export default async function AngebotPage({ params }) {
         var currentImg = 0;
         var totalImgs = ${images.length};
 
-        function showImg(idx) {
+        window.showImg = function(idx) {
           if (totalImgs === 0) return;
           currentImg = ((idx % totalImgs) + totalImgs) % totalImgs;
           document.querySelectorAll('.gallery-img').forEach(function(el, i) {
@@ -339,8 +339,8 @@ export default async function AngebotPage({ params }) {
           if (next) next.style.display = currentImg === totalImgs - 1 ? 'none' : 'flex';
         }
 
-        function prevImg() { showImg(currentImg - 1); }
-        function nextImg() { showImg(currentImg + 1); }
+        window.prevImg = function() { window.showImg(currentImg - 1); }
+        window.nextImg = function() { window.showImg(currentImg + 1); }
 
         window.addEventListener('DOMContentLoaded', function() {
           // Init all imgs hidden except first
@@ -351,7 +351,7 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.addEventListener('click', function() { showImg(i); });
           });
-          showImg(0);
+          window.showImg(0);
         });
 
         async function sendContact() {
@@ -394,10 +394,10 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
                   ))}
                   {images.length > 1 && (
                     <>
-                      <button className="gallery-arrow prev" onClick="prevImg()" aria-label="Vorheriges Bild">
+                      <button className="gallery-arrow prev" onClick={() => window.prevImg()} aria-label="Vorheriges Bild">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                       </button>
-                      <button className="gallery-arrow next" onClick="nextImg()" aria-label="Nächstes Bild">
+                      <button className="gallery-arrow next" onClick={() => window.nextImg()} aria-label="Nächstes Bild">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                       </button>
                     </>
@@ -415,9 +415,9 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
             {images.length > 1 && (
               <div className="gallery-thumbs">
                 {images.map((src, i) => (
-                  <div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`}>
-                    <img src={src} alt={`Vorschau ${i+1}`} />
-                  </div>
+<div key={i} className={`gallery-thumb${i === 0 ? ' active' : ''}`} onClick={() => window.showImg(i)}>
+  <img src={src} alt={`Vorschau ${i+1}`} />
+</div>
                 ))}
               </div>
             )}
