@@ -237,12 +237,16 @@ export default async function AngebotPage({ params }) {
           pointer-events:none;
         }
         .img-tt-box img { display:block; border-radius:8px; }
-        .img-tt-box.square img { width:148px; height:148px; object-fit:cover; }
- object-fit:cover; }
+.img-tt-box.square img {
+  width:148px;
+  height:148px;
+  object-fit:cover;
+}
+
 .img-tt-box.wide img {
-  width: 300px;
-  height: auto;
-  object-fit: contain;
+  width:220px;
+  height:auto;
+  object-fit:contain;
 }
         .img-tt:hover .img-tt-box { display:block; }
 
