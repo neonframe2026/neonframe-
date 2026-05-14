@@ -426,14 +426,12 @@ export default async function AngebotPage({ params }) {
     <span
       style={{
         position:'relative',
-        display:'inline-flex',
-        alignItems:'center',
-        justifyContent:'center',
-        width:'20px',
-        height:'20px',
-        fontSize:'20px',
-        lineHeight:'20px',
-        color:'#e5e7eb'
+display:'inline-block',
+width:'20px',
+height:'20px',
+fontSize:'20px',
+lineHeight:'20px',
+color:'#e5e7eb'
       }}
     >
       ★
