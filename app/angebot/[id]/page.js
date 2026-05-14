@@ -401,14 +401,14 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
                     <>
                       <button
   className="gallery-arrow prev"
-  onClick={() => window.prevImg()}
+  onClick={() => typeof window !== 'undefined' && window.prevImg()}
   aria-label="Vorheriges Bild"
 >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                       </button>
                       <button
   className="gallery-arrow next"
-  onClick={() => window.nextImg()}
+  onClick={() => typeof window !== 'undefined' && window.nextImg()}
   aria-label="Nächstes Bild"
 >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
@@ -431,7 +431,7 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
   <div
     key={i}
     className={`gallery-thumb${i === 0 ? ' active' : ''}`}
-    onClick={() => window.showImg(i)}
+    onClick={() => typeof window !== 'undefined' && window.showImg(i)}
   >
     <img src={src} alt={`Vorschau ${i+1}`} />
   </div>
@@ -447,7 +447,7 @@ document.querySelectorAll('.gallery-img').forEach(function(el, i) {
             <button
   id="contact-btn"
   className="contact-btn"
-  onClick={() => window.sendContact()}
+  onClick={() => typeof window !== 'undefined' && window.sendContact()}
 >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:16,height:16}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
               Per E-Mail senden
