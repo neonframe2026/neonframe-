@@ -344,9 +344,9 @@ export default async function AngebotPage({ params }) {
 
         window.addEventListener('DOMContentLoaded', function() {
           // Init all imgs hidden except first
-          document.querySelectorAll('.gallery-img').forEach(function(el, i) {
-            el.style.display = i === 0 ? 'block' : 'none';
-          });
+document.querySelectorAll('.gallery-img').forEach(function(el, i) {
+  el.classList.toggle('active', i === 0);
+});
           // Attach thumb clicks
           document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
             el.addEventListener('click', function() { showImg(i); });
