@@ -235,7 +235,7 @@ export default async function AngebotPage({ params }) {
   display: block;
 
   /* links leicht abschneiden */
-  object-position: 12px center;
+  object-position: 18px center;
 }
         .img-tt:hover .img-tt-box { display:block; }
 
