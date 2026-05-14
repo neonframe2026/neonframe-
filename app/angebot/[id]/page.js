@@ -138,10 +138,10 @@ export default async function AngebotPage({ params }) {
           align-items: center;
           justify-content: center;
         }
-        .gallery-img {
+.gallery-img {
   width:100%;
   height:100%;
-  object-fit:cover;
+  object-fit:contain;
   position:absolute;
   inset:0;
   opacity:0;
@@ -215,7 +215,7 @@ export default async function AngebotPage({ params }) {
         .stars-label { font-size:14px; color:#666; font-weight:500; }
         .made-for { font-size:15px; color:#111; font-weight:400; margin-bottom:22px; }
 
-        .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#bbb; display:block; margin-bottom:6px; }
+        .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#555; display:block; margin-bottom:6px; }
         .cfg-group { margin-bottom:16px; }
         .cfg-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:22px; align-items:flex-end; }
 .cfg-pill {
@@ -317,47 +317,103 @@ export default async function AngebotPage({ params }) {
         .desc-body li { font-size:15px; color:#555; line-height:1.9; }
         .desc-body strong { font-weight:700; color:#333; }
         .desc-body a { color:#60c8f0; text-decoration:none; }
+
+        /* LIGHTBOX */
+        .lightbox-overlay {
+          display:none; position:fixed; inset:0; background:rgba(0,0,0,.92);
+          z-index:1000; align-items:center; justify-content:center; cursor:zoom-out;
+        }
+        .lightbox-overlay.open { display:flex; }
+        .lightbox-overlay img { max-width:92vw; max-height:92vh; object-fit:contain; border-radius:8px; }
+        .lightbox-close {
+          position:absolute; top:20px; right:24px; background:none; border:none;
+          color:#fff; font-size:36px; cursor:pointer; line-height:1; opacity:.8;
+        }
+        .lightbox-close:hover { opacity:1; }
+        .gallery-main { cursor:zoom-in; }
       `}</style>
 
 <script dangerouslySetInnerHTML={{__html:`
-        var currentImg = 0;
-        var totalImgs = ${images.length};
+        (function() {
+          var currentImg = 0;
+          var totalImgs = ${images.length};
+          var imgs = ${JSON.stringify(images)};
 
-        window.showImg = function(idx) {
-          if (totalImgs === 0) return;
-          currentImg = ((idx % totalImgs) + totalImgs) % totalImgs;
-          document.querySelectorAll('.gallery-img').forEach(function(el, i) {
-            el.classList.toggle('active', i === currentImg);
+          function showImg(idx) {
+            if (totalImgs === 0) return;
+            currentImg = ((idx % totalImgs) + totalImgs) % totalImgs;
+            document.querySelectorAll('.gallery-img').forEach(function(el, i) {
+              el.classList.toggle('active', i === currentImg);
+            });
+            document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
+              el.classList.toggle('active', i === currentImg);
+            });
+            var prev = document.getElementById('gallery-prev');
+            var next = document.getElementById('gallery-next');
+            if (prev) prev.style.display = currentImg === 0 ? 'none' : 'flex';
+            if (next) next.style.display = currentImg === totalImgs - 1 ? 'none' : 'flex';
+          }
+
+          function openLightbox() {
+            var src = imgs[currentImg];
+            if (!src) return;
+            document.getElementById('lightbox-img').src = src;
+            document.getElementById('lightbox').classList.add('open');
+          }
+
+          window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.remove('open');
+          }
+
+          // Keyboard support
+          document.addEventListener('keydown', function(e) {
+            var lb = document.getElementById('lightbox');
+            if (lb && lb.classList.contains('open')) {
+              if (e.key === 'Escape') window.closeLightbox();
+              return;
+            }
+            if (e.key === 'ArrowLeft') showImg(currentImg - 1);
+            if (e.key === 'ArrowRight') showImg(currentImg + 1);
           });
-          document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
-            el.classList.toggle('active', i === currentImg);
-          });
-          var prev = document.querySelector('.gallery-arrow.prev');
-          var next = document.querySelector('.gallery-arrow.next');
-          if (prev) prev.style.display = currentImg === 0 ? 'none' : 'flex';
-          if (next) next.style.display = currentImg === totalImgs - 1 ? 'none' : 'flex';
-        }
 
-        window.prevImg = function() { window.showImg(currentImg - 1); }
-        window.nextImg = function() { window.showImg(currentImg + 1); }
+          function init() {
+            // Pfeile
+            var prevBtn = document.getElementById('gallery-prev');
+            var nextBtn = document.getElementById('gallery-next');
+            if (prevBtn) prevBtn.addEventListener('click', function(e) { e.stopPropagation(); showImg(currentImg - 1); });
+            if (nextBtn) nextBtn.addEventListener('click', function(e) { e.stopPropagation(); showImg(currentImg + 1); });
 
-        function initGallery() {
-          var prevBtn = document.getElementById('gallery-prev');
-          var nextBtn = document.getElementById('gallery-next');
-          if (!prevBtn && !nextBtn && totalImgs <= 1) return;
-          document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
-            el.addEventListener('click', function() { window.showImg(i); });
-          });
-          if (prevBtn) prevBtn.addEventListener('click', function() { window.prevImg(); });
-          if (nextBtn) nextBtn.addEventListener('click', function() { window.nextImg(); });
-          window.showImg(0);
-        }
+            // Thumbnails
+            document.querySelectorAll('.gallery-thumb').forEach(function(el, i) {
+              el.addEventListener('click', function() { showImg(i); });
+            });
 
-        if (document.readyState === 'loading') {
-          window.addEventListener('DOMContentLoaded', initGallery);
-        } else {
-          initGallery();
-        }
+            // Touch/Swipe
+            var mc = document.querySelector('.gallery-main');
+            if (mc) {
+              var startX = 0;
+              mc.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; }, {passive:true});
+              mc.addEventListener('touchend', function(e) {
+                var dx = e.changedTouches[0].clientX - startX;
+                if (Math.abs(dx) > 40) showImg(currentImg + (dx < 0 ? 1 : -1));
+              }, {passive:true});
+
+              // Lightbox beim Klick
+              mc.addEventListener('click', function(e) {
+                if (e.target.classList.contains('gallery-arrow') || e.target.closest('.gallery-arrow')) return;
+                openLightbox();
+              });
+            }
+
+            showImg(0);
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+          } else {
+            init();
+          }
+        })();
 
         async function sendContact() {
           var msg = document.getElementById('contact-msg').value.trim();
@@ -377,6 +433,12 @@ export default async function AngebotPage({ params }) {
           btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg> Per E-Mail senden';
         }
       `}} />
+
+      {/* LIGHTBOX */}
+      <div id="lightbox" className="lightbox-overlay" onClick="if(event.target===this||event.target.className==='lightbox-close')closeLightbox()">
+        <button className="lightbox-close" onClick="closeLightbox()">×</button>
+        <img id="lightbox-img" src="" alt="Vollbild" />
+      </div>
 
       {/* HEADER */}
       <header className="hdr">
