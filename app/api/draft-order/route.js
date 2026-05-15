@@ -78,7 +78,6 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
             </tr>
           </table>
 
-          <p style="margin:0 0 20px;font-size:12px;color:#aaa;line-height:1.6">⚠️ Kein Widerrufsrecht bei individuell angefertigten Produkten (§ 312g BGB)</p>
           <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Grüße</p>
           <p style="margin:0;font-size:15px;font-weight:700;color:#111">Dein NeonFrame-Team</p>
         </td></tr>
