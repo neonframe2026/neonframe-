@@ -64,48 +64,42 @@ export default function AdminPage() {
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
   const [tab, setTab] = useState('create')
+  const [previewTab, setPreviewTab] = useState('angebot') // 'angebot' | 'email'
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
 
-  // ── KEY FIX: store ALL form values in a ref, never in state ──
-  // This means text inputs are UNCONTROLLED (defaultValue only).
-  // Only selects and price fields use state (because they need to re-render the price display).
   const fRef = useRef({
-    num: '', project: '', w: '', h: '',
+    num: '', project: '', customerEmail: '', w: '', h: '',
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
     delivery: '', url: '',
   })
 
-  // State only for things that MUST re-render: selects + price numbers
   const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct' })
   const [priceInputs, setPriceInputs] = useState({ basePrice: '', discVal: '20', vat: '19' })
-
   const [imgSrcs, setImgSrcs] = useState([null, null, null])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
   const iframeRef = useRef(null)
+  const emailIframeRef = useRef(null)
 
   const prices = calcPrices(priceInputs.basePrice, selects.discType, priceInputs.discVal, priceInputs.vat)
 
-  // Text input: update ref only (no re-render → no focus loss), then schedule preview
   const updText = (k, v) => { fRef.current[k] = v; schedulePreview() }
-
-  // Select: update ref + state (need re-render for controlled select)
   const updSelect = (k, v) => { fRef.current[k] = v; setSelects(p => ({ ...p, [k]: v })) }
-
-  // Price input: update ref + state (need re-render for price display)
   const updPrice = (k, v) => { fRef.current[k] = v; setPriceInputs(p => ({ ...p, [k]: v })) }
 
   const debounceRef = useRef(null)
   const schedulePreview = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => { renderPreviewFromRef() }, 400)
+    debounceRef.current = setTimeout(() => {
+      renderPreviewFromRef()
+      renderEmailPreview()
+    }, 400)
   }, [])
 
-  // Trigger preview when selects/prices/images change
-  useEffect(() => { if (authed) schedulePreview() }, [selects, priceInputs, imgSrcs, authed])
+  useEffect(() => { if (authed) schedulePreview() }, [selects, priceInputs, imgSrcs, authed, previewTab])
 
   function renderPreviewFromRef() {
     if (!iframeRef.current) return
@@ -128,42 +122,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1
 .contact-hdr img{width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0}
 .contact-hdr h3{font-size:13px;font-weight:700;margin-bottom:2px}
 .contact-hdr p{font-size:11px;color:#999;line-height:1.4}
-.contact-card textarea{width:100%;background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:9px 11px;font-size:12px;resize:vertical;min-height:60px;font-family:inherit;outline:none;margin-bottom:8px;display:block}
-.contact-card button{background:#0a0a0a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:8px}
 .stars-row{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.stars{color:#f59e0b;font-size:16px}
-.stars-lbl{font-size:12px;color:#666}
 .badge-made{display:inline-flex;align-items:center;gap:8px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:10px;padding:6px 11px;margin-bottom:14px}
-.badge-made .name{font-size:12px;color:#555}
-.badge-made strong{color:#111}
 .sz-row{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-start}
 .cfg-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
 .cfg-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#111;display:block;margin-bottom:3px}
 .pill{display:inline-flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #eee;border-radius:20px;padding:5px 11px;font-size:12px;font-weight:500;color:#333}
 .checks{margin-bottom:14px;display:flex;flex-direction:column;gap:7px}
 .ck{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:#555;line-height:1.5}
-.ck-icon{color:#22c55e;font-size:13px;flex-shrink:0}
+.ck-icon{color:#22c55e}
 .price-box{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;margin-bottom:10px}
 .pr{display:flex;justify-content:space-between;font-size:12px;color:#999;padding:3px 0}
 .pr-d{display:flex;justify-content:space-between;font-size:12px;color:#16a34a;padding:3px 0;font-weight:600}
 .pr-n{display:flex;justify-content:space-between;font-size:12px;color:#111;padding:3px 0}
-.pr-g{display:flex;justify-content:space-between;font-size:12px;color:#999;padding:3px 0}
 .divider{border-top:1px solid #f0f0f0;margin:8px 0}
 .total{display:flex;justify-content:space-between;align-items:baseline}
 .tlbl{font-size:13px;font-weight:700;color:#111}
-.tval{font-size:20px;font-weight:800;color:#111;letter-spacing:-.02em}
+.tval{font-size:20px;font-weight:800;color:#111}
 .tval-note{font-size:10px;color:#888;margin-left:5px;font-weight:400}
 .ship{background:#f0fbff;border:1px solid #b8e8f8;border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:9px;margin-bottom:5px}
-.ship-icon{color:#60c8f0;font-size:15px}
-.ship strong{display:block;font-size:12px;font-weight:700;color:#111;margin-bottom:1px}
-.ship span{font-size:11px;color:#888}
-.cta{width:100%;background:#16a34a;color:#fff;border:none;border-radius:11px;padding:14px;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0;cursor:pointer;font-family:inherit}
-.feats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
-.feat{background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;display:flex;align-items:flex-start;gap:8px}
-.feat-icon{width:28px;height:28px;background:#f0fbff;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #d0f0fc;color:#60c8f0;font-size:12px}
-.feat strong{display:block;font-size:11px;font-weight:700;margin-bottom:1px}
-.feat span{font-size:10px;color:#888;line-height:1.4}
+.cta{width:100%;background:#16a34a;color:#fff;border:none;border-radius:11px;padding:14px;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0;cursor:pointer}
+.warn{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;margin-bottom:10px;font-size:11px;color:#92400e}
 </style></head><body>
 <div class="hdr">
   <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style="height:52px">
@@ -179,14 +159,12 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280" alt="Support">
         <div><h3>Noch Fragen oder Änderungswünsche?</h3><p>Wir melden uns schnellstmöglich.</p></div>
       </div>
-      <textarea placeholder="z.B. Kann die Farbe noch angepasst werden?"></textarea>
-      <button>✉ Per E-Mail senden</button>
     </div>
   </div>
   <div>
     <h1>Individuelles LED-Neon-Schild –<br>personalisiert nach Wunsch</h1>
-    <div class="stars-row"><div class="stars">★★★★<span style="color:#e5e7eb">★</span></div><span class="stars-lbl">4,5 / 5 Sternen</span></div>
-    ${f.project ? `<div class="badge-made"><span class="name">Individuell angefertigt für <strong>${f.project}</strong></span></div>` : ''}
+    <div class="stars-row"><span style="color:#f59e0b;font-size:16px">★★★★</span><span style="color:#e5e7eb;font-size:16px">★</span><span style="font-size:12px;color:#666;margin-left:4px">4,5 / 5 Sternen</span></div>
+    ${f.project ? `<div class="badge-made"><span style="font-size:12px;color:#555">Individuell angefertigt für <strong style="color:#111">${f.project}</strong></span></div>` : ''}
     <div class="sz-row">
       ${f.w && f.h ? `<div><span class="cfg-lbl">Maße (Breite × Höhe)</span><div class="pill" style="margin-top:3px">${f.w} × ${f.h} cm</div></div>` : ''}
       ${colors.length > 0 ? `<div><span class="cfg-lbl">Farbe</span><div style="margin-top:3px">${colorPills}</div></div>` : ''}
@@ -205,22 +183,64 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       ${parseFloat(f.basePrice) > 0 ? `<div class="pr"><span>Listenpreis (netto)</span><span>€ ${parseFloat(f.basePrice).toFixed(2)}</span></div>` : ''}
       ${p.discAmt > 0 ? `<div class="pr-d"><span>− Rabatt (${f.discType === 'pct' ? f.discVal + '%' : '€ ' + parseFloat(f.discVal).toFixed(2)})</span><span>− € ${p.discAmt.toFixed(2)}</span></div>` : ''}
       ${p.net > 0 ? `<div class="pr-n"><span>Netto-Preis nach Rabatt</span><span>€ ${p.net.toFixed(2)}</span></div>` : ''}
-      ${p.vatAmt > 0 ? `<div class="pr-g"><span>+ MwSt. (${f.vat}%)</span><span>+ € ${p.vatAmt.toFixed(2)}</span></div>` : ''}
+      ${p.vatAmt > 0 ? `<div class="pr-n"><span>+ MwSt. (${f.vat}%)</span><span>+ € ${p.vatAmt.toFixed(2)}</span></div>` : ''}
       <div class="divider"></div>
       <div class="total"><span class="tlbl">Gesamtbetrag</span><span class="tval">${p.total > 0 ? '€ ' + p.total.toFixed(2) : '–'}${p.total > 0 ? '<span class="tval-note">(inkl. MwSt.)</span>' : ''}</span></div>
     </div>
     <div class="cta">🛒 Angebot annehmen</div>
-    <div class="ship"><div class="ship-icon">🚚</div><div><strong>Kostenloser Versand</strong><span>${f.delivery ? 'Geliefert zwischen ' + f.delivery : 'Lieferzeit 2–3 Wochen'}</span></div></div>
-    <div class="feats">
-      <div class="feat"><div class="feat-icon">🛡</div><div><strong>Qualitätsgarantie</strong><span>Hochwertige Neonfertigung</span></div></div>
-      <div class="feat"><div class="feat-icon">📦</div><div><strong>Komplettpaket</strong><span>Netzteil, Dimmer, FB</span></div></div>
-      <div class="feat"><div class="feat-icon">⚡</div><div><strong>Einfache Installation</strong><span>In Minuten montiert</span></div></div>
-      <div class="feat"><div class="feat-icon">♾</div><div><strong>Extrem langlebig</strong><span>100.000 Std. Lebensdauer</span></div></div>
-    </div>
+    <div class="warn">⚠️ Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB kein Widerrufsrecht.</div>
+    <div class="ship"><span>🚚</span><div><strong style="display:block;font-size:12px">Kostenloser Versand</strong><span style="font-size:11px;color:#888">${f.delivery ? 'Geliefert zwischen ' + f.delivery : 'Lieferzeit 2–3 Wochen'}</span></div></div>
   </div>
 </div>
 </body></html>`
     const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document
+    if (doc) { doc.open(); doc.write(html); doc.close() }
+  }
+
+  function renderEmailPreview() {
+    if (!emailIframeRef.current) return
+    const f = { ...fRef.current, ...selects, ...priceInputs }
+    const p = calcPrices(f.basePrice, f.discType, f.discVal, f.vat)
+    const firstName = f.project?.split(' ')[0] || 'dort'
+
+    const html = `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:24px;text-align:center">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="40" style="display:block;margin:0 auto">
+        </td></tr>
+        <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
+        <tr><td style="background:#fff;padding:28px 28px 20px">
+          <h1 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#111">Hallo ${firstName}! 👋</h1>
+          <p style="margin:0 0 20px;font-size:14px;color:#666;line-height:1.6">Ihr individuelles Angebot für Ihr personalisiertes LED-Neon-Schild ist fertig!</p>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:10px">Ihre Konfiguration</div>
+            ${f.num ? `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="color:#666">Angebot</span><span style="font-weight:600">#${f.num}</span></div>` : ''}
+            ${f.w && f.h ? `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="color:#666">Maße</span><span style="font-weight:600">${f.w} × ${f.h} cm</span></div>` : ''}
+            ${f.color ? `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="color:#666">Farben</span><span style="font-weight:600">${f.color}</span></div>` : ''}
+            ${p.total > 0 ? `<div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0 0;margin-top:6px;border-top:1px solid #e2e8f0"><span style="font-weight:700">Gesamtbetrag</span><span style="font-weight:800;color:#111">€ ${p.total.toFixed(2)}</span></div>` : ''}
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+            <tr>
+              <td style="padding-right:6px"><div style="background:#f8fafc;border:1.5px solid #e2e8f0;color:#111;text-align:center;padding:12px;border-radius:9px;font-size:13px;font-weight:600">📋 Angebot ansehen</div></td>
+              <td style="padding-left:6px"><div style="background:#16a34a;color:#fff;text-align:center;padding:12px;border-radius:9px;font-size:13px;font-weight:700">🛒 Jetzt bestellen</div></td>
+            </tr>
+          </table>
+          <p style="margin:0 0 8px;font-size:12px;color:#888;line-height:1.6">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
+          <p style="margin:0;font-size:11px;color:#aaa">⚠️ Kein Widerrufsrecht bei individuell angefertigten Produkten (§ 312g BGB)</p>
+        </td></tr>
+        <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 14px 14px;padding:14px;text-align:center">
+          <p style="margin:0;font-size:11px;color:#aaa">NeonFrame · neonframe.de · info@neonframe.de</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`
+    const doc = emailIframeRef.current.contentDocument || emailIframeRef.current.contentWindow?.document
     if (doc) { doc.open(); doc.write(html); doc.close() }
   }
 
@@ -230,16 +250,12 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     try {
       const txt = await extractPdfText(file)
       const p = parsePdfFields(txt)
-      // Update refs
       if (p.num) fRef.current.num = p.num
       if (p.project) fRef.current.project = p.project
       if (p.w) fRef.current.w = p.w
       if (p.h) fRef.current.h = p.h
       if (p.colors) fRef.current.color = p.colors
-      if (p.price) fRef.current.basePrice = p.price
-      // Force price display update
-      if (p.price) setPriceInputs(prev => ({ ...prev, basePrice: p.price }))
-      // Force re-render for input defaultValues by remounting — simplest approach
+      if (p.price) { fRef.current.basePrice = p.price; setPriceInputs(prev => ({ ...prev, basePrice: p.price })) }
       setParseStatus({ type: 'ok', msg: `${Object.values(p).filter(Boolean).length} Felder erkannt – bitte prüfen` })
       schedulePreview()
     } catch (err) {
@@ -256,6 +272,20 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     setPublishing(true)
     const f = { ...fRef.current, ...selects, ...priceInputs }
     try {
+      // 1. Bilder hochladen
+      const imgFields = ['preview_image', 'preview_image_2', 'preview_image_3']
+      const uploadedImgs = [null, null, null]
+      for (let i = 0; i < 3; i++) {
+        if (imgSrcs[i]?.startsWith('data:')) {
+          const blob = await (await fetch(imgSrcs[i])).blob()
+          const fd = new FormData(); fd.append('file', blob, `offer-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'new')
+          const up = await fetch('/api/upload', { method: 'POST', body: fd })
+          const upData = await up.json()
+          if (upData.url) uploadedImgs[i] = upData.url
+        }
+      }
+
+      // 2. Angebot in Supabase speichern
       const payload = {
         offer_num: f.num, project: f.project,
         width: f.w, height: f.h,
@@ -265,26 +295,65 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
         net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
         delivery: f.delivery,
-        checkout_url: f.url, preview_image: null, preview_image_2: null, preview_image_3: null, published: true,
+        checkout_url: f.url,
+        preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
+        published: true,
       }
-      const imgFields = ['preview_image', 'preview_image_2', 'preview_image_3']
-      for (let i = 0; i < 3; i++) {
-        if (imgSrcs[i]?.startsWith('data:')) {
-          const blob = await (await fetch(imgSrcs[i])).blob()
-          const fd = new FormData(); fd.append('file', blob, `offer-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'new')
-          const up = await fetch('/api/upload', { method: 'POST', body: fd })
-          const upData = await up.json()
-          if (upData.url) payload[imgFields[i]] = upData.url
-        }
-      }
+
       const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      const id = data.custom_id || data.id
-      const link = `${window.location.origin}/angebot/${id}`
-      setPublishedLink(link)
-      await navigator.clipboard.writeText(link).catch(() => {})
-      alert(`Veröffentlicht!\n\nLink kopiert:\n${link}`)
+
+      const offerId = data.custom_id || data.id
+      const offerLink = `${window.location.origin}/angebot/${offerId}`
+
+      // 3. Shopify Draft Order erstellen + Kunden-E-Mail senden
+      const draftRes = await fetch('/api/draft-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: f.customerEmail,
+          customerName: f.project,
+          offerNum: f.num,
+          finalPrice: prices.total,
+          basePrice: f.basePrice,
+          discVal: f.discVal,
+          discType: f.discType,
+          vatPct: f.vat,
+          width: f.w,
+          height: f.h,
+          colors: f.color,
+          backplate: f.backplate,
+          backplateColor: f.backplate_color,
+          usage: f.usage,
+          delivery: f.delivery,
+          offerLink,
+        }),
+      })
+
+      const draftData = await draftRes.json()
+
+      let statusMsg = `Veröffentlicht!\n\nAngebotslink:\n${offerLink}`
+
+      if (draftData.success) {
+        // 4. Checkout-URL in Angebot speichern
+        if (draftData.checkoutUrl) {
+          await fetch(`/api/offers?id=${data.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkout_url: draftData.checkoutUrl }),
+          })
+        }
+        statusMsg += `\n\nShopify Draft Order: ${draftData.draftOrderName}`
+        if (f.customerEmail) statusMsg += `\nKunden-E-Mail gesendet an: ${f.customerEmail}`
+      } else {
+        statusMsg += `\n\n⚠️ Draft Order Fehler: ${draftData.error}`
+      }
+
+      setPublishedLink(offerLink)
+      await navigator.clipboard.writeText(offerLink).catch(() => {})
+      alert(statusMsg)
+
     } catch (err) { alert('Fehler: ' + err.message) }
     finally { setPublishing(false) }
   }
@@ -351,9 +420,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     btnDark: {background:'#0a0a0a',color:'#fff',border:'none',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
     btnOutline: {background:'transparent',border:'1px solid #e5e7eb',color:'#374151',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
     linkBox: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:10,display:'flex',alignItems:'center',gap:8,marginTop:8},
-    right: {flex:1,position:'relative',overflow:'hidden',background:'#f3f4f6'},
-    iframe: {width:'100%',height:'100%',border:'none',display:'block',background:'#fff'},
-    previewLabel: {position:'absolute',top:10,right:10,background:'rgba(0,0,0,.6)',color:'#fff',fontSize:11,padding:'4px 10px',borderRadius:20,zIndex:10,pointerEvents:'none'},
+    right: {flex:1,position:'relative',overflow:'hidden',background:'#f3f4f6',display:'flex',flexDirection:'column'},
+    iframe: {width:'100%',flex:1,border:'none',display:'block',background:'#fff'},
   }
 
   const Field = ({ label, children }) => (
@@ -426,6 +494,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       </div>
 
       <div style={S.main}>
+        {/* LEFT FORM */}
         <div style={S.left}>
           {/* BILDER */}
           <div style={S.section}>
@@ -449,7 +518,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
           </div>
 
-          {/* ANGEBOTSDATEN — uncontrolled inputs (defaultValue) */}
+          {/* ANGEBOTSDATEN */}
           <div style={S.section}>
             <div style={S.sTitle}>Angebotsdaten</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -458,6 +527,10 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
               </Field>
               <Field label="Projekt / Kundenname">
                 <input style={S.input} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. esskultur – Max Mustermann" />
+              </Field>
+              {/* NEU: Kunden-E-Mail */}
+              <Field label="Kunden-E-Mail">
+                <input style={{...S.input, borderColor: '#60c8f044', background: '#f0fbff'}} type="email" defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" />
               </Field>
               <div style={S.row2}>
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
@@ -469,7 +542,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* KONFIGURATION — controlled selects */}
+          {/* KONFIGURATION */}
           <div style={S.section}>
             <div style={S.sTitle}>Konfiguration</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -491,7 +564,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* PREIS — price inputs use state for live display */}
+          {/* PREIS */}
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -512,8 +585,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                 <Field label="MwSt. (%)">
                   <input style={S.input} type="number" step="0.1" value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} />
                 </Field>
-                <Field label="Checkout-URL">
-                  <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https://..." />
+                <Field label="Lieferdatum">
+                  <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
                 </Field>
               </div>
               <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
@@ -524,18 +597,14 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* LIEFERDATUM */}
-          <div style={S.section}>
-            <div style={S.sTitle}>Weitere Einstellungen</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Lieferdatum">
-                <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="z.B. 27. Mai und 3. Juni" />
-              </Field>
-            </div>
-          </div>
-
           {/* PUBLISH */}
           <div style={S.publishArea}>
+            {/* Info box */}
+            <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#166534',lineHeight:1.5}}>
+              ✅ Beim Veröffentlichen wird automatisch:<br/>
+              • Ein Shopify Draft Order erstellt<br/>
+              • Eine E-Mail an den Kunden gesendet
+            </div>
             <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
             {publishedLink && (
               <div style={S.linkBox}>
@@ -546,10 +615,16 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
           </div>
         </div>
 
-        {/* PREVIEW */}
+        {/* RIGHT PREVIEW with tabs */}
         <div style={S.right}>
-          <div style={S.previewLabel}>Live-Vorschau</div>
-          <iframe ref={iframeRef} style={S.iframe} title="Vorschau" />
+          {/* Preview tabs */}
+          <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'0 20px',display:'flex',alignItems:'center',gap:4,height:44,flexShrink:0}}>
+            <button onClick={() => setPreviewTab('angebot')} style={{...S.tab(previewTab==='angebot'),fontSize:12,padding:'4px 14px'}}>Angebotsseite</button>
+            <button onClick={() => setPreviewTab('email')} style={{...S.tab(previewTab==='email'),fontSize:12,padding:'4px 14px'}}>Kunden-E-Mail</button>
+            <div style={{marginLeft:'auto',fontSize:11,color:'#9ca3af'}}>Live-Vorschau</div>
+          </div>
+          <iframe ref={iframeRef} style={{...S.iframe, display: previewTab === 'angebot' ? 'block' : 'none'}} title="Angebotsvorschau" />
+          <iframe ref={emailIframeRef} style={{...S.iframe, display: previewTab === 'email' ? 'block' : 'none'}} title="E-Mail Vorschau" />
         </div>
       </div>
     </div>
