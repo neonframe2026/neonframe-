@@ -182,7 +182,7 @@ function ContactCard({ displayId, projectName }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
         {loading ? 'Wird gesendet...' : 'Per E-Mail senden'}
       </button>
-      {status === 'ok' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>✅ Nachricht erfolgreich gesendet – wir melden uns schnellstmöglich bei dir.</div>}
+      {status === 'ok' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>Nachricht gesendet! Wir melden uns bald.</div>}
       {status === 'err' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>{msg.trim() ? 'Fehler. Bitte direkt an info@neonframe.de schreiben.' : 'Bitte eine Nachricht eingeben.'}</div>}
     </div>
   )
@@ -341,6 +341,12 @@ export default function AngebotPage({ offer }) {
         {/* LEFT col — desktop only */}
         <div className="col-left">
           <Gallery images={images} />
+          {offer.customer_note && (
+            <div style={{ marginTop: 20, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 16, padding: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 10 }}>Notizen von NeonFrame ❗</div>
+              <div style={{ fontSize: 14, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{offer.customer_note}</div>
+            </div>
+          )}
           <ContactCard displayId={displayId} projectName={offer.project || ''} />
         </div>
 
@@ -467,12 +473,6 @@ export default function AngebotPage({ offer }) {
             Angebot annehmen
           </a>
 
-          {/* Widerrufsrecht Hinweis */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, marginTop: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
-          </div>
-
           {/* 9 — Versand */}
           <div className="ship-box mob-ship">
             <svg className="ship-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
@@ -505,6 +505,12 @@ export default function AngebotPage({ offer }) {
 
           {/* 12 — Mobile-only contact */}
           <div className="mob-contact">
+            {offer.customer_note && (
+              <div style={{ marginBottom: 16, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 16, padding: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 10 }}>Notizen von NeonFrame ❗</div>
+                <div style={{ fontSize: 14, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{offer.customer_note}</div>
+              </div>
+            )}
             <ContactCard displayId={displayId} projectName={offer.project || ''} />
           </div>
 
@@ -539,14 +545,12 @@ export default function AngebotPage({ offer }) {
                 <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
               </div>
             )}
-{/* Toggle button — only Mehr anzeigen here, Weniger is at bottom */}
+            {/* Toggle button — only Mehr anzeigen here, Weniger is at bottom */}
             {!descOpen && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
-              <button className="mehr-btn" style={{ marginTop: 0 }} onClick={() => setDescOpen(true)}>
+              <button className="mehr-btn" onClick={() => setDescOpen(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
                 Mehr anzeigen
-</button>
-              </div>
+              </button>
             )}
           </div>
 
@@ -573,18 +577,18 @@ export default function AngebotPage({ offer }) {
                 </ul>
               </DescRow>
               <DescRow icon={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>} title="Garantie">
-                <p>Wir bieten standardmäßig 2 Jahre Garantie auf alle unsere Innen-Neon-Schilder; für Außen-Neon-Schilder beträgt die Garantie 1 Jahr.</p>
+                <p><strong>2 Jahre</strong> auf Innen · <strong>1 Jahr</strong> auf Außen-Neon-Schilder (IP65). Bei Defekten ersetzen wir das Schild kostenlos.</p>
               </DescRow>
               <DescRow icon={<><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></>} title="Was ist in der Box?">
                 <ul style={{ paddingLeft: 20 }}>
                   <li style={{ marginBottom: 4 }}>Handgefertigtes LED-Neon-Schild</li>
                   <li style={{ marginBottom: 4 }}>Netzteil · Dimmer · Fernbedienung</li>
                   <li style={{ marginBottom: 4 }}>Stromkabel 300 cm (auf Anfrage länger)</li>
-                  <li>Montagematerial – Schrauben, Dübel, Abstandshalter (Aufhängeseile auf Anfrage)</li>
+                  <li>Montagematerial – Schrauben, Dübel, Abstandshalter</li>
                 </ul>
               </DescRow>
               <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
-                <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – Unser Team antwortet dir in der Regel innerhalb weniger Stunden.</p>
+                <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – wir antworten innerhalb von 24 Stunden.</p>
               </DescRow>
               {/* Weniger anzeigen — ganz unten */}
               <div style={{ padding: '8px 32px 24px', display: 'flex', justifyContent: 'center', borderTop: '1px solid #f5f5f5' }}>
