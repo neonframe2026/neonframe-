@@ -69,7 +69,7 @@ export default function AdminPage() {
   const [loadingOffers, setLoadingOffers] = useState(false)
 
   const fRef = useRef({
-        num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
+    num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
     delivery: '', url: '',
@@ -294,9 +294,9 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
         disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
         net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-delivery: f.delivery,
+        delivery: f.delivery,
         checkout_url: f.url,
-        customer_note: f.customerNote,
+        customer_note: f.customerNote || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -586,15 +586,9 @@ delivery: f.delivery,
                 <Field label="MwSt. (%)">
                   <input style={S.input} type="number" step="0.1" value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} />
                 </Field>
-<Field label="Lieferdatum">
-                <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
-              </Field>
-<Field label="Checkout-URL (Shopify Draft Order Link)">
-                <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https://..." />
-              </Field>
-              <Field label="Notizen für den Kunden">
-                <textarea style={{...S.input, minHeight: 80, resize: 'vertical', lineHeight: 1.5}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
-              </Field>
+                <Field label="Lieferdatum">
+                  <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
+                </Field>
               </div>
               <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
                 {[['Netto',prices.net>0?`€ ${prices.net.toFixed(2)}`:'–',false],['+ MwSt.',prices.vatAmt>0?`€ ${prices.vatAmt.toFixed(2)}`:'–',false],['Endpreis',prices.total>0?`€ ${prices.total.toFixed(2)}`:'–',true]].map(([l,v,a])=>(
@@ -604,7 +598,21 @@ delivery: f.delivery,
             </div>
           </div>
 
-          {/* PUBLISH */}
+          {/* LIEFERDATUM + WEITERE */}
+          <div style={S.section}>
+            <div style={S.sTitle}>Weitere Einstellungen</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <Field label="Lieferdatum">
+                <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
+              </Field>
+              <Field label="Checkout-URL (Shopify Draft Order Link)">
+                <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https://..." />
+              </Field>
+              <Field label="Notizen für den Kunden">
+                <textarea style={{...S.input, minHeight: 80, resize: 'vertical', lineHeight: 1.5, paddingTop: 9}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
+              </Field>
+            </div>
+          </div>
           <div style={S.publishArea}>
             {/* Info box */}
             <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#166534',lineHeight:1.5}}>
