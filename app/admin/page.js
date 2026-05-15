@@ -527,7 +527,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                 <input style={S.input} defaultValue={fRef.current.num} onChange={e => updText('num', e.target.value)} placeholder="NF-1001" />
               </Field>
               <Field label="Projekt / Kundenname">
-                <input style={S.input} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. esskultur – Max Mustermann" />
+                <input style={S.input} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" />
               </Field>
               {/* NEU: Kunden-E-Mail */}
               <Field label="Kunden-E-Mail">
