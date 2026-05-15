@@ -617,7 +617,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             {/* Info box */}
             <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#166534',lineHeight:1.5}}>
               ✅ Beim Veröffentlichen wird automatisch:<br/>
-              • Ein Shopify Draft Order erstellt<br/>
               • Eine E-Mail an den Kunden gesendet
             </div>
             <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
