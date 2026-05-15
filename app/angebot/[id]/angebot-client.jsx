@@ -343,7 +343,7 @@ export default function AngebotPage({ offer }) {
           <Gallery images={images} />
           {offer.customer_note && (
             <div style={{ marginTop: 20, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 16, padding: 20 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 10 }}>Notizen von NeonFrame ❗</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#111', marginBottom: 10 }}>❗Notizen von NeonFrame</div>
               <div style={{ fontSize: 14, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{offer.customer_note}</div>
             </div>
           )}
