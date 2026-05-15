@@ -585,9 +585,12 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                 <Field label="MwSt. (%)">
                   <input style={S.input} type="number" step="0.1" value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} />
                 </Field>
-                <Field label="Lieferdatum">
-                  <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
-                </Field>
+<Field label="Lieferdatum">
+                <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
+              </Field>
+              <Field label="Checkout-URL (Shopify Draft Order Link)">
+                <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https://..." />
+              </Field>
               </div>
               <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
                 {[['Netto',prices.net>0?`€ ${prices.net.toFixed(2)}`:'–',false],['+ MwSt.',prices.vatAmt>0?`€ ${prices.vatAmt.toFixed(2)}`:'–',false],['Endpreis',prices.total>0?`€ ${prices.total.toFixed(2)}`:'–',true]].map(([l,v,a])=>(
