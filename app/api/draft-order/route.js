@@ -48,7 +48,7 @@ export async function POST(request) {
 }
 
 function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, finalPrice, width, height, colors, delivery }) {
-  const firstName = customerName?.split(' ')[0] || 'dort'
+  const firstName = customerName || 'dort'
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
