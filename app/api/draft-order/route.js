@@ -65,7 +65,6 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
           <p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.7">Ihr individuelles Angebot für Ihr personalisiertes LED-Neon-Schild ist fertig! 🎉</p>
           <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">Wir haben alles nach Ihren Wünschen konfiguriert – Maße, Farben und alle Details sind in Ihrem persönlichen Angebot zusammengefasst.</p>
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Das Angebot ist für Sie reserviert. Bei Fragen oder Änderungswünschen können Sie uns jederzeit direkt über die Angebotsseite oder per E-Mail unter <a href="mailto:info@neonframe.de" style="color:#60c8f0;text-decoration:none">info@neonframe.de</a> erreichen – wir melden uns schnellstmöglich.</p>
-          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Wir freuen uns darauf, Ihr Neon-Schild für Sie zu fertigen!</p>
 
           <!-- Angebot ansehen Button -->
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
