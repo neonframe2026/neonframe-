@@ -57,7 +57,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
         <tr><td style="background:#0a0a0a;border-radius:16px 16px 0 0;padding:28px 36px;text-align:center">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="72" style="display:block;margin:0 auto">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="110" style="display:block;margin:0 auto">
         </td></tr>
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
         <tr><td style="background:#ffffff;padding:36px 36px 28px">
