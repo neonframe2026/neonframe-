@@ -218,6 +218,77 @@ function DescRow({ icon, title, children }) {
   )
 }
 
+// ─── PAYMENT ICONS ────────────────────────────────────────────────────────────
+function PaymentIcons() {
+  const icons = [
+    {
+      name: 'PayPal',
+      el: <div style={{ background: '#003087', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 13, fontFamily: 'Arial,sans-serif', letterSpacing: -0.5 }}><span style={{ color: '#009cde' }}>Pay</span><span style={{ color: '#fff' }}>Pal</span></span>
+      </div>
+    },
+    {
+      name: 'Klarna',
+      el: <div style={{ background: '#ffb3c7', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 11, color: '#17120e', fontFamily: 'Arial,sans-serif', letterSpacing: -0.5 }}>klarna</span>
+      </div>
+    },
+    {
+      name: 'Visa',
+      el: <div style={{ background: '#1a1f71', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 16, color: '#fff', fontFamily: 'Arial,sans-serif', fontStyle: 'italic', letterSpacing: -1 }}>VISA</span>
+      </div>
+    },
+    {
+      name: 'Mastercard',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#eb001b"/><circle cx="23" cy="11" r="10" fill="#f79e1b"/><path d="M18 3.5a10 10 0 0 1 0 15A10 10 0 0 1 18 3.5z" fill="#ff5f00"/></svg>
+      </div>
+    },
+    {
+      name: 'Apple Pay',
+      el: <div style={{ background: '#000', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #333', flexShrink: 0 }}>
+        <svg width="44" height="18" viewBox="0 0 56 22" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9.5 3.8C8.8 4.6 7.7 5.2 6.6 5.1c-.1-1.1.4-2.3 1.1-3C8.4 1.3 9.7.7 10.7.8c.1 1.2-.3 2.3-1.2 3z"/>
+          <path d="M10.8 5.5c-1.8-.1-3.3 1-4.2 1-.9 0-2.2-1-3.6-1C1 5.5-.8 7 -1.5 9.1c-1.3 2.4.4 7.6 1.8 10.1.7 1 1.5 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2.1.8-1.3 1.1-2.5 1.2-2.6 0 0-2.3-.9-2.3-3.4 0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.6-3.1-1.6h-.1z"/>
+          <text x="16" y="16" fontSize="13" fontWeight="500" fontFamily="-apple-system,BlinkMacSystemFont,sans-serif" fill="white"> Pay</text>
+        </svg>
+      </div>
+    },
+    {
+      name: 'Google Pay',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="44" height="16" viewBox="0 0 56 18" xmlns="http://www.w3.org/2000/svg">
+          <text x="0" y="14" fontSize="12" fontFamily="Arial,sans-serif" fontWeight="500">
+            <tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan>
+          </text>
+          <text x="36" y="14" fontSize="12" fontFamily="Arial,sans-serif" fontWeight="500" fill="#5f6368">Pay</text>
+        </svg>
+      </div>
+    },
+    {
+      name: 'Amex',
+      el: <div style={{ background: '#007bc1', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 7.5, color: '#fff', fontFamily: 'Arial,sans-serif', textAlign: 'center', lineHeight: 1.3, letterSpacing: 0.2 }}>AMERICAN<br/>EXPRESS</span>
+      </div>
+    },
+    {
+      name: 'Maestro',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#009be0"/><circle cx="23" cy="11" r="10" fill="#ee0005"/><path d="M18 3.5a10 10 0 0 1 0 15A10 10 0 0 1 18 3.5z" fill="#7b2d8b"/></svg>
+      </div>
+    },
+  ]
+
+  return (
+    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      {icons.map(({ name, el }) => (
+        <div key={name} title={name}>{el}</div>
+      ))}
+    </div>
+  )
+}
+
 // ─── STEPPER ─────────────────────────────────────────────────────────────────
 const STATUS_INDEX = { offer_sent: 1, confirmed: 2, in_production: 3, shipped: 4 }
 
@@ -288,13 +359,12 @@ export default function AngebotPage({ offer }) {
       <style>{`
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#111; background:#fff; -webkit-font-smoothing:antialiased; }
-        .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; z-index:100; }
-        @media(max-width:900px){ .hdr { padding:0 20px; height:68px; } }
-        .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 22px; border-radius:20px; }
-        .hdr-right { display:flex; align-items:center; gap:10px; }
-        .valid-badge { background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#d97706; font-size:12px; font-weight:600; padding:7px 14px; border-radius:20px; display:flex; align-items:center; gap:6px; }
-        .stepper-wrap { background:#f9fafb; border-bottom:1px solid #eee; padding:14px 52px; }
-        @media(max-width:900px){ .stepper-wrap { padding:12px 16px; } .stepper-step-label { display:none; } }
+        .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100; }
+        @media(max-width:900px){ .hdr { padding:0 16px; height:64px; } }
+        .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+        .valid-badge { background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#d97706; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+        .hdr-logo { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
+        @media(max-width:900px){ .hdr-logo img { height:46px !important; } .hdr-badge { font-size:11px; padding:6px 10px; } .valid-badge { font-size:11px; padding:6px 10px; } }
         /* Desktop layout */
         .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.3fr 1fr; gap:72px; align-items:start; }
         /* Mobile layout */
@@ -311,10 +381,11 @@ export default function AngebotPage({ offer }) {
           .mob-checks  { order:6; }
           .mob-price   { order:7; }
           .mob-cta     { order:8; }
-          .mob-ship    { order:9; }
-          .mob-express { order:10; }
-          .mob-features{ order:11; }
-          .mob-contact { order:12; display:block !important; margin-top:24px; }
+          .mob-warn    { order:9; }
+          .mob-ship    { order:10; }
+          .mob-express { order:11; }
+          .mob-features{ order:12; }
+          .mob-contact { order:13; display:block !important; margin-top:24px; }
         @media(max-width:960px){
           .desc-section { margin-top:24px; }
           .desc-header { flex-wrap:wrap; gap:8px; align-items:center; }
@@ -388,10 +459,10 @@ export default function AngebotPage({ offer }) {
         .weniger-btn:hover { background:#60c8f0; color:#fff; }
       `}</style>
 
-{/* HEADER */}
-      <header className="hdr" style={{ position: 'relative' }}>
+      {/* HEADER */}
+      <header className="hdr">
         {/* Links: Gültig bis */}
-        <div style={{ position: 'absolute', left: 52, top: '50%', transform: 'translateY(-50%)' }}>
+        <div>
           {validUntilFormatted && (
             <div className="valid-badge">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -400,11 +471,11 @@ export default function AngebotPage({ offer }) {
           )}
         </div>
         {/* Mitte: Logo */}
-        <a href="https://neonframe.de" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 80, display: 'block' }} />
+        <a href="https://neonframe.de" className="hdr-logo">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 78, display: 'block' }} />
         </a>
         {/* Rechts: Angebot Badge */}
-        <div style={{ position: 'absolute', right: 52, top: '50%', transform: 'translateY(-50%)' }}>
+        <div>
           {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
         </div>
       </header>
@@ -548,8 +619,11 @@ export default function AngebotPage({ offer }) {
             Angebot annehmen
           </a>
 
+          {/* ✅ Zahlungsarten Icons */}
+          <PaymentIcons />
+
           {/* Widerrufsrecht */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
+          <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
           </div>
