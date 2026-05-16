@@ -218,11 +218,21 @@ function DescRow({ icon, title, children }) {
   )
 }
 
+// ─── SECURE PAYMENT ───────────────────────────────────────────────────────────
+function SecurePayment() {
+  return (
+    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span style={{ fontSize: 13, color: '#555' }}>Sichere Zahlung · Alle gängigen Zahlungsmethoden akzeptiert</span>
+    </div>
+  )
+}
+
 // ─── STEPPER ─────────────────────────────────────────────────────────────────
 const STATUS_INDEX = { offer_sent: 1, confirmed: 2, in_production: 3, shipped: 4 }
 
 function Stepper({ status }) {
-  const steps = ['Anfrage gesendet', 'Angebot erhalten', 'Bestätigt', 'In Produktion', 'Lieferung']
+  const steps = ['Anfrage gesendet', 'Angebot erhalten', 'Bestellt', 'In Produktion', 'Lieferung']
   const activeIdx = STATUS_INDEX[status] ?? 1
 
   return (
@@ -547,6 +557,9 @@ export default function AngebotPage({ offer }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
             Angebot annehmen
           </a>
+
+          
+          <SecurePayment />
 
           {/* Widerrufsrecht */}
           <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
