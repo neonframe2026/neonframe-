@@ -398,20 +398,11 @@ export default function AngebotPage({ offer }) {
       `}</style>
 
       {/* HEADER */}
-      <header className="hdr">
-        {/* Links: Angebotsdatum */}
-        <div>
-          <div className="valid-badge">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Angebotsdatum: {angebotsDatum}
-          </div>
-        </div>
-        {/* Mitte: Logo */}
-        <a href="https://neonframe.de" className="hdr-logo">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 78, display: 'block' }} />
-        </a>
-        {/* Rechts: Angebot Badge */}
-        <div>
+      <header className="hdr" style={{ justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <a href="https://neonframe.de">
+            <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 78, display: 'block' }} />
+          </a>
           {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
         </div>
       </header>
@@ -551,16 +542,8 @@ export default function AngebotPage({ offer }) {
 
           {/* 8 — CTA */}
           <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 20, height: 20 }}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-                Angebot annehmen
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 400, opacity: 0.8 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-                Sichere Zahlung · Alle gängigen Zahlungsmethoden
-              </div>
-            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+            Angebot annehmen
           </a>
 
           {/* Widerrufsrecht */}
