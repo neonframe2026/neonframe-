@@ -279,10 +279,9 @@ export default function AngebotPage({ offer }) {
   const colors = parseColors(offer.colors)
   const displayId = offer.offer_num || offer.custom_id || offer.id?.slice(0, 8)
 
-  // ✅ Gültigkeitsdatum formatieren
-  const validUntilFormatted = offer.valid_until
-    ? new Date(offer.valid_until).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    : null
+  const angebotsDatum = offer.created_at
+    ? new Date(offer.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   const images = []
   if (offer.preview_image) images.push(offer.preview_image)
@@ -301,7 +300,7 @@ export default function AngebotPage({ offer }) {
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100; }
         @media(max-width:900px){ .hdr { padding:0 16px; height:64px; } }
         .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
-        .valid-badge { background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#d97706; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+        .valid-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
         .hdr-logo { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
         @media(max-width:900px){ .hdr-logo img { height:46px !important; } .hdr-badge { font-size:11px; padding:6px 10px; } .valid-badge { font-size:11px; padding:6px 10px; } }
         /* Desktop layout */
@@ -400,14 +399,12 @@ export default function AngebotPage({ offer }) {
 
       {/* HEADER */}
       <header className="hdr">
-        {/* Links: Gültig bis */}
+        {/* Links: Angebotsdatum */}
         <div>
-          {validUntilFormatted && (
-            <div className="valid-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              Gültig bis {validUntilFormatted}
-            </div>
-          )}
+          <div className="valid-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Angebotsdatum: {angebotsDatum}
+          </div>
         </div>
         {/* Mitte: Logo */}
         <a href="https://neonframe.de" className="hdr-logo">
@@ -554,12 +551,17 @@ export default function AngebotPage({ offer }) {
 
           {/* 8 — CTA */}
           <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-            Angebot annehmen
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 20, height: 20 }}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                Angebot annehmen
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 400, opacity: 0.8 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                Sichere Zahlung · Alle gängigen Zahlungsmethoden
+              </div>
+            </div>
           </a>
-
-          
-          <SecurePayment />
 
           {/* Widerrufsrecht */}
           <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
