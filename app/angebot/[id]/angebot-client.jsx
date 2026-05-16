@@ -170,7 +170,6 @@ function ContactCard({ displayId, projectName }) {
   return (
     <div style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-        {/* bigger support icon: 64px */}
         <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280" alt="Support" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 17, fontWeight: 700, color: '#111', marginBottom: 3 }}>Noch Fragen oder Änderungswünsche?</div>
@@ -178,25 +177,26 @@ function ContactCard({ displayId, projectName }) {
         </div>
       </div>
       <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }} />
-<div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-  <button onClick={send} disabled={loading} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
-    {loading ? 'Wird gesendet...' : 'Per E-Mail senden'}
-  </button>
-  <a href="https://wa.me/4917656197641" target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
-    <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 17, height: 17 }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.833L.057 23.077a.75.75 0 0 0 .916.932l5.453-1.431A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.712 9.712 0 0 1-4.953-1.355l-.355-.21-3.676.964.983-3.589-.23-.368A9.712 9.712 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
-    Per WhatsApp senden
-  </a>
-</div>
-<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: '1px solid #f0f0f0' }}>
-  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f5f5f5', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-    <svg viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" style={{ width: 15, height: 15 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-  </div>
-  <div>
-    <div style={{ fontSize: 11, color: '#999', marginBottom: 1 }}>Oder rufen Sie uns an</div>
-    <a href="tel:+4917656197641" style={{ fontSize: 14, fontWeight: 600, color: '#111', textDecoration: 'none' }}>+49 176 56197641</a>
-  </div>
-</div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button onClick={send} disabled={loading} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
+          {loading ? 'Wird gesendet...' : 'Per E-Mail senden'}
+        </button>
+        {/* ✅ WhatsApp-Link fix: +49 statt 49 */}
+        <a href="https://wa.me/+4917656197641" target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>
+          <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 17, height: 17 }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.833L.057 23.077a.75.75 0 0 0 .916.932l5.453-1.431A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.712 9.712 0 0 1-4.953-1.355l-.355-.21-3.676.964.983-3.589-.23-.368A9.712 9.712 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+          Per WhatsApp senden
+        </a>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 14, borderTop: '1px solid #f0f0f0' }}>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f5f5f5', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" style={{ width: 15, height: 15 }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: '#999', marginBottom: 1 }}>Oder rufen Sie uns an</div>
+          <a href="tel:+4917656197641" style={{ fontSize: 14, fontWeight: 600, color: '#111', textDecoration: 'none' }}>+49 176 56197641</a>
+        </div>
+      </div>
       {status === 'ok' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>Nachricht gesendet! Wir melden uns bald.</div>}
       {status === 'err' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>{msg.trim() ? 'Fehler. Bitte direkt an info@neonframe.de schreiben.' : 'Bitte eine Nachricht eingeben.'}</div>}
     </div>
@@ -218,6 +218,57 @@ function DescRow({ icon, title, children }) {
   )
 }
 
+// ─── PAYMENT ICONS ────────────────────────────────────────────────────────────
+function PaymentIcons() {
+  const icons = [
+    { name: 'PayPal', bg: '#003087', content: <svg viewBox="0 0 48 48" style={{ width: 36, height: 22 }}><path fill="#fff" d="M18.6 8h8.3c4.3 0 7.2 2 7.2 6.2 0 5.5-3.8 8.4-9.2 8.4h-3.2L20 30h-5.5L18.6 8zm3.5 10.5h2.4c2.2 0 3.7-.9 3.7-3 0-1.6-1-2.5-2.9-2.5h-2.3l-.9 5.5zM30.8 18h4.8c3.7 0 6.2 1.7 6.2 5.4 0 4.8-3.3 7.3-8 7.3h-2.8L29.5 38h-5.4l4.7-20h2zm3 8.2h2c1.9 0 3.2-.8 3.2-2.6 0-1.4-.9-2.1-2.5-2.1h-1.9l-.8 4.7z"/></svg> },
+    { name: 'Klarna', bg: '#FFB3C7', content: <span style={{ fontWeight: 800, fontSize: 13, color: '#17120E', letterSpacing: -0.5 }}>klarna</span> },
+    { name: 'Visa', bg: '#1A1F71', content: <svg viewBox="0 0 48 48" style={{ width: 36, height: 22 }}><path fill="#fff" d="M20 15l-3.5 18h-4L16 15h4zm14.5 11.7c0-1.8-4.5-1.9-4.5-2.7 0-.2.4-.5 1.4-.5 1.3 0 2.6.3 3.5.7l.5-3.2a11 11 0 0 0-3.5-.6c-3.7 0-6.3 1.8-6.3 4.4 0 1.9 1.8 3 3.2 3.6 1.4.7 1.9 1.1 1.9 1.7 0 .9-1.1 1.3-2.2 1.3-1.4 0-3-.4-4-.9l-.5 3.3c1.1.5 3 .9 4.9.9 4 0 6.6-1.8 6.6-4.6zM11 15l-6.7 18H.5L-2.5 18.5c-.2-.6-.4-.8-.9-1.1C-4.5 16.8-6.3 16.2-8 16l.1-.5H-1c1 0 1.8.6 2 1.7l1.8 9.3L6.7 15H11zm23 0l-3.1 18h-3.8L30.2 15H34z"/></svg> },
+    { name: 'Mastercard', bg: '#EB001B', content: <svg viewBox="0 0 48 48" style={{ width: 32, height: 20 }}><circle cx="18" cy="24" r="12" fill="#EB001B"/><circle cx="30" cy="24" r="12" fill="#F79E1B"/><path fill="#FF5F00" d="M24 14.3a12 12 0 0 1 0 19.4A12 12 0 0 1 24 14.3z"/></svg> },
+    { name: 'Maestro', bg: '#009BE0', content: <svg viewBox="0 0 48 48" style={{ width: 32, height: 20 }}><circle cx="18" cy="24" r="12" fill="#009BE0"/><circle cx="30" cy="24" r="12" fill="#EE0005"/><path fill="#7B2D8B" d="M24 14.3a12 12 0 0 1 0 19.4A12 12 0 0 1 24 14.3z"/></svg> },
+    { name: 'Apple Pay', bg: '#000', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="2" y="18" fill="#fff" fontSize="11" fontFamily="-apple-system,sans-serif" fontWeight="500"> Pay</text><path fill="#fff" d="M6 5.5C5.3 6.3 4.2 6.9 3.1 6.8c-.1-1.1.4-2.2 1-2.9C4.8 3.1 6 2.5 7 2.5c.1 1.1-.3 2.2-1 3z M7 7c-1.7-.1-3.1.9-3.9.9-.8 0-2-.9-3.3-.9C-2 7-.3 9.3.3 10.5 1.5 12.7 3.2 15 5 15c.8 0 1.4-.5 2.3-.5.9 0 1.4.5 2.3.5 1.8 0 3.3-2 4.5-4.2-.1 0-2.7-1-2.7-4 0-2.5 2-3.7 2.1-3.8C12 1.8 10.2 1 9 1 7.5 1 6.5 2 5.5 2c-.9 0-1.8-1-3-1C.8 1-1.3 2.5-1.3 5c0 .7.1 1.5.4 2.3L7 7z"/></svg> },
+    { name: 'Google Pay', bg: '#fff', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="2" y="17" fontSize="10" fontFamily="sans-serif" fontWeight="500"><tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan></text><text x="24" y="17" fill="#444" fontSize="10" fontFamily="sans-serif" fontWeight="500"> Pay</text></svg> },
+    { name: 'Amex', bg: '#007BC1', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="4" y="17" fill="#fff" fontSize="9" fontFamily="sans-serif" fontWeight="700" letterSpacing="0.5">AMERICAN EXPRESS</text></svg> },
+  ]
+
+  return (
+    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      {icons.map(({ name, bg, content }) => (
+        <div key={name} title={name} style={{ background: bg, border: '1px solid #e5e7eb', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+          {content}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── STEPPER ─────────────────────────────────────────────────────────────────
+function Stepper() {
+  const steps = ['Angebot erhalten', 'Bestätigen', 'Produktion', 'Lieferung']
+  return (
+    <div style={{ background: '#f9fafb', borderBottom: '1px solid #eee', padding: '14px 52px' }}>
+      <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 0 }}>
+        {steps.map((step, i) => (
+          <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: i === 0 ? '#16a34a' : i === 1 ? '#16a34a' : '#e5e7eb', border: `2px solid ${i <= 1 ? '#16a34a' : '#d1d5db'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {i <= 1
+                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5" /></svg>
+                  : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9ca3af', display: 'block' }} />
+                }
+              </div>
+              <span style={{ fontSize: 12, fontWeight: i <= 1 ? 600 : 400, color: i <= 1 ? '#15803d' : '#9ca3af', whiteSpace: 'nowrap' }}>{step}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ flex: 1, height: 2, background: i < 1 ? '#16a34a' : '#e5e7eb', margin: '0 10px' }} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function AngebotPage({ offer }) {
   const [descOpen, setDescOpen] = useState(false)
@@ -233,6 +284,11 @@ export default function AngebotPage({ offer }) {
   const discDisplay = discType === 'pct' ? `${discVal}%` : `€ ${discVal.toFixed(2)}`
   const colors = parseColors(offer.colors)
   const displayId = offer.offer_num || offer.custom_id || offer.id?.slice(0, 8)
+
+  // ✅ Gültigkeitsdatum formatieren
+  const validUntilFormatted = offer.valid_until
+    ? new Date(offer.valid_until).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : null
 
   const images = []
   if (offer.preview_image) images.push(offer.preview_image)
@@ -251,6 +307,10 @@ export default function AngebotPage({ offer }) {
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; z-index:100; }
         @media(max-width:900px){ .hdr { padding:0 20px; height:68px; } }
         .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 22px; border-radius:20px; }
+        .hdr-right { display:flex; align-items:center; gap:10px; }
+        .valid-badge { background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.35); color:#d97706; font-size:12px; font-weight:600; padding:7px 14px; border-radius:20px; display:flex; align-items:center; gap:6px; }
+        .stepper-wrap { background:#f9fafb; border-bottom:1px solid #eee; padding:14px 52px; }
+        @media(max-width:900px){ .stepper-wrap { padding:12px 16px; } .stepper-step-label { display:none; } }
         /* Desktop layout */
         .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.3fr 1fr; gap:72px; align-items:start; }
         /* Mobile layout */
@@ -317,7 +377,7 @@ export default function AngebotPage({ offer }) {
         .express-row { display:flex; align-items:center; gap:7px; font-size:13px; color:#999; margin-bottom:18px; margin-top:6px; }
         .express-icon { width:14px; height:14px; color:#f59e0b; flex-shrink:0; }
         /* CTA */
-        .cta-btn { width:100%; background:#16a34a; color:#fff; border:none; border-radius:13px; padding:18px; font-size:17px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:14px; font-family:inherit; transition:background .15s, transform .1s; text-decoration:none; }
+        .cta-btn { width:100%; background:#16a34a; color:#fff; border:none; border-radius:13px; padding:18px; font-size:17px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px; font-family:inherit; transition:background .15s, transform .1s; text-decoration:none; }
         .cta-btn:hover { background:#15803d; transform:translateY(-1px); }
         .cta-btn svg { width:20px; height:20px; }
         /* Features */
@@ -349,8 +409,20 @@ export default function AngebotPage({ offer }) {
         <a href="https://neonframe.de">
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 68, display: 'block' }} />
         </a>
-        {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
+        <div className="hdr-right">
+          {/* ✅ Gültigkeitsdatum Badge */}
+          {validUntilFormatted && (
+            <div className="valid-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Gültig bis {validUntilFormatted}
+            </div>
+          )}
+          {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
+        </div>
       </header>
+
+      {/* ✅ STEPPER */}
+      <Stepper />
 
       <div className="page-wrap">
         {/* LEFT col — desktop only */}
@@ -382,7 +454,7 @@ export default function AngebotPage({ offer }) {
             <span style={{ fontSize: 14, color: '#666', fontWeight: 500 }}>4,5/5 Sternen</span>
           </div>
 
-          {/* 3 — Badge: no gap between "für" and name — use single string */}
+          {/* 3 — Badge */}
           {offer.project && (
             <div className="mob-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 10, padding: '7px 12px', marginBottom: 18, whiteSpace: 'nowrap' }}>
               <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -392,7 +464,7 @@ export default function AngebotPage({ offer }) {
             </div>
           )}
 
-          {/* 4 — MOBILE ONLY gallery (order:4) */}
+          {/* 4 — MOBILE ONLY gallery */}
           <div className="mob-gallery">
             <Gallery images={images} />
           </div>
@@ -465,7 +537,7 @@ export default function AngebotPage({ offer }) {
             ))}
           </div>
 
-          {/* 7 — Preis (inkl. MwSt. inline in der Total-Zeile) */}
+          {/* 7 — Preis */}
           <div className="price-section mob-price">
             <table className="price-table">
               <tbody>
@@ -488,8 +560,11 @@ export default function AngebotPage({ offer }) {
             Angebot annehmen
           </a>
 
+          {/* ✅ Zahlungsarten Icons */}
+          <PaymentIcons />
+
           {/* Widerrufsrecht */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
           </div>
@@ -538,7 +613,7 @@ export default function AngebotPage({ offer }) {
         </div>
       </div>
 
-      {/* PRODUKTBESCHREIBUNG — inline expand, no popup */}
+      {/* PRODUKTBESCHREIBUNG */}
       <div className="desc-section">
         <div className="desc-wrap">
           <div className="desc-header">
@@ -546,7 +621,6 @@ export default function AngebotPage({ offer }) {
             <div className="desc-badge-pill">PowerLEDs™ Technologie</div>
           </div>
 
-          {/* Premium-Beleuchtung with fade + inline expand */}
           <div style={{ borderBottom: descOpen ? 'none' : '1px solid #f0f0f0', padding: '18px 32px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
               <div style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff' }}>
@@ -554,19 +628,16 @@ export default function AngebotPage({ offer }) {
               </div>
               <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>Premium-Beleuchtung</span>
             </div>
-            {/* Faded preview when collapsed */}
             {!descOpen && (
               <div className="pb-fade">
                 <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
               </div>
             )}
-            {/* Full text when expanded */}
             {descOpen && (
               <div style={{ fontSize: 14, color: '#555', lineHeight: 1.8 }}>
                 <p>Die LED-Neon-Röhren sorgen für ein gleichmäßiges, helles Leuchten ohne Flackern oder sichtbare Lichtpunkte. Dank unserer patentierten PowerLEDs™ Technologie ist das Neon-Schild energieeffizient, langlebig und sicher im Gebrauch. Unsere LEDs erreichen eine Lebensdauer von bis zu 100.000 Stunden – das entspricht über 11 Jahren Dauerbetrieb.</p>
               </div>
             )}
-            {/* Toggle button — only Mehr anzeigen here, Weniger is at bottom */}
             {!descOpen && (
               <button className="mehr-btn" onClick={() => setDescOpen(true)}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
@@ -575,7 +646,6 @@ export default function AngebotPage({ offer }) {
             )}
           </div>
 
-          {/* Rest of description — only shown when expanded */}
           {descOpen && (
             <>
               <DescRow icon={<><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></>} title="Rückplatte & Finish">
@@ -611,7 +681,6 @@ export default function AngebotPage({ offer }) {
               <DescRow icon={<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></>} title="Kontakt">
                 <p>📧 <a href="mailto:info@neonframe.de" style={{ color: '#60c8f0', fontWeight: 600, textDecoration: 'none' }}>info@neonframe.de</a> – wir antworten innerhalb von 24 Stunden.</p>
               </DescRow>
-              {/* Weniger anzeigen — ganz unten */}
               <div style={{ padding: '8px 32px 24px', display: 'flex', justifyContent: 'center', borderTop: '1px solid #f5f5f5' }}>
                 <button className="weniger-btn" onClick={() => { setDescOpen(false); document.querySelector('.desc-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
