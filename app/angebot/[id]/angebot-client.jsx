@@ -221,49 +221,104 @@ function DescRow({ icon, title, children }) {
 // ─── PAYMENT ICONS ────────────────────────────────────────────────────────────
 function PaymentIcons() {
   const icons = [
-    { name: 'PayPal', bg: '#003087', content: <svg viewBox="0 0 48 48" style={{ width: 36, height: 22 }}><path fill="#fff" d="M18.6 8h8.3c4.3 0 7.2 2 7.2 6.2 0 5.5-3.8 8.4-9.2 8.4h-3.2L20 30h-5.5L18.6 8zm3.5 10.5h2.4c2.2 0 3.7-.9 3.7-3 0-1.6-1-2.5-2.9-2.5h-2.3l-.9 5.5zM30.8 18h4.8c3.7 0 6.2 1.7 6.2 5.4 0 4.8-3.3 7.3-8 7.3h-2.8L29.5 38h-5.4l4.7-20h2zm3 8.2h2c1.9 0 3.2-.8 3.2-2.6 0-1.4-.9-2.1-2.5-2.1h-1.9l-.8 4.7z"/></svg> },
-    { name: 'Klarna', bg: '#FFB3C7', content: <span style={{ fontWeight: 800, fontSize: 13, color: '#17120E', letterSpacing: -0.5 }}>klarna</span> },
-    { name: 'Visa', bg: '#1A1F71', content: <svg viewBox="0 0 48 48" style={{ width: 36, height: 22 }}><path fill="#fff" d="M20 15l-3.5 18h-4L16 15h4zm14.5 11.7c0-1.8-4.5-1.9-4.5-2.7 0-.2.4-.5 1.4-.5 1.3 0 2.6.3 3.5.7l.5-3.2a11 11 0 0 0-3.5-.6c-3.7 0-6.3 1.8-6.3 4.4 0 1.9 1.8 3 3.2 3.6 1.4.7 1.9 1.1 1.9 1.7 0 .9-1.1 1.3-2.2 1.3-1.4 0-3-.4-4-.9l-.5 3.3c1.1.5 3 .9 4.9.9 4 0 6.6-1.8 6.6-4.6zM11 15l-6.7 18H.5L-2.5 18.5c-.2-.6-.4-.8-.9-1.1C-4.5 16.8-6.3 16.2-8 16l.1-.5H-1c1 0 1.8.6 2 1.7l1.8 9.3L6.7 15H11zm23 0l-3.1 18h-3.8L30.2 15H34z"/></svg> },
-    { name: 'Mastercard', bg: '#EB001B', content: <svg viewBox="0 0 48 48" style={{ width: 32, height: 20 }}><circle cx="18" cy="24" r="12" fill="#EB001B"/><circle cx="30" cy="24" r="12" fill="#F79E1B"/><path fill="#FF5F00" d="M24 14.3a12 12 0 0 1 0 19.4A12 12 0 0 1 24 14.3z"/></svg> },
-    { name: 'Maestro', bg: '#009BE0', content: <svg viewBox="0 0 48 48" style={{ width: 32, height: 20 }}><circle cx="18" cy="24" r="12" fill="#009BE0"/><circle cx="30" cy="24" r="12" fill="#EE0005"/><path fill="#7B2D8B" d="M24 14.3a12 12 0 0 1 0 19.4A12 12 0 0 1 24 14.3z"/></svg> },
-    { name: 'Apple Pay', bg: '#000', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="2" y="18" fill="#fff" fontSize="11" fontFamily="-apple-system,sans-serif" fontWeight="500"> Pay</text><path fill="#fff" d="M6 5.5C5.3 6.3 4.2 6.9 3.1 6.8c-.1-1.1.4-2.2 1-2.9C4.8 3.1 6 2.5 7 2.5c.1 1.1-.3 2.2-1 3z M7 7c-1.7-.1-3.1.9-3.9.9-.8 0-2-.9-3.3-.9C-2 7-.3 9.3.3 10.5 1.5 12.7 3.2 15 5 15c.8 0 1.4-.5 2.3-.5.9 0 1.4.5 2.3.5 1.8 0 3.3-2 4.5-4.2-.1 0-2.7-1-2.7-4 0-2.5 2-3.7 2.1-3.8C12 1.8 10.2 1 9 1 7.5 1 6.5 2 5.5 2c-.9 0-1.8-1-3-1C.8 1-1.3 2.5-1.3 5c0 .7.1 1.5.4 2.3L7 7z"/></svg> },
-    { name: 'Google Pay', bg: '#fff', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="2" y="17" fontSize="10" fontFamily="sans-serif" fontWeight="500"><tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan></text><text x="24" y="17" fill="#444" fontSize="10" fontFamily="sans-serif" fontWeight="500"> Pay</text></svg> },
-    { name: 'Amex', bg: '#007BC1', content: <svg viewBox="0 0 48 24" style={{ width: 38, height: 20 }}><text x="4" y="17" fill="#fff" fontSize="9" fontFamily="sans-serif" fontWeight="700" letterSpacing="0.5">AMERICAN EXPRESS</text></svg> },
+    {
+      name: 'PayPal',
+      el: <div style={{ background: '#003087', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 13, fontFamily: 'Arial,sans-serif', letterSpacing: -0.5 }}><span style={{ color: '#009cde' }}>Pay</span><span style={{ color: '#fff' }}>Pal</span></span>
+      </div>
+    },
+    {
+      name: 'Klarna',
+      el: <div style={{ background: '#ffb3c7', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 11, color: '#17120e', fontFamily: 'Arial,sans-serif', letterSpacing: -0.5 }}>klarna</span>
+      </div>
+    },
+    {
+      name: 'Visa',
+      el: <div style={{ background: '#1a1f71', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 16, color: '#fff', fontFamily: 'Arial,sans-serif', fontStyle: 'italic', letterSpacing: -1 }}>VISA</span>
+      </div>
+    },
+    {
+      name: 'Mastercard',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#eb001b"/><circle cx="23" cy="11" r="10" fill="#f79e1b"/><path d="M18 3.5a10 10 0 0 1 0 15A10 10 0 0 1 18 3.5z" fill="#ff5f00"/></svg>
+      </div>
+    },
+    {
+      name: 'Apple Pay',
+      el: <div style={{ background: '#000', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #333', flexShrink: 0 }}>
+        <svg width="44" height="18" viewBox="0 0 56 22" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9.5 3.8C8.8 4.6 7.7 5.2 6.6 5.1c-.1-1.1.4-2.3 1.1-3C8.4 1.3 9.7.7 10.7.8c.1 1.2-.3 2.3-1.2 3z"/>
+          <path d="M10.8 5.5c-1.8-.1-3.3 1-4.2 1-.9 0-2.2-1-3.6-1C1 5.5-.8 7 -1.5 9.1c-1.3 2.4.4 7.6 1.8 10.1.7 1 1.5 2.2 2.7 2.1 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2.1.8-1.3 1.1-2.5 1.2-2.6 0 0-2.3-.9-2.3-3.4 0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.6-3.1-1.6h-.1z"/>
+          <text x="16" y="16" fontSize="13" fontWeight="500" fontFamily="-apple-system,BlinkMacSystemFont,sans-serif" fill="white"> Pay</text>
+        </svg>
+      </div>
+    },
+    {
+      name: 'Google Pay',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="44" height="16" viewBox="0 0 56 18" xmlns="http://www.w3.org/2000/svg">
+          <text x="0" y="14" fontSize="12" fontFamily="Arial,sans-serif" fontWeight="500">
+            <tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan>
+          </text>
+          <text x="36" y="14" fontSize="12" fontFamily="Arial,sans-serif" fontWeight="500" fill="#5f6368">Pay</text>
+        </svg>
+      </div>
+    },
+    {
+      name: 'Amex',
+      el: <div style={{ background: '#007bc1', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <span style={{ fontWeight: 900, fontSize: 7.5, color: '#fff', fontFamily: 'Arial,sans-serif', textAlign: 'center', lineHeight: 1.3, letterSpacing: 0.2 }}>AMERICAN<br/>EXPRESS</span>
+      </div>
+    },
+    {
+      name: 'Maestro',
+      el: <div style={{ background: '#fff', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#009be0"/><circle cx="23" cy="11" r="10" fill="#ee0005"/><path d="M18 3.5a10 10 0 0 1 0 15A10 10 0 0 1 18 3.5z" fill="#7b2d8b"/></svg>
+      </div>
+    },
   ]
 
   return (
     <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-      {icons.map(({ name, bg, content }) => (
-        <div key={name} title={name} style={{ background: bg, border: '1px solid #e5e7eb', borderRadius: 6, width: 52, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-          {content}
-        </div>
+      {icons.map(({ name, el }) => (
+        <div key={name} title={name}>{el}</div>
       ))}
     </div>
   )
 }
 
 // ─── STEPPER ─────────────────────────────────────────────────────────────────
-function Stepper() {
-  const steps = ['Angebot erhalten', 'Bestätigen', 'Produktion', 'Lieferung']
+const STATUS_INDEX = { offer_sent: 1, confirmed: 2, in_production: 3, shipped: 4 }
+
+function Stepper({ status }) {
+  const steps = ['Anfrage gesendet', 'Angebot erhalten', 'Bestätigt', 'In Produktion', 'Lieferung']
+  const activeIdx = STATUS_INDEX[status] ?? 1
+
   return (
     <div style={{ background: '#f9fafb', borderBottom: '1px solid #eee', padding: '14px 52px' }}>
-      <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 0 }}>
-        {steps.map((step, i) => (
-          <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: i === 0 ? '#16a34a' : i === 1 ? '#16a34a' : '#e5e7eb', border: `2px solid ${i <= 1 ? '#16a34a' : '#d1d5db'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {i <= 1
-                  ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5" /></svg>
-                  : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9ca3af', display: 'block' }} />
-                }
+      <style>{`@media(max-width:900px){.stp-lbl{display:none!important}}`}</style>
+      <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
+        {steps.map((step, i) => {
+          const done = i <= activeIdx
+          return (
+            <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: done ? '#16a34a' : '#e5e7eb', border: `2px solid ${done ? '#16a34a' : '#d1d5db'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {done
+                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5" /></svg>
+                    : <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9ca3af', display: 'block' }} />
+                  }
+                </div>
+                <span className="stp-lbl" style={{ fontSize: 12, fontWeight: done ? 600 : 400, color: done ? '#15803d' : '#9ca3af', whiteSpace: 'nowrap' }}>{step}</span>
               </div>
-              <span style={{ fontSize: 12, fontWeight: i <= 1 ? 600 : 400, color: i <= 1 ? '#15803d' : '#9ca3af', whiteSpace: 'nowrap' }}>{step}</span>
+              {i < steps.length - 1 && (
+                <div style={{ flex: 1, height: 2, background: i < activeIdx ? '#16a34a' : '#e5e7eb', margin: '0 10px' }} />
+              )}
             </div>
-            {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 2, background: i < 1 ? '#16a34a' : '#e5e7eb', margin: '0 10px' }} />
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -422,7 +477,7 @@ export default function AngebotPage({ offer }) {
       </header>
 
       {/* ✅ STEPPER */}
-      <Stepper />
+      <Stepper status={offer.status} />
 
       <div className="page-wrap">
         {/* LEFT col — desktop only */}
