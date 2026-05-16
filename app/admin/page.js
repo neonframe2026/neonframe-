@@ -72,7 +72,7 @@ export default function AdminPage() {
     num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
-    delivery: '', url: '',
+delivery: '', url: '', validUntil: '',
   })
 
   const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct' })
@@ -187,7 +187,9 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       <div class="divider"></div>
       <div class="total"><span class="tlbl">Gesamtbetrag</span><span class="tval">${p.total > 0 ? '€ ' + p.total.toFixed(2) : '–'}${p.total > 0 ? '<span class="tval-note">(inkl. MwSt.)</span>' : ''}</span></div>
     </div>
+${f.validUntil ? `<div style="display:flex;align-items:center;gap:6px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:#d97706;font-size:11px;font-weight:600;padding:6px 12px;border-radius:20px;margin-bottom:8px;width:fit-content">📅 Gültig bis ${new Date(f.validUntil).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>` : ''}
     <div class="cta">🛒 Angebot annehmen</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">${['PayPal','Klarna','Visa','Mastercard','Maestro','Apple Pay','Google Pay','Amex'].map(n=>`<div style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:600;color:#555">${n}</div>`).join('')}</div>
     <div class="warn">⚠️ Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB kein Widerrufsrecht.</div>
     <div class="ship"><span>🚚</span><div><strong style="display:block;font-size:12px">Kostenloser Versand</strong><span style="font-size:11px;color:#888">${f.delivery ? 'Geliefert zwischen ' + f.delivery : 'Lieferzeit 2–3 Wochen'}</span></div></div>
   </div>
@@ -296,7 +298,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
         delivery: f.delivery,
         checkout_url: f.url,
-        customer_note: f.customerNote || null,
+customer_note: f.customerNote || null,
+        valid_until: f.validUntil || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -602,8 +605,11 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
           <div style={S.section}>
             <div style={S.sTitle}>Weitere Einstellungen</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Lieferdatum">
+<Field label="Lieferdatum">
                 <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
+              </Field>
+              <Field label="Angebot gültig bis">
+                <input style={S.input} type="date" defaultValue={fRef.current.validUntil} onChange={e => updText('validUntil', e.target.value)} />
               </Field>
               <Field label="Checkout-URL (Shopify Draft Order Link)">
                 <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https://..." />
