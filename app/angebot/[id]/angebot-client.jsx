@@ -221,7 +221,7 @@ function DescRow({ icon, title, children }) {
 // ─── SECURE PAYMENT ───────────────────────────────────────────────────────────
 function SecurePayment() {
   return (
-    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+    <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10 }}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
       <span style={{ fontSize: 13, color: '#555' }}>Sichere Zahlung · Alle gängigen Zahlungsmethoden akzeptiert</span>
     </div>
@@ -236,8 +236,8 @@ function Stepper({ status }) {
   const activeIdx = STATUS_INDEX[status] ?? 1
 
   return (
-    <div style={{ background: '#f9fafb', borderBottom: '1px solid #eee', padding: '14px 52px' }}>
-      <style>{`@media(max-width:900px){.stp-lbl{display:none!important}}`}</style>
+    <div style={{ background: '#f9fafb', borderBottom: '1px solid #eee', padding: '14px 52px' }} className="stepper-bar">
+      <style>{`@media(max-width:900px){.stp-lbl{display:none!important}.stepper-bar{display:none!important}}`}</style>
       <div style={{ maxWidth: 1380, margin: '0 auto', display: 'flex', alignItems: 'center' }}>
         {steps.map((step, i) => {
           const done = i <= activeIdx
