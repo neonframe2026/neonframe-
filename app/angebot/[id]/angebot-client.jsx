@@ -303,6 +303,7 @@ export default function AngebotPage({ offer }) {
         .valid-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
         .hdr-logo { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
         @media(max-width:900px){ .hdr-logo img { height:46px !important; } .hdr-badge { font-size:11px; padding:6px 10px; } .valid-badge { font-size:11px; padding:6px 10px; } }
+        @media(max-width:900px){ .hdr img { height:52px !important; } }
         /* Desktop layout */
         .page-wrap { max-width:1380px; margin:0 auto; padding:52px 52px 60px; display:grid; grid-template-columns:1.3fr 1fr; gap:72px; align-items:start; }
         /* Mobile layout */
@@ -398,13 +399,11 @@ export default function AngebotPage({ offer }) {
       `}</style>
 
       {/* HEADER */}
-      <header className="hdr" style={{ justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <a href="https://neonframe.de">
-            <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 78, display: 'block' }} />
-          </a>
-          {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
-        </div>
+      <header className="hdr">
+        <a href="https://neonframe.de">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{ height: 78, display: 'block' }} />
+        </a>
+        {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
       </header>
 
       {/* ✅ STEPPER */}
