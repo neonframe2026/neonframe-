@@ -5,7 +5,7 @@ const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW || 'neonframe2025'
 
 const STATUS_OPTIONS = [
   { value: 'offer_sent',     label: 'Angebot erhalten',  color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-  { value: 'confirmed',      label: 'Bestätigt',          color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+  { value: 'confirmed',      label: 'Bestellt',          color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
   { value: 'in_production',  label: 'In Produktion',      color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
   { value: 'shipped',        label: 'Lieferung',          color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
 ]
