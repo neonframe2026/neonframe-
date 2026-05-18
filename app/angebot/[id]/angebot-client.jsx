@@ -406,8 +406,7 @@ export default function AngebotPage({ offer }) {
         {displayId && <div className="hdr-badge">Angebot #{displayId}</div>}
       </header>
 
-      {/* ✅ STEPPER */}
-      <Stepper status={offer.status} />
+
 
       <div className="page-wrap">
         {/* LEFT col — desktop only */}
