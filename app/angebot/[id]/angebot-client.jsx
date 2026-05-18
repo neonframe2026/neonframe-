@@ -486,7 +486,7 @@ export default function AngebotPage({ offer }) {
                   </div>
                 </div>
               )}
-              {offer.backplate_color && (
+              {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
                 <div>
                   <span className="cfg-label">Rückwandfarbe</span>
                   <div className="img-tt" style={{ marginTop: 4 }}>
