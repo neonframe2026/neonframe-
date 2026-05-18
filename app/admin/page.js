@@ -103,6 +103,207 @@ const PAYMENT_ICONS_HTML = `
   </div>
 </div>`
 
+function EditModal({ offer, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    offer_num: offer.offer_num || offer.custom_id || '',
+    project: offer.project || '',
+    width: offer.width || '',
+    height: offer.height || '',
+    colors: offer.colors || '',
+    backplate: offer.backplate || 'Ausgeschnitten',
+    backplate_color: offer.backplate_color || 'Transparent',
+    usage: offer.usage || 'Innen',
+    base_price: offer.base_price || '',
+    disc_type: offer.disc_type || 'pct',
+    disc_val: offer.disc_val || '20',
+    vat_pct: offer.vat_pct || '19',
+    delivery: offer.delivery || '',
+    checkout_url: offer.checkout_url || '',
+    customer_note: offer.customer_note || '',
+    valid_until: offer.valid_until ? offer.valid_until.slice(0, 10) : '',
+    status: offer.status || 'offer_sent',
+  })
+  const [saving, setSaving] = useState(false)
+  const [imgSrcs, setImgSrcs] = useState([
+    offer.preview_image || null,
+    offer.preview_image_2 || null,
+    offer.preview_image_3 || null,
+  ])
+
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const prices = calcPrices(form.base_price, form.disc_type, form.disc_val, form.vat_pct)
+
+  function handleImage(e, idx) {
+    const file = e.target.files[0]; if (!file) return
+    const r = new FileReader()
+    r.onload = ev => setImgSrcs(prev => { const next = [...prev]; next[idx] = ev.target.result; return next })
+    r.readAsDataURL(file)
+  }
+
+  async function save() {
+    setSaving(true)
+    try {
+      const uploadedImgs = [...imgSrcs]
+      for (let i = 0; i < 3; i++) {
+        if (imgSrcs[i]?.startsWith('data:')) {
+          const blob = await (await fetch(imgSrcs[i])).blob()
+          const fd = new FormData()
+          fd.append('file', blob, `offer-edit-${Date.now()}-${i}.jpg`)
+          fd.append('offerId', offer.id)
+          const up = await fetch('/api/upload', { method: 'POST', body: fd })
+          const upData = await up.json()
+          if (upData.url) uploadedImgs[i] = upData.url
+        }
+      }
+      const payload = {
+        offer_num: form.offer_num, project: form.project,
+        width: form.width, height: form.height, colors: form.colors,
+        backplate: form.backplate, backplate_color: form.backplate_color, usage: form.usage,
+        base_price: parseFloat(form.base_price) || 0, disc_type: form.disc_type,
+        disc_val: parseFloat(form.disc_val) || 0, vat_pct: parseFloat(form.vat_pct) || 19,
+        net_price: prices.net, final_price: prices.total,
+        delivery: form.delivery, checkout_url: form.checkout_url,
+        customer_note: form.customer_note || null,
+        valid_until: form.valid_until || null, status: form.status,
+        preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
+      }
+      const res = await fetch(`/api/offers?id=${offer.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      onSaved()
+    } catch (err) { alert('Fehler: ' + err.message) }
+    setSaving(false)
+  }
+
+  const inp = { background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', color: '#111', fontSize: 13, fontFamily: 'inherit', outline: 'none', width: '100%' }
+  const sel = { ...inp, cursor: 'pointer' }
+  const lbl = { fontSize: 10, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 5 }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Angebot bearbeiten</div>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>#{offer.custom_id || offer.id?.slice(0,8)}{offer.project ? ` · ${offer.project}` : ''}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#9ca3af', lineHeight: 1, padding: 4 }}>×</button>
+        </div>
+
+        <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Bilder */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              {[0,1,2].map(idx => (
+                <label key={idx} htmlFor={`edit-img-${idx}`} style={{ border: '1px dashed #e5e7eb', borderRadius: 10, padding: 8, textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: '#fafafa' }}>
+                  <input id={`edit-img-${idx}`} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImage(e, idx)} />
+                  {imgSrcs[idx]
+                    ? <img src={imgSrcs[idx]} style={{ width: '100%', height: 64, objectFit: 'cover', borderRadius: 6 }} alt="" />
+                    : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{ fontSize: 10, color: '#9ca3af' }}>Bild {idx+1}</span></>
+                  }
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Angebotsdaten */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Angebotsdaten</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>Angebotsnummer</label><input style={inp} value={form.offer_num} onChange={e => set('offer_num', e.target.value)} /></div>
+                <div><label style={lbl}>Projekt / Kundenname</label><input style={inp} value={form.project} onChange={e => set('project', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>Breite (cm)</label><input style={inp} type="number" value={form.width} onChange={e => set('width', e.target.value)} /></div>
+                <div><label style={lbl}>Höhe (cm)</label><input style={inp} type="number" value={form.height} onChange={e => set('height', e.target.value)} /></div>
+              </div>
+              <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
+            </div>
+          </div>
+
+          {/* Konfiguration */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Konfiguration</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div><label style={lbl}>Rückwandform</label>
+                <select style={sel} value={form.backplate} onChange={e => set('backplate', e.target.value)}>
+                  {BACKPLATE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+              <div><label style={lbl}>Rückwandfarbe</label>
+                <select style={sel} value={form.backplate_color} onChange={e => set('backplate_color', e.target.value)}>
+                  {BACKPLATE_COLOR_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+              <div><label style={lbl}>Verwendungszweck</label>
+                <select style={sel} value={form.usage} onChange={e => set('usage', e.target.value)}>
+                  {USAGE_OPTIONS.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Preis */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Preiskalkulation</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div><label style={lbl}>Listenpreis (netto)</label><input style={inp} type="number" step="0.01" value={form.base_price} onChange={e => set('base_price', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>Rabatt-Typ</label>
+                  <select style={sel} value={form.disc_type} onChange={e => set('disc_type', e.target.value)}>
+                    <option value="pct">Prozent (%)</option>
+                    <option value="eur">Euro (€)</option>
+                  </select>
+                </div>
+                <div><label style={lbl}>Rabatt ({form.disc_type === 'pct' ? '%' : '€'})</label><input style={inp} type="number" step="0.01" value={form.disc_val} onChange={e => set('disc_val', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>MwSt. (%)</label><input style={inp} type="number" value={form.vat_pct} onChange={e => set('vat_pct', e.target.value)} /></div>
+                <div><label style={lbl}>Kalkuliert</label>
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '9px 12px', fontSize: 13, fontWeight: 700, color: '#16a34a' }}>
+                    {prices.total > 0 ? `€ ${prices.total.toFixed(2)}` : '–'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Weitere Einstellungen */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Weitere Einstellungen</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>Lieferdatum</label><input style={inp} value={form.delivery} onChange={e => set('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" /></div>
+                <div><label style={lbl}>Gültig bis</label><input style={inp} type="date" value={form.valid_until} onChange={e => set('valid_until', e.target.value)} /></div>
+              </div>
+              <div><label style={lbl}>Status</label>
+                <select style={sel} value={form.status} onChange={e => set('status', e.target.value)}>
+                  {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+              <div><label style={lbl}>Checkout-URL</label><input style={inp} value={form.checkout_url} onChange={e => set('checkout_url', e.target.value)} placeholder="https://..." /></div>
+              <div><label style={lbl}>Notizen für den Kunden</label>
+                <textarea style={{ ...inp, minHeight: 72, resize: 'vertical', lineHeight: 1.5 }} value={form.customer_note} onChange={e => set('customer_note', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ flex: 1, background: 'transparent', border: '1px solid #e5e7eb', color: '#374151', borderRadius: 10, padding: 12, fontWeight: 500, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Abbrechen</button>
+          <button onClick={save} disabled={saving} style={{ flex: 2, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: 12, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
+            {saving ? 'Wird gespeichert...' : '✓ Änderungen speichern'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
@@ -111,6 +312,7 @@ export default function AdminPage() {
   const [previewTab, setPreviewTab] = useState('angebot')
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
+  const [editingOffer, setEditingOffer] = useState(null)
 
   const fRef = useRef({
     num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
@@ -501,8 +703,15 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     <div style={{display:'flex',flexDirection:'column',gap:5}}><label style={S.label}>{label}</label>{children}</div>
   )
 
-  if (tab === 'manage') return (
+if (tab === 'manage') return (
     <div style={S.app}>
+      {editingOffer && (
+        <EditModal
+          offer={editingOffer}
+          onClose={() => setEditingOffer(null)}
+          onSaved={() => { setEditingOffer(null); loadOffers() }}
+        />
+      )}
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
@@ -561,6 +770,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                       )}
                     </div>
                     <div style={{display:'flex',gap:8,flexShrink:0}}>
+                      <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
                       <button onClick={() => toggleOffer(o.id, o.published)} style={{...S.btnOutline,fontSize:12}}>{o.published?'Deaktivieren':'Aktivieren'}</button>
                       <button onClick={() => deleteOffer(o.id)} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Löschen</button>
                     </div>
