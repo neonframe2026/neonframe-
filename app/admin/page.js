@@ -217,7 +217,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     ${f.num ? `<div class="badge">Angebot #${f.num}</div>` : ''}
   </div>
 </div>
-<div class="stepper">${stepperHtml}</div>
+
 <div class="wrap">
   <div>
     <div class="img-box">
@@ -530,8 +530,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
                         {o.project && <span style={{fontSize:14,color:'#6b7280'}}>{o.project}</span>}
                         <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                        {/* Status Badge */}
-                        <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:currentStatus.bg,color:currentStatus.color,border:`1px solid ${currentStatus.border}`}}>{currentStatus.label}</span>
+                        {/* Erstellungsdatum */}
+                        {o.created_at && <span style={{fontSize:12,color:'#9ca3af'}}>📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>}
                       </div>
                       <div style={{fontSize:13,color:'#9ca3af',display:'flex',gap:16,flexWrap:'wrap'}}>
                         {o.width && o.height && <span>{o.width} × {o.height} cm</span>}
