@@ -569,6 +569,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         delivery: f.delivery,
         checkout_url: f.url,
         customer_note: f.customerNote || null,
+        customer_email: f.customerEmail || null,
         valid_until: f.validUntil || null,
         status: f.status || 'offer_sent',
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
