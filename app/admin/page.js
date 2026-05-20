@@ -122,6 +122,7 @@ function EditModal({ offer, onClose, onSaved }) {
     customer_note: offer.customer_note || '',
     valid_until: offer.valid_until ? offer.valid_until.slice(0, 10) : '',
     status: offer.status || 'offer_sent',
+    customer_email: offer.customer_email || '',
   })
   const [saving, setSaving] = useState(false)
   const [imgSrcs, setImgSrcs] = useState([
@@ -165,6 +166,7 @@ function EditModal({ offer, onClose, onSaved }) {
         delivery: form.delivery, checkout_url: form.checkout_url,
         customer_note: form.customer_note || null,
         valid_until: form.valid_until || null, status: form.status,
+        customer_email: form.customer_email || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       }
       const res = await fetch(`/api/offers?id=${offer.id}`, {
@@ -217,6 +219,7 @@ function EditModal({ offer, onClose, onSaved }) {
                 <div><label style={lbl}>Angebotsnummer</label><input style={inp} value={form.offer_num} onChange={e => set('offer_num', e.target.value)} /></div>
                 <div><label style={lbl}>Projekt / Kundenname</label><input style={inp} value={form.project} onChange={e => set('project', e.target.value)} /></div>
               </div>
+              <div><label style={lbl}>Kunden-E-Mail</label><input style={{...inp, borderColor:'#60c8f044', background:'#f0fbff'}} type="email" value={form.customer_email} onChange={e => set('customer_email', e.target.value)} placeholder="kunde@email.de" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>Breite (cm)</label><input style={inp} type="number" value={form.width} onChange={e => set('width', e.target.value)} /></div>
                 <div><label style={lbl}>Höhe (cm)</label><input style={inp} type="number" value={form.height} onChange={e => set('height', e.target.value)} /></div>
@@ -739,8 +742,23 @@ if (tab === 'manage') return (
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
                         {o.project && <span style={{fontSize:14,color:'#6b7280'}}>{o.project}</span>}
                         <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                        {/* Erstellungsdatum */}
-                        {o.created_at && <span style={{fontSize:12,color:'#9ca3af'}}>📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>}
+                        {/* Erstellungsdatum – rot wenn > 4 Tage */}
+                        {o.created_at && (() => {
+                          const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
+                          const isOld = daysDiff >= 4
+                          return (
+                            <span style={{display:'flex',alignItems:'center',gap:6}}>
+                              <span style={{fontSize:12,color:isOld?'#dc2626':'#9ca3af',fontWeight:isOld?700:400}}>
+                                📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
+                              </span>
+                              {isOld && (
+                                <span style={{display:'inline-flex',alignItems:'center',gap:4,background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap'}}>
+                                  ↩ Nochmals kontaktieren
+                                </span>
+                              )}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <div style={{fontSize:13,color:'#9ca3af',display:'flex',gap:16,flexWrap:'wrap'}}>
                         {o.width && o.height && <span>{o.width} × {o.height} cm</span>}
