@@ -4,10 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW || 'neonframe2025'
 
 const STATUS_OPTIONS = [
-  { value: 'offer_sent',     label: 'Angebot erhalten',  color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-  { value: 'confirmed',      label: 'Bestellt',          color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
-  { value: 'in_production',  label: 'In Produktion',      color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
-  { value: 'shipped',        label: 'Lieferung',          color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+  { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+  { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  { value: 'confirmed',       label: 'Bestellt',             color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
 ]
 
 function calcPrices(basePrice, discType, discVal, vatPct) {
@@ -654,7 +653,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     loadOffers()
   }
 
-  useEffect(() => { if (authed && tab === 'manage') loadOffers() }, [authed, tab])
+  useEffect(() => { if (authed) loadOffers() }, [authed, tab])
 
   if (!authed) return (
     <div style={{position:'fixed',inset:0,background:'#f9fafb',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -718,7 +717,13 @@ if (tab === 'manage') return (
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
-          <div style={S.tabs}><button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button><button style={S.tab(true)}>Verwalten</button></div>
+          <div style={S.tabs}>
+            <button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button>
+            <button style={{...S.tab(true), position:'relative'}}>
+              Verwalten
+              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 4 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+            </button>
+          </div>
         </div>
         <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
       </div>
@@ -742,17 +747,30 @@ if (tab === 'manage') return (
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
                         {o.project && <span style={{fontSize:14,color:'#6b7280'}}>{o.project}</span>}
                         <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                        {/* Erstellungsdatum – rot wenn > 4 Tage */}
+                        {/* Erstellungsdatum – rot + klickbares Badge wenn > 4 Tage und noch nicht kontaktiert */}
                         {o.created_at && (() => {
                           const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
-                          const isOld = daysDiff >= 4
+                          const needsContact = daysDiff >= 4 && o.status !== 'recontacted' && o.status !== 'confirmed'
                           return (
                             <span style={{display:'flex',alignItems:'center',gap:6}}>
-                              <span style={{fontSize:12,color:isOld?'#dc2626':'#9ca3af',fontWeight:isOld?700:400}}>
+                              <span style={{fontSize:12,color:needsContact?'#dc2626':'#9ca3af',fontWeight:needsContact?700:400}}>
                                 📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
                               </span>
-                              {isOld && (
-                                <span style={{display:'inline-flex',alignItems:'center',gap:4,background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap'}}>
+                              {needsContact && (
+                                <span
+                                  onClick={() => {
+                                    const email = o.customer_email
+                                    if (email) {
+                                      navigator.clipboard.writeText(email)
+                                        .then(() => alert('E-Mail kopiert: ' + email))
+                                        .catch(() => alert('E-Mail: ' + email))
+                                    } else {
+                                      alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
+                                    }
+                                  }}
+                                  title={o.customer_email ? 'E-Mail kopieren: ' + o.customer_email : 'Keine E-Mail hinterlegt'}
+                                  style={{display:'inline-flex',alignItems:'center',gap:4,background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
+                                >
                                   ↩ Nochmals kontaktieren
                                 </span>
                               )}
@@ -806,7 +824,13 @@ if (tab === 'manage') return (
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
-          <div style={S.tabs}><button style={S.tab(true)}>Erstellen</button><button style={S.tab(false)} onClick={() => setTab('manage')}>Verwalten</button></div>
+          <div style={S.tabs}>
+            <button style={S.tab(true)}>Erstellen</button>
+            <button style={{...S.tab(false), position:'relative'}} onClick={() => setTab('manage')}>
+              Verwalten
+              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 4 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+            </button>
+          </div>
         </div>
         <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
       </div>
