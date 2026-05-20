@@ -617,8 +617,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             body: JSON.stringify({ checkout_url: draftData.checkoutUrl }),
           })
         }
-        statusMsg += `\n\nShopify Draft Order: ${draftData.draftOrderName}`
-        if (f.customerEmail) statusMsg += `\nKunden-E-Mail gesendet an: ${f.customerEmail}`
+        if (f.customerEmail) statusMsg += `\n\nKunden-E-Mail gesendet an: ${f.customerEmail}`
       } else {
         statusMsg += `\n\n⚠️ Draft Order Fehler: ${draftData.error}`
       }
