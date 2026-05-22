@@ -850,8 +850,8 @@ if (tab === 'manage') return (
           { BILDER }
           div style={S.section}
             div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}
-              div style={{fontSize:11,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.08em'}}>Dateien hochladendiv
-              button onClick={resetForm} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'4px 12px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>↺ Resetbutton
+              div style={{fontSize:11,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.08em'}}Dateien hochladendiv
+              button onClick={resetForm} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'4px 12px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}↺ Resetbutton
             div
             div style={S.uploadRow}
               {[0,1,2].map(idx = (
