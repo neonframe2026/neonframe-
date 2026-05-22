@@ -739,7 +739,7 @@ if (tab === 'manage') return (
       div style={{padding32,overflowY'auto',flex1,background'#f9fafb'}}
         div style={{maxWidth900,margin'0 auto'}}
           div style={{display'flex',alignItems'center',justifyContent'space-between',marginBottom20}}
-            h2 style={{fontSize20,fontWeight700}}Alle Angebote{offers.length > 0 && <span style={{fontSize14,fontWeight500,color:'#9ca3af',marginLeft8}}>({offers.length})</span>}h2
+            h2 style={{fontSize20,fontWeight700}}Alle Angebote{offers.length > 0 && span style={{fontSize14,fontWeight500,color:'#9ca3af',marginLeft8}}({offers.length})span}h2
             button style={S.btnDark} onClick={loadOffers}Aktualisierenbutton
           div
           {loadingOffers  div style={{textAlign'center',padding60,color'#9ca3af',fontSize14}}Wird geladen...div
