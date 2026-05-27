@@ -20,12 +20,12 @@ export async function POST(req) {
 <!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:16px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<body style="margin:0;padding:8px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
 
-        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:16px 28px;text-align:center">
+        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:14px 28px;text-align:center">
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="120" height="120" style="display:block;margin:0 auto;border-radius:12px">
         </td></tr>
 
@@ -77,8 +77,12 @@ export async function POST(req) {
 
         </td></tr>
 
-        <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 14px 14px;padding:14px;text-align:center">
-          <p style="margin:0;font-size:12px;color:#aaa">NeonFrame · neonframe.de · info@neonframe.de</p>
+        <tr><td style="background:#f8fafc;border-radius:0 0 14px 14px;padding:14px;text-align:center">
+          <p style="margin:0;font-size:12px;color:#aaa">
+            <a href="https://neonframe.de" style="color:#aaa;text-decoration:none;">neonframe.de</a>
+            &nbsp;·&nbsp;
+            <a href="mailto:info@neonframe.de" style="color:#aaa;text-decoration:none;">info@neonframe.de</a>
+          </p>
         </td></tr>
 
       </table>
