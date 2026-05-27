@@ -31,22 +31,8 @@ export async function POST(req) {
           <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#111">Hallo ${firstName},</h1>
           <p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.7">wir hoffen es geht Ihnen gut.</p>
           <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">Bezüglich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine Rückmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot für Sie interessant:</p>
-
-          <table width="100%" cellpadding="2" cellspacing="0" style="background:#bbf7d0;border-radius:12px;margin:0 0 20px 0">
-            <tr><td style="background:#f0fdf4;border-radius:10px;padding:20px 22px">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="36" valign="top" style="font-size:24px">&#127873;</td>
-                  <td style="padding-left:14px">
-                    <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#166534">Exklusives Angebot f&#252;r Sie</p>
-                    <p style="margin:0;font-size:14px;color:#166534;line-height:1.7">Da wir aktuell Referenzen f&#252;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&#252;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts &#8211; und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>!</p>
-                  </td>
-                </tr>
-              </table>
-            </td></tr>
-          </table>
-
-          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, k&#246;nnen Sie sich jederzeit gerne bei uns melden!</p>
+          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Da wir aktuell Referenzen für unsere Website und Social Media sammeln, haben wir ein besonderes Angebot für Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>!</p>
+          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, können Sie sich jederzeit gerne bei uns melden!</p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
             <tr>
@@ -58,7 +44,7 @@ export async function POST(req) {
             </tr>
           </table>
 
-          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Gr&#252;&#223;e</p>
+          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Grüße</p>
           <p style="margin:0;font-size:15px;font-weight:700;color:#111">Dein NeonFrame-Team</p>
         </td></tr>
         <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 16px 16px;padding:20px 36px;text-align:center">
