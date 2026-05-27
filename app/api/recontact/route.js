@@ -31,25 +31,28 @@ export async function POST(req) {
           <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#111">Hallo ${firstName},</h1>
           <p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.7">wir hoffen es geht Ihnen gut.</p>
           <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">Bez&uuml;glich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine R&uuml;ckmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot f&uuml;r Sie interessant:</p>
-          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0 0 28px;">
   <tr>
-    <td style="background:#10371d;border:1px solid #16a34a;padding:24px;border-radius:12px">
-      
-      <table cellpadding="0" cellspacing="0" role="presentation">
+    <td bgcolor="#12351f" style="background-color:#12351f;border:1px solid #16a34a;padding:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">
         <tr>
-          <td style="font-size:28px;padding-right:16px;vertical-align:top;">🎁</td>
-          <td>
-            <p style="margin:0 0 12px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.2">
+          <td width="36" valign="top" style="font-size:26px;line-height:28px;padding-right:14px;">
+            🎁
+          </td>
+          <td valign="top">
+            <p style="margin:0 0 12px;font-size:16px;font-weight:800;color:#d1fae5;line-height:1.4;">
               Exklusives Angebot f&uuml;r Sie
             </p>
-
-            <p style="margin:0;font-size:15px;color:#d1fae5;line-height:1.8">
+            <p style="margin:0;font-size:15px;color:#bbf7d0;line-height:1.7;">
               Da wir aktuell Referenzen f&uuml;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&uuml;r Sie.<br><br>
-              Schicken Sie uns nach Erhalt Ihres Neonschildes <strong style="color:#ffffff;">Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong style="color:#86efac;">weitere 10&nbsp;% Rabatt on top!</strong>
+              Schicken Sie uns nach Erhalt Ihres Neonschildes <strong style="color:#ffffff;">Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts &ndash; und wir geben Ihnen <strong style="color:#86efac;">weitere 10&nbsp;% Rabatt on top!</strong>
             </p>
           </td>
         </tr>
       </table>
+    </td>
+  </tr>
+</table>
 
     </td>
   </tr>
