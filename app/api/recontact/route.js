@@ -20,7 +20,7 @@ export async function POST(req) {
 <!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:0 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<body style="margin:0;padding:4px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
@@ -31,7 +31,7 @@ export async function POST(req) {
 
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
 
-        <tr><td style="background:#fff;padding:24px 32px 24px">
+        <tr><td style="background:#fff;padding:24px 32px 24px;border-bottom:1px solid #f0f0f0">
 
           <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111">Hallo ${firstName}!</p>
 
