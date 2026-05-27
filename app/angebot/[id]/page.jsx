@@ -5,6 +5,8 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import AngebotPage from './angebot-client'
 
+export const revalidate = 0
+
 export async function generateMetadata() {
   return { title: 'Ihr persönliches Angebot – NeonFrame' }
 }
