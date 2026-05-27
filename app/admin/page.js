@@ -51,7 +51,7 @@ async function extractPdfText(file) {
 
 function parsePdfFields(txt) {
   const get = (patterns) => { for (const p of patterns) { const m = txt.match(p); if (m) return (m[1] || m[0]).trim() } return '' }
-  const num = get([/Angebotsnummer:\s+(\d+)/, /Angebotsnummer:(\d+)/])
+  const num = get([/Angebotsnummer:\s+(\d{8,})/i, /Angebotsnummer:\s+[\d-]+\s+(\d{8,})/i])
   const project = get([/Project:\s+(\S+)/, /Projekt:\s+(\S+)/])
   let w = '', h = ''
   for (const p of [/Abmessungen:\s+(\d+)\s+x\s+(\d+)/i, /(\d+)\s+x\s+(\d+)\s+CM/i]) {
