@@ -57,9 +57,9 @@ function parsePdfFields(txt) {
   for (const p of [/Abmessungen:\s*(\d+)\s*[xX×]\s*(\d+)/i, /(\d+)\s*[xX×]\s*(\d+)\s*CM/i]) {
     const m = txt.match(p); if (m) { w = m[1]; h = m[2]; break }
   }
-  const colors = get([/Farbe\(n\):\s*([^\n]+)/i, /Farben?:\s*([^\n]+)/i])
+  const colors = get([/Farbe\(n\):\s*(\w+)/i, /Farben?:\s*(\w+)/i])
   let price = ''
-  for (const p of [/Gesamt\s*\(excl\s*MwSt\.\)[^€]*€\s*([\d.,]+)/i, /Gesamt:[^€]*€\s*([\d.,]+)/i]) {
+  for (const p of [/Gesamt \(excl MwSt\.\): € ([\d.,]+)/i, /Gesamt: € ([\d.,]+)/i, /Gesamt[^€]*€ ([\d.,]+)/i]) {
     const m = txt.match(p)
     if (m) { price = m[1].replace(/\./g, '').replace(',', '.'); break }
   }
