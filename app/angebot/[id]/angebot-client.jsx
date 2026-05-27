@@ -267,14 +267,14 @@ function Stepper({ status }) {
 export default function AngebotPage({ offer }) {
   const [descOpen, setDescOpen] = useState(false)
 
-  const net = parseFloat(offer.net_price) || 0
-  const vatPct = parseFloat(offer.vat_pct) || 19
-  const final = parseFloat(offer.final_price) || 0
-  const base = parseFloat(offer.base_price) || 0
-  const discType = offer.disc_type || 'pct'
-  const discVal = parseFloat(offer.disc_val) || 0
-  const vatAmt = final - net
-  const discAmt = discType === 'pct' ? base * (discVal / 100) : discVal
+const base = parseFloat(offer.base_price) || 0
+const discType = offer.disc_type || 'pct'
+const discVal = parseFloat(offer.disc_val) || 0
+const vatPct = parseFloat(offer.vat_pct) || 19
+const discAmt = discType === 'pct' ? base * (discVal / 100) : discVal
+const net = discType === 'pct' ? base * (1 - discVal / 100) : Math.max(0, base - discVal)
+const vatAmt = net * (vatPct / 100)
+const final = net + vatAmt
   const discDisplay = discType === 'pct' ? `${discVal}%` : `€ ${discVal.toFixed(2)}`
   const colors = parseColors(offer.colors)
   const displayId = offer.offer_num || offer.custom_id || offer.id?.slice(0, 8)
