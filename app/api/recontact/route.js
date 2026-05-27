@@ -50,7 +50,7 @@ export async function POST(req) {
             </tr>
           </table>
 
-          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Gr&uuml;&szlig;e</p>
+          <p style="margin:28px 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Gr&uuml;&szlig;e</p>
           <p style="margin:0;font-size:15px;font-weight:700;color:#111">Dein NeonFrame-Team</p>
         </td></tr>
         <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 16px 16px;padding:20px 36px;text-align:center">
