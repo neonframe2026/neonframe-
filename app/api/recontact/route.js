@@ -43,14 +43,14 @@ export async function POST(req) {
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0">
-            <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 22px">
+            <tr><td style="background:#f0fdf4;border-radius:12px;padding:20px 22px">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td width="36" valign="top" style="font-size:26px">🎁</td>
+                  <td width="36" valign="top" style="font-size:26px">&#127873;</td>
                   <td style="padding-left:14px">
-                    <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#166534">Exklusives Angebot für Sie</p>
+                    <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#166534">Exklusives Angebot f&#252;r Sie</p>
                     <p style="margin:0;font-size:14px;color:#166534;line-height:1.7">
-                      Da wir aktuell Referenzen für unsere Website und Social Media sammeln, haben wir ein besonderes Angebot für Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>!
+                      Da wir aktuell Referenzen f&#252;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&#252;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts &#8211; und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>!
                     </p>
                   </td>
                 </tr>
@@ -59,7 +59,7 @@ export async function POST(req) {
           </table>
 
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">
-            Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, können Sie sich jederzeit gerne bei uns melden!
+            Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, k&#246;nnen Sie sich jederzeit gerne bei uns melden!
           </p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
@@ -70,7 +70,7 @@ export async function POST(req) {
             </td></tr>
           </table>
 
-          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Grüße</p>
+          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Gr&#252;&#223;e</p>
           <p style="margin:0;font-size:15px;font-weight:700;color:#111">Dein NeonFrame-Team</p>
 
         </td></tr>
@@ -78,7 +78,7 @@ export async function POST(req) {
         <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 16px 16px;padding:20px 36px;text-align:center">
           <p style="margin:0;font-size:12px;color:#aaa">
             <a href="https://neonframe.de" style="color:#60c8f0;text-decoration:none;">neonframe.de</a>
-            &nbsp;·&nbsp;
+            &nbsp;&middot;&nbsp;
             <a href="mailto:info@neonframe.de" style="color:#60c8f0;text-decoration:none;">info@neonframe.de</a>
           </p>
         </td></tr>
