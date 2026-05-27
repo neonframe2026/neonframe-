@@ -34,16 +34,14 @@ export async function POST(req) {
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Da wir aktuell Referenzen f&uuml;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&uuml;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts &ndash; und wir geben Ihnen <strong>weitere 10&nbsp;% Rabatt on top</strong>!</p>
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, k&ouml;nnen Sie sich jederzeit gerne bei uns melden!</p>
 
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px">
             <tr>
               <td align="center">
-                <table cellpadding="0" cellspacing="0">
+                <table cellpadding="0" cellspacing="0" border="0" role="presentation">
                   <tr>
-                    <td align="center" bgcolor="#16a34a" style="border-radius:12px">
-                      <a href="${offerLink || '#'}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;mso-padding-alt:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-                        <!--[if mso]><i style="letter-spacing:34px;mso-font-width:-100%;mso-text-raise:30pt">&nbsp;</i><![endif]-->
-                        <span style="mso-text-raise:16pt">Jetzt Angebot ansehen</span>
-                        <!--[if mso]><i style="letter-spacing:34px;mso-font-width:-100%">&nbsp;</i><![endif]-->
+                    <td align="center" bgcolor="#16a34a" style="background:#16a34a;border-radius:12px;padding:16px 36px">
+                      <a href="${offerLink || '#'}" target="_blank" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;font-weight:700;line-height:20px;color:#ffffff;text-decoration:none;display:block">
+                        Jetzt Angebot ansehen
                       </a>
                     </td>
                   </tr>
