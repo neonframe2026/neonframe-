@@ -37,9 +37,17 @@ export async function POST(req) {
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
             <tr>
               <td align="center">
-                <a href="${offerLink || '#'}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">
-                  Jetzt Angebot ansehen
-                </a>
+                <table cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" bgcolor="#16a34a" style="border-radius:12px">
+                      <a href="${offerLink || '#'}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;mso-padding-alt:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+                        <!--[if mso]><i style="letter-spacing:34px;mso-font-width:-100%;mso-text-raise:30pt">&nbsp;</i><![endif]-->
+                        <span style="mso-text-raise:16pt">Jetzt Angebot ansehen</span>
+                        <!--[if mso]><i style="letter-spacing:34px;mso-font-width:-100%">&nbsp;</i><![endif]-->
+                      </a>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>
