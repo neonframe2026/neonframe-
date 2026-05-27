@@ -51,13 +51,13 @@ async function extractPdfText(file) {
 
 function parsePdfFields(txt) {
   const get = (patterns) => { for (const p of patterns) { const m = txt.match(p); if (m) return (m[1] || m[0]).trim() } return '' }
-  const num = get([/Angebots(nummer|nr\.?|#)[\s•#]+([A-Z0-9-]{3,20})/i])
+  const num = get([/Angebots(nummer|nr\.?|#)[\s:•#]+([A-Z0-9-]{3,20})/i, /Angebotsnummer:\s*(\d+)/i])
   const project = get([/(Projekt|Project)[\s•]+([^\n•]{2,60})(\s[•\n]|$)/i, /(Kunde|für)[\s]+([^\n]{2,50})/i])
   let w = '', h = ''
   for (const p of [/(\d+)\s[xX×]\s(\d+)\scm/, /Abmessungen[^\d]*(\d+)\s[xX×]\s(\d+)/i]) { const m = txt.match(p); if (m) { w = m[1]; h = m[2]; break } }
-  const colors = get([/Farbe[n]?\s[(\w)a-z]\s[•-]\s([^\n•]{2,60})(\s(Gesamt|MwSt|\n))/i])
+  const colors = get([/Farbe\(n\)[\s:]+([^\n]{2,40})/i, /Farben?[\s:•-]+([^\n•]{2,40})/i, /Farbe[n]?\s[(\w)a-z]\s[•-]\s([^\n•]{2,60})/i])
   let price = ''
-  for (const p of [/Gesamt[^€\d]*€\s([\d.,]+)/i, /€\s([\d.,]+)\s(netto|zzgl)/i, /(\d{2,6}[.,]\d{2})\s€/]) { const m = txt.match(p); if (m) { price = m[1].replace(',', '.'); break } }
+  for (const p of [/Gesamt[^€\d]*€\s*([\d.,]+)/i, /€\s*([\d.,]+)/i, /(\d{2,6}[.,]\d{2})\s*€/]) { const m = txt.match(p); if (m) { price = m[1].replace(',', '.'); break } }
   return { num, project, w, h, colors, price }
 }
 
