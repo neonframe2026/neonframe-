@@ -20,20 +20,20 @@ export async function POST(req) {
 <!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:24px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<body style="margin:0;padding:16px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
 
-        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:20px 28px;text-align:center">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="100" height="100" style="display:block;margin:0 auto;border-radius:12px">
+        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:16px 28px;text-align:center">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="120" height="120" style="display:block;margin:0 auto;border-radius:12px">
         </td></tr>
 
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
 
-        <tr><td style="background:#fff;padding:28px 32px 24px">
+        <tr><td style="background:#fff;padding:24px 32px 24px">
 
-          <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111">Hallo ${firstName}! 👋</p>
+          <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111">Hallo ${firstName}!</p>
 
           <p style="margin:0 0 16px;font-size:16px;color:#444;line-height:1.7">
             wir hoffen es geht Ihnen gut.
@@ -43,7 +43,7 @@ export async function POST(req) {
             Bezüglich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine Rückmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot für Sie interessant:
           </p>
 
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0">
             <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 22px">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
@@ -59,13 +59,17 @@ export async function POST(req) {
             </td></tr>
           </table>
 
-          <p style="margin:0 0 24px;font-size:16px;color:#444;line-height:1.7">
+          <p style="margin:24px 0 0;font-size:16px;color:#444;line-height:1.7">
             Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, können Sie sich jederzeit gerne bei uns melden!
           </p>
 
-          <a href="${offerLink}" style="display:block;background:#16a34a;color:#fff;text-align:center;padding:18px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;">
-            Jetzt Angebot ansehen
-          </a>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0">
+            <tr><td align="center">
+              <a href="${offerLink}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;">
+                Jetzt Angebot ansehen
+              </a>
+            </td></tr>
+          </table>
 
           <p style="margin:24px 0 0;font-size:16px;color:#444;line-height:1.6">
             Viele Grüße<br><strong>Dein NeonFrame-Team</strong>
