@@ -16,41 +16,40 @@ export async function POST(req) {
       from: 'NeonFrame <info@neonframe.de>',
       to: customerEmail,
       subject: `Ihr Angebot wartet noch auf Sie – NeonFrame 💡`,
-      html: `
-<!DOCTYPE html>
+      html: `<!DOCTYPE html>
 <html lang="de">
-<head><meta charset="UTF-8"></head>
-<body style="margin:0;padding:4px 20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
-  <table width="100%" cellpadding="0" cellspacing="0">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
 
-        <tr><td style="background:#0a0a0a;border-radius:14px 14px 0 0;padding:4px 28px;text-align:center">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="120" height="120" style="display:block;margin:0 auto;border-radius:12px">
+        <tr><td style="background:#0a0a0a;border-radius:16px 16px 0 0;padding:8px 36px;text-align:center">
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="110" style="display:block;margin:0 auto">
         </td></tr>
 
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
 
-        <tr><td style="background:#fff;padding:24px 32px 24px">
+        <tr><td style="background:#ffffff;padding:36px 36px 28px">
 
-          <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111">Hallo ${firstName}!</p>
+          <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#111">Hallo ${firstName}!</h1>
 
-          <p style="margin:0 0 16px;font-size:16px;color:#444;line-height:1.7">
+          <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">
             wir hoffen es geht Ihnen gut.
           </p>
 
-          <p style="margin:0 0 16px;font-size:16px;color:#444;line-height:1.7">
+          <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">
             Bezüglich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine Rückmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot für Sie interessant:
           </p>
 
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0">
             <tr><td style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 22px">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td width="36" valign="top" style="font-size:26px">🎁</td>
                   <td style="padding-left:14px">
-                    <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#166534">Exklusives Angebot für Sie</p>
-                    <p style="margin:0;font-size:15px;color:#166534;line-height:1.7">
+                    <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#166534">Exklusives Angebot für Sie</p>
+                    <p style="margin:0;font-size:14px;color:#166534;line-height:1.7">
                       Da wir aktuell Referenzen für unsere Website und Social Media sammeln, haben wir ein besonderes Angebot für Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>!
                     </p>
                   </td>
@@ -59,39 +58,35 @@ export async function POST(req) {
             </td></tr>
           </table>
 
-          <p style="margin:24px 0 0;font-size:16px;color:#444;line-height:1.7">
+          <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">
             Falls Sie an dem Angebot interessiert sind, oder noch weitere Fragen haben, können Sie sich jederzeit gerne bei uns melden!
           </p>
 
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0">
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
             <tr><td align="center">
-              <a href="${offerLink}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 40px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;">
+              <a href="${offerLink}" style="display:inline-block;background:#16a34a;color:#fff;text-align:center;padding:16px 40px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;">
                 Jetzt Angebot ansehen
               </a>
             </td></tr>
           </table>
 
-          <p style="margin:24px 0 0;font-size:16px;color:#444;line-height:1.6">
-            Viele Grüße<br><strong>Dein NeonFrame-Team</strong>
-          </p>
+          <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Grüße</p>
+          <p style="margin:0;font-size:15px;font-weight:700;color:#111">Dein NeonFrame-Team</p>
 
         </td></tr>
 
-        <tr><td height="1" style="background:#e5e7eb;font-size:0">&nbsp;</td></tr>
-
-        <tr><td style="background:#f8fafc;border-radius:0 0 14px 14px;padding:14px;text-align:center">
-          <p style="margin:0;font-size:12px;color:#888">
-            <a href="https://neonframe.de" style="color:#2563eb;text-decoration:none;">neonframe.de</a>
+        <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 16px 16px;padding:20px 36px;text-align:center">
+          <p style="margin:0;font-size:12px;color:#aaa">
+            <a href="https://neonframe.de" style="color:#60c8f0;text-decoration:none;">neonframe.de</a>
             &nbsp;·&nbsp;
-            <a href="mailto:info@neonframe.de" style="color:#2563eb;text-decoration:none;">info@neonframe.de</a>
+            <a href="mailto:info@neonframe.de" style="color:#60c8f0;text-decoration:none;">info@neonframe.de</a>
           </p>
         </td></tr>
 
       </table>
     </td></tr>
   </table>
-</body></html>
-      `,
+</body></html>`,
     })
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://angebote.neonframe.de'
