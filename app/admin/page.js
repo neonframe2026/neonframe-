@@ -766,47 +766,52 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                               <span style={{fontSize:12,color:needsContact?'#dc2626':'#9ca3af',fontWeight:needsContact?700:400}}>
                                 📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
                               </span>
-                              {needsContact && (
-                                <span
-onClick={async () => {
-  if (!o.customer_email) {
-    alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
-    return
-  }
-  if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
-  
-  try {
-    const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
-    const res = await fetch('/api/recontact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        offerId: o.id,
-        customerEmail: o.customer_email,
-        customerName: o.project,
-        offerLink,
-        price: o.final_price,
-        width: o.width,
-        height: o.height,
-        colors: o.colors,
-      }),
-    })
-    const data = await res.json()
-    if (data.success) {
-      alert('✅ E-Mail gesendet & Status aktualisiert!')
-      loadOffers()
-    } else {
-      alert('Fehler: ' + data.error)
+<span
+  onClick={async () => {
+    if (!o.customer_email) {
+      alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
+      return
     }
-  } catch (err) {
-    alert('Fehler: ' + err.message)
-  }
-}}
-                                  title={o.customer_email ? 'E-Mail kopieren: ' + o.customer_email : 'Keine E-Mail hinterlegt'}
-                                  style={{display:'inline-flex',alignItems:'center',gap:4,background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
-                                >
-                                  ↩ Nochmals kontaktieren
-                                </span>
+    if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
+    try {
+      const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
+      const res = await fetch('/api/recontact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offerId: o.id,
+          customerEmail: o.customer_email,
+          customerName: o.project,
+          offerLink,
+          price: o.final_price,
+          width: o.width,
+          height: o.height,
+          colors: o.colors,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert('✅ E-Mail gesendet & Status aktualisiert!')
+        loadOffers()
+      } else {
+        alert('Fehler: ' + data.error)
+      }
+    } catch (err) {
+      alert('Fehler: ' + err.message)
+    }
+  }}
+  title={o.customer_email ? o.customer_email : 'Keine E-Mail hinterlegt'}
+  style={{
+    display:'inline-flex',alignItems:'center',gap:4,
+    background: daysDiff >= 3 ? '#fef2f2' : '#f3f4f6',
+    border: `1px solid ${daysDiff >= 3 ? '#fecaca' : '#e5e7eb'}`,
+    color: daysDiff >= 3 ? '#dc2626' : '#9ca3af',
+    fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,
+    whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'
+  }}
+>
+  ↩ Nochmals kontaktieren
+</span>
                               )}
                             </span>
                           )
