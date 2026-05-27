@@ -24,23 +24,30 @@ export async function POST(req) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
-        <tr><td style="background:#0a0a0a;border-radius:16px 16px 0 0;padding:24px 36px">
+        <tr><td style="background:#0a0a0a;border-radius:16px 16px 0 0;padding:20px 36px 0 36px">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td width="60" valign="middle">
-                <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="52" height="52" style="display:block;border-radius:8px">
+              <td width="80" valign="middle">
+                <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="72" height="72" style="display:block;border-radius:10px">
               </td>
               <td valign="middle" style="padding-left:16px">
-                <p style="margin:0;font-size:16px;font-weight:700;color:#ffffff">NeonFrame</p>
+                <p style="margin:0;font-size:18px;font-weight:700;color:#ffffff">NeonFrame</p>
                 <p style="margin:0;font-size:12px;color:#60c8f0">Ihr pers&ouml;nliches Neonschild</p>
               </td>
             </tr>
+            <tr>
+              <td colspan="2" style="padding-top:20px">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background:#16a34a;padding:16px 20px;border-radius:10px 10px 0 0">
+                      <p style="margin:0 0 3px;font-size:10px;font-weight:700;color:#bbf7d0;letter-spacing:.1em;text-transform:uppercase">Erinnerung</p>
+                      <p style="margin:0;font-size:18px;font-weight:800;color:#ffffff">Ihr Angebot wartet noch auf Sie!</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
           </table>
-        </td></tr>
-
-        <tr><td style="background:#16a34a;padding:20px 36px">
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#bbf7d0;letter-spacing:.08em;text-transform:uppercase">Erinnerung</p>
-          <p style="margin:0;font-size:20px;font-weight:800;color:#ffffff">Ihr Angebot wartet noch auf Sie!</p>
         </td></tr>
 
         <tr><td style="background:#ffffff;padding:32px 36px 28px">
@@ -49,8 +56,8 @@ export async function POST(req) {
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0">
             <tr>
-              <td width="4" style="background:#16a34a;border-radius:4px 0 0 4px">&nbsp;</td>
-              <td style="background:#f8f8f8;padding:16px 20px;border-radius:0 8px 8px 0">
+              <td width="4" bgcolor="#16a34a" style="border-radius:4px 0 0 4px">&nbsp;</td>
+              <td bgcolor="#f8f8f8" style="padding:16px 20px;border-radius:0 8px 8px 0">
                 <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#166534">&#127873; Exklusives Angebot f&uuml;r Sie</p>
                 <p style="margin:0;font-size:14px;color:#444;line-height:1.7">Da wir aktuell Referenzen f&uuml;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&uuml;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts &ndash; und wir geben Ihnen <strong>weitere 10&nbsp;% Rabatt on top</strong>!</p>
               </td>
