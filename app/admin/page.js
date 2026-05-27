@@ -65,38 +65,29 @@ const BACKPLATE_OPTIONS = ['Ausgeschnitten', 'Quadratisch', 'Ohne']
 const BACKPLATE_COLOR_OPTIONS = ['Transparent', 'Schwarz', 'Weiß']
 const USAGE_OPTIONS = ['Innen', 'Außen IP65']
 
-// Payment icons as simple SVG/styled divs matching the screenshot exactly
 const PAYMENT_ICONS_HTML = `
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-  <!-- PayPal -->
   <div style="background:#003087;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <svg width="36" height="20" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg"><text x="4" y="22" font-size="16" font-weight="800" font-family="Arial,sans-serif" fill="#009cde">P</text><text x="14" y="22" font-size="16" font-weight="800" font-family="Arial,sans-serif" fill="#012169">ay</text><text x="28" y="22" font-size="16" font-weight="800" font-family="Arial,sans-serif" fill="#009cde">Pa</text></svg>
   </div>
-  <!-- Klarna -->
   <div style="background:#ffb3c7;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <span style="font-weight:900;font-size:11px;color:#17120e;font-family:Arial,sans-serif;letter-spacing:-0.5px">klarna</span>
   </div>
-  <!-- Visa -->
   <div style="background:#1a1f71;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <span style="font-weight:900;font-size:16px;color:#fff;font-family:Arial,sans-serif;font-style:italic;letter-spacing:-1px">VISA</span>
   </div>
-  <!-- Mastercard -->
   <div style="background:#fff;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#eb001b"/><circle cx="23" cy="11" r="10" fill="#f79e1b"/><path d="M18 4a10 10 0 0 1 0 14A10 10 0 0 1 18 4z" fill="#ff5f00"/></svg>
   </div>
-  <!-- Apple Pay -->
   <div style="background:#000;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #333">
     <svg width="38" height="16" viewBox="0 0 60 26" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 5.2c-.8 1-2.1 1.7-3.3 1.6-.2-1.3.5-2.6 1.2-3.4C10.2 2.5 11.6 1.8 12.7 1.8c.1 1.3-.4 2.5-1.2 3.4zM12.7 7c-1.8-.1-3.4 1-4.2 1s-2.2-1-3.6-1C2.9 7 1 8.5.3 10.7c-1.4 2.5.4 7.8 1.9 10.4.7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.2.8-1.3 1.2-2.6 1.2-2.6s-2.3-.9-2.3-3.5c0-2.2 1.8-3.2 1.9-3.3-1-1.5-2.7-1.7-3.2-1.7h-.1z" fill="white"/><text x="18" y="19" font-size="13" font-weight="500" font-family="-apple-system,BlinkMacSystemFont,sans-serif" fill="white"> Pay</text></svg>
   </div>
-  <!-- Google Pay -->
   <div style="background:#fff;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <svg width="40" height="16" viewBox="0 0 60 22" xmlns="http://www.w3.org/2000/svg"><text x="0" y="16" font-size="12" font-family="Arial,sans-serif" font-weight="500"><tspan fill="#4285F4">G</tspan><tspan fill="#EA4335">o</tspan><tspan fill="#FBBC05">o</tspan><tspan fill="#4285F4">g</tspan><tspan fill="#34A853">l</tspan><tspan fill="#EA4335">e</tspan></text><text x="38" y="16" font-size="12" font-family="Arial,sans-serif" font-weight="500" fill="#5f6368"> Pay</text></svg>
   </div>
-  <!-- Amex -->
   <div style="background:#007bc1;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <span style="font-weight:900;font-size:8px;color:#fff;font-family:Arial,sans-serif;letter-spacing:0.2px;text-align:center;line-height:1.2">AMERICAN<br>EXPRESS</span>
   </div>
-  <!-- Maestro -->
   <div style="background:#fff;border-radius:6px;width:52px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb">
     <svg width="36" height="22" viewBox="0 0 36 22"><circle cx="13" cy="11" r="10" fill="#009be0"/><circle cx="23" cy="11" r="10" fill="#ee0005"/><path d="M18 4a10 10 0 0 1 0 14A10 10 0 0 1 18 4z" fill="#7b2d8b"/></svg>
   </div>
@@ -194,7 +185,6 @@ function EditModal({ offer, onClose, onSaved }) {
         </div>
 
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Bilder */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
@@ -210,7 +200,6 @@ function EditModal({ offer, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Angebotsdaten */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Angebotsdaten</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -227,7 +216,6 @@ function EditModal({ offer, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Konfiguration */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Konfiguration</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
@@ -249,7 +237,6 @@ function EditModal({ offer, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Preis */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Preiskalkulation</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -274,7 +261,6 @@ function EditModal({ offer, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Weitere Einstellungen */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Weitere Einstellungen</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -384,10 +370,6 @@ export default function AdminPage() {
         : ''
       return `<div style="display:flex;align-items:center;flex:${i < stepperSteps.length-1 ? '1' : '0'}">${dot}<div style="margin-left:6px;margin-right:4px">${label}</div>${line}</div>`
     }).join('')
-
-    const validBadge = f.validUntil
-      ? `<div style="display:flex;align-items:center;gap:6px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);color:#d97706;font-size:11px;font-weight:600;padding:6px 12px;border-radius:20px;margin-bottom:8px;width:fit-content">📅 Gültig bis ${new Date(f.validUntil).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>`
-      : ''
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
@@ -733,7 +715,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             <button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button>
             <button style={{...S.tab(true), position:'relative'}}>
               Verwalten
-              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 0 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
             </button>
           </div>
         </div>
@@ -751,6 +733,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
               {offers.map(o => {
                 const id = o.custom_id || o.id.slice(0,8)
                 const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
+                const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
+                const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
                 return (
                   <div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'16px 20px',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:16}}>
                     <div>
@@ -758,64 +742,59 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
                         {o.project && <span style={{fontSize:14,color:'#6b7280'}}>{o.project}</span>}
                         <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                        {o.created_at && (() => {
-                          const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
-                          const needsContact = daysDiff >= 4 && o.status !== 'recontacted' && o.status !== 'confirmed'
-                          return (
-                            <span style={{display:'flex',alignItems:'center',gap:6}}>
-                              <span style={{fontSize:12,color:needsContact?'#dc2626':'#9ca3af',fontWeight:needsContact?700:400}}>
-                                📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
-                              </span>
-<span
-  onClick={async () => {
-    if (!o.customer_email) {
-      alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
-      return
-    }
-    if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
-    try {
-      const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
-      const res = await fetch('/api/recontact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          offerId: o.id,
-          customerEmail: o.customer_email,
-          customerName: o.project,
-          offerLink,
-          price: o.final_price,
-          width: o.width,
-          height: o.height,
-          colors: o.colors,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        alert('✅ E-Mail gesendet & Status aktualisiert!')
-        loadOffers()
-      } else {
-        alert('Fehler: ' + data.error)
-      }
-    } catch (err) {
-      alert('Fehler: ' + err.message)
-    }
-  }}
-  title={o.customer_email ? o.customer_email : 'Keine E-Mail hinterlegt'}
-  style={{
-    display:'inline-flex',alignItems:'center',gap:4,
-    background: daysDiff >= 3 ? '#fef2f2' : '#f3f4f6',
-    border: `1px solid ${daysDiff >= 3 ? '#fecaca' : '#e5e7eb'}`,
-    color: daysDiff >= 3 ? '#dc2626' : '#9ca3af',
-    fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,
-    whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'
-  }}
->
-  ↩ Nochmals kontaktieren
-</span>
-                              )}
+                        {o.created_at && (
+                          <span style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontSize:12,color:isRed?'#dc2626':'#9ca3af',fontWeight:isRed?700:400}}>
+                              📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
                             </span>
-                          )
-                        })()}
+                            <span
+                              onClick={async () => {
+                                if (!o.customer_email) {
+                                  alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
+                                  return
+                                }
+                                if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
+                                try {
+                                  const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
+                                  const res = await fetch('/api/recontact', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      offerId: o.id,
+                                      customerEmail: o.customer_email,
+                                      customerName: o.project,
+                                      offerLink,
+                                      price: o.final_price,
+                                      width: o.width,
+                                      height: o.height,
+                                      colors: o.colors,
+                                    }),
+                                  })
+                                  const data = await res.json()
+                                  if (data.success) {
+                                    alert('✅ E-Mail gesendet & Status aktualisiert!')
+                                    loadOffers()
+                                  } else {
+                                    alert('Fehler: ' + data.error)
+                                  }
+                                } catch (err) {
+                                  alert('Fehler: ' + err.message)
+                                }
+                              }}
+                              title={o.customer_email ? o.customer_email : 'Keine E-Mail hinterlegt'}
+                              style={{
+                                display:'inline-flex',alignItems:'center',gap:4,
+                                background: isRed ? '#fef2f2' : '#f3f4f6',
+                                border: `1px solid ${isRed ? '#fecaca' : '#e5e7eb'}`,
+                                color: isRed ? '#dc2626' : '#9ca3af',
+                                fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,
+                                whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'
+                              }}
+                            >
+                              ↩ Nochmals kontaktieren
+                            </span>
+                          </span>
+                        )}
                       </div>
                       <div style={{fontSize:13,color:'#9ca3af',display:'flex',gap:16,flexWrap:'wrap'}}>
                         {o.width && o.height && <span>{o.width} × {o.height} cm</span>}
@@ -866,7 +845,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             <button style={S.tab(true)}>Erstellen</button>
             <button style={{...S.tab(false), position:'relative'}} onClick={() => setTab('manage')}>
               Verwalten
-              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 0 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
             </button>
           </div>
         </div>
@@ -874,9 +853,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       </div>
 
       <div style={S.main}>
-        {/* LEFT FORM */}
         <div style={S.left}>
-          {/* BILDER */}
           <div style={S.section}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
               <div style={S.sTitle}>Dateien hochladen</div>
@@ -901,7 +878,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
           </div>
 
-          {/* ANGEBOTSDATEN */}
           <div style={S.section}>
             <div style={S.sTitle}>Angebotsdaten</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -924,7 +900,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* KONFIGURATION */}
           <div style={S.section}>
             <div style={S.sTitle}>Konfiguration</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -946,7 +921,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* PREIS */}
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -979,7 +953,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          {/* WEITERE EINSTELLUNGEN */}
           <div style={S.section}>
             <div style={S.sTitle}>Weitere Einstellungen</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -1015,7 +988,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
           </div>
         </div>
 
-        {/* RIGHT PREVIEW */}
         <div style={S.right}>
           <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'0 20px',display:'flex',alignItems:'center',gap:4,height:44,flexShrink:0}}>
             <button onClick={() => setPreviewTab('angebot')} style={{...S.tab(previewTab==='angebot'),fontSize:12,padding:'4px 14px'}}>Angebotsseite</button>
