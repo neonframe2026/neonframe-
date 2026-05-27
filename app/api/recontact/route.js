@@ -26,7 +26,7 @@ export async function POST(req) {
         <tr><td style="background:#0a0a0a;border-radius:16px 16px 0 0;padding:8px 36px;text-align:center">
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="110" style="display:block;margin:0 auto">
         </td></tr>
-        <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
+        <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:1px;font-size:0">&nbsp;</td></tr>
         <tr><td style="background:#ffffff;padding:36px 36px 28px">
           <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#111">Hallo ${firstName},</h1>
           <p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.7">wir hoffen es geht Ihnen gut.</p>
