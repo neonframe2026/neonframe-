@@ -31,7 +31,7 @@ export async function POST(req) {
 
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
 
-        <tr><td style="background:#fff;padding:24px 32px 24px;border-bottom:1px solid #f0f0f0">
+        <tr><td style="background:#fff;padding:24px 32px 24px">
 
           <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111">Hallo ${firstName}!</p>
 
@@ -76,6 +76,8 @@ export async function POST(req) {
           </p>
 
         </td></tr>
+
+        <tr><td height="1" style="background:#e5e7eb;font-size:0">&nbsp;</td></tr>
 
         <tr><td style="background:#f8fafc;border-radius:0 0 14px 14px;padding:14px;text-align:center">
           <p style="margin:0;font-size:12px;color:#888">
