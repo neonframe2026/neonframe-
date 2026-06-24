@@ -9,7 +9,7 @@ export async function POST(request) {
 
   const firstName = customerName?.split(' ')[0] || 'dort'
 
-  const html = `<!DOCTYPE html>
+const html = `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:20px;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
@@ -20,20 +20,21 @@ export async function POST(request) {
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" height="40" style="display:block;margin:0 auto">
         </td></tr>
         <tr><td style="background:linear-gradient(90deg,#0ea5e9,#60c8f0);height:3px;font-size:0">&nbsp;</td></tr>
-        <tr><td style="background:#fff;padding:32px 28px 24px">
-          <h1 style="margin:0 0 12px;font-size:22px;font-weight:800;color:#111">Hallo ${firstName}! 🎉</h1>
-          <p style="margin:0 0 16px;font-size:14px;color:#555;line-height:1.7">Wir hoffen, dass Ihr neues LED-Neon-Schild bei Ihnen gut angekommen ist und Sie begeistert! ✨</p>
-          <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.7">Es würde uns sehr freuen, wenn Sie sich kurz die Zeit nehmen würden, uns eine Bewertung zu hinterlassen. Das hilft uns sehr und dauert nur 1 Minute.</p>
-          <div style="text-align:center;margin:28px 0">
+        <tr><td style="background:#fff;padding:36px 32px 28px">
+          <p style="margin:0 0 20px;font-size:16px;font-weight:700;color:#111">Hallo ${firstName},</p>
+          <p style="margin:0 0 16px;font-size:15px;color:#444;line-height:1.8">wir hoffen, dass Ihr neues Neonschild gut bei Ihnen angekommen ist und Sie begeistert.</p>
+          <p style="margin:0 0 28px;font-size:15px;color:#444;line-height:1.8">Wir würden uns sehr freuen, wenn Sie sich einen kurzen Moment Zeit nehmen würden, um uns eine Bewertung zu hinterlassen. Ihr Feedback hilft uns dabei, unseren Service kontinuierlich zu verbessern und anderen Kunden bei ihrer Entscheidung zu helfen.</p>
+          <div style="text-align:center;margin:32px 0">
             <a href="https://de.trustpilot.com/evaluate/neonframe.de" target="_blank"
-              style="display:inline-block;background:#00b67a;color:#fff;text-decoration:none;padding:16px 36px;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:0.2px">
+              style="display:inline-block;background:#00b67a;color:#fff;text-decoration:none;padding:16px 40px;border-radius:10px;font-size:15px;font-weight:700;">
               ⭐ Jetzt Bewertung abgeben
             </a>
           </div>
-          <p style="margin:0 0 8px;font-size:12px;color:#999;line-height:1.6;text-align:center">Vielen Dank für Ihr Vertrauen in NeonFrame!</p>
+          <p style="margin:24px 0 0;font-size:15px;color:#444;line-height:1.8">Vielen Dank für Ihr Vertrauen in NeonFrame.</p>
+          <p style="margin:8px 0 0;font-size:15px;color:#444;">Mit freundlichen Grüßen,<br>Ihr NeonFrame-Team</p>
         </td></tr>
         <tr><td style="background:#f8fafc;border-top:1px solid #f0f0f0;border-radius:0 0 14px 14px;padding:14px;text-align:center">
-          <p style="margin:0;font-size:11px;color:#aaa">NeonFrame · neonframe.de · info@neonframe.de</p>
+          <p style="margin:0;font-size:12px;color:#aaa">neonframe.de · info@neonframe.de</p>
         </td></tr>
       </table>
     </td></tr>
