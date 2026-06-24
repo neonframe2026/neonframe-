@@ -805,7 +805,7 @@ if (tab === 'home') return (
                 const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
                 const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
                 return (
-<div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 180px 200px'}}>
+<div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 220px 200px'}}>
 <div style={{padding:'20px 22px',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
                       <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
@@ -843,7 +843,7 @@ if (tab === 'home') return (
                       <span style={{fontSize:10,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.06em'}}>Status</span>
                       <select
                         value={o.status || 'offer_sent'}
-                        onChange={e => updateStatus(o.id, e.target.value)}style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%',minWidth:170}}
+                        onChange={e => updateStatus(o.id, e.target.value)}style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
                       >
                         {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </select>
