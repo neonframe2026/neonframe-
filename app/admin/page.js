@@ -306,6 +306,8 @@ export default function AdminPage() {
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
   const [editingOffer, setEditingOffer] = useState(null)
+  const [manageSearch, setManageSearch] = useState('')
+  const [manageStatus, setManageStatus] = useState('')
 
   const fRef = useRef({
     num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
@@ -771,14 +773,33 @@ if (tab === 'home') return (
       </div>
       <div style={{padding:32,overflowY:'auto',flex:1,background:'#f9fafb'}}>
         <div style={{maxWidth:900,margin:'0 auto'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
+<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
             <h2 style={{fontSize:20,fontWeight:700}}>Alle Angebote {offers.length > 0 && <span style={{fontSize:14,fontWeight:500,color:'#9ca3af'}}>({offers.length})</span>}</h2>
             <button style={S.btnDark} onClick={loadOffers}>Aktualisieren</button>
+          </div>
+          <div style={{display:'flex',gap:10,marginBottom:20}}>
+            <input
+              placeholder="Nach Name oder Angebots-ID suchen..."
+              onChange={e => setManageSearch(e.target.value)}
+              style={{flex:1,background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'#111'}}
+            />
+            <select
+              onChange={e => setManageStatus(e.target.value)}
+              style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'#111',cursor:'pointer'}}
+            >
+              <option value="">Alle Status</option>
+              {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
           </div>
           {loadingOffers ? <div style={{textAlign:'center',padding:60,color:'#9ca3af',fontSize:14}}>Wird geladen...</div>
            : offers.length === 0 ? <div style={{textAlign:'center',padding:60,color:'#9ca3af',fontSize:14}}>Noch keine Angebote.</div>
            : <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {offers.map(o => {
+              {offers.filter(o => {
+                const q = manageSearch.toLowerCase()
+                const matchSearch = !q || (o.project && o.project.toLowerCase().includes(q)) || (o.custom_id && String(o.custom_id).includes(q))
+                const matchStatus = !manageStatus || o.status === manageStatus
+                return matchSearch && matchStatus
+              }).map(o => {
                 const id = o.custom_id || o.id.slice(0,8)
                 const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
                 const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
