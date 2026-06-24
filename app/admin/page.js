@@ -323,6 +323,7 @@ export default function AdminPage() {
   const [previewOfferId, setPreviewOfferId] = useState(null)
   const [previewOfferDbId, setPreviewOfferDbId] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(null)
+  const [basePriceDisplay, setBasePriceDisplay] = useState('')
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -343,6 +344,7 @@ export default function AdminPage() {
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent' })
     setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
     setImgSrcs([])
+    setBasePriceDisplay('')
     setPublishedLink(null)
     setParseStatus(null)
   }
@@ -978,7 +980,7 @@ return (
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
 <Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" defaultValue="" onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" key="basePrice" />
+                <input style={S.input} type="number" step="0.01" value={basePriceDisplay} onChange={e => { setBasePriceDisplay(e.target.value); updPriceField('basePrice', e.target.value) }} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
