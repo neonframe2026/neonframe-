@@ -321,6 +321,7 @@ export default function AdminPage() {
   const [imgSrcs, setImgSrcs] = useState([])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
+  const [previewLoading, setPreviewLoading] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
   const [previewOfferId, setPreviewOfferId] = useState(null)
   const [previewOfferDbId, setPreviewOfferDbId] = useState(null)
@@ -1049,8 +1050,10 @@ return (
               • Eine E-Mail an den Kunden gesendet
             </div>
             <button
-              style={{...S.btnGreen, background:'#1d4ed8', marginBottom:8}}
+style={{...S.btnGreen, background:'#1d4ed8', marginBottom:8, opacity: previewLoading ? 0.7 : 1, cursor: previewLoading ? 'not-allowed' : 'pointer'}}
+              disabled={previewLoading}
 onClick={async () => {
+  setPreviewLoading(true)
   const f = { ...fRef.current, ...selects, ...priceInputs }
   try {
     const uploadedImgs = [...imgSrcs]
@@ -1088,11 +1091,12 @@ let offerId = previewOfferId
       setPreviewOfferId(offerId)
       setPreviewOfferDbId(data.id)
     }
-    setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
+setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
   } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
+  finally { setPreviewLoading(false) }
 }}
             >
-              👁 Vorschau öffnen
+              {previewLoading ? '⏳ Vorschau wird erstellt...' : '👁 Vorschau öffnen'}
             </button>
             <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
             {publishedLink && (
