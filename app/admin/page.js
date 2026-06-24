@@ -854,13 +854,13 @@ if (draftData.checkoutUrl) {
 
 return (
     <div style={S.app}>
-      {showPreviewModal !== null && (
+      {showPreviewModal && showPreviewModal !== null && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
           <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
             <span style={{fontWeight:700,fontSize:15}}>👁 Vorschau</span>
             <div style={{display:'flex',gap:10}}>
-              <button onClick={() => setShowPreviewModal(false)} style={{background:'transparent',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
-              <button onClick={() => { setShowPreviewModal(false); publish() }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
+              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
+              <button onClick={() => { setShowPreviewModal(null); publish() }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
             </div>
           </div>
           <iframe src={showPreviewModal} style={{flex:1,border:'none',width:'100%',background:'#fff'}} title="Vorschau" />
@@ -1011,7 +1011,16 @@ return (
 onClick={async () => {
   const f = { ...fRef.current, ...selects, ...priceInputs }
   try {
-    const uploadedImgs = imgSrcs.map((s, i) => s && !s.startsWith('data') ? s : null)
+    const uploadedImgs = [...imgSrcs]
+    for (let i = 0; i < 3; i++) {
+      if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
+        const blob = await (await fetch(imgSrcs[i])).blob()
+        const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
+        const up = await fetch('/api/upload', { method: 'POST', body: fd })
+        const upData = await up.json()
+        if (upData.url) uploadedImgs[i] = upData.url
+      }
+    }
     const payload = {
       offer_num: f.num, project: f.project,
       width: f.w, height: f.h,
