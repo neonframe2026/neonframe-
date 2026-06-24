@@ -844,7 +844,7 @@ if (tab === 'home') return (
                       <select
                         value={o.status || 'offer_sent'}
                         onChange={e => updateStatus(o.id, e.target.value)}
-                        style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
+                        style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%',textAlign:'center',textAlignLast:'center',appearance:'none',backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,backgroundRepeat:'no-repeat',backgroundPosition:'calc(100% - 10px) center',paddingRight:'28px'}}
                       >
                         {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </select>
