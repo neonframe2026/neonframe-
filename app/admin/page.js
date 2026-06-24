@@ -850,6 +850,17 @@ if (tab === 'home') return (
                     </div>
                     <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
                       <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
+                      {o.status === 'confirmed' && (
+                        <button onClick={async () => {
+                          if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
+                          if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
+                          try {
+                            const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project }) })
+                            const data = await res.json()
+                            if (data.success) { alert('✅ Bewertungsanfrage gesendet!') } else { alert('Fehler: ' + data.error) }
+                          } catch (err) { alert('Fehler: ' + err.message) }
+                        }} style={{background:'#fefce8',border:'1px solid #fde68a',color:'#92400e',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>⭐ Bewertung anfragen</button>
+                      )}
                       <button onClick={() => toggleOffer(o.id, o.published)} style={{...S.btnOutline,fontSize:12}}>{o.published?'Deaktivieren':'Aktivieren'}</button>
                       <button onClick={() => deleteOffer(o.id)} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Löschen</button>
                     </div>
