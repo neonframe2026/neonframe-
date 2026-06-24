@@ -52,7 +52,7 @@ Wir w&uuml;rden uns sehr freuen, wenn Sie sich einen kurzen Moment Zeit f&uuml;r
 Vielen Dank f&uuml;r Ihr Vertrauen und Ihre Unterst&uuml;tzung!
 </p>
 
-<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:48px">
 <tr>
 <td align="center">
 <table cellpadding="0" cellspacing="0" border="0" role="presentation">
