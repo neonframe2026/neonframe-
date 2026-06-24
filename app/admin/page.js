@@ -316,7 +316,7 @@ export default function AdminPage() {
 
   const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent' })
   const [priceInputs, setPriceInputs] = useState({ basePrice: '', discVal: '20', vat: '19' })
-  const [imgSrcs, setImgSrcs] = useState([null, null, null])
+  const [imgSrcs, setImgSrcs] = useState([])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
@@ -341,7 +341,7 @@ export default function AdminPage() {
     }
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent' })
     setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
-    setImgSrcs([null, null, null])
+    setImgSrcs([])
     setPublishedLink(null)
     setParseStatus(null)
   }
@@ -887,17 +887,41 @@ return (
               <div style={S.sTitle}>Dateien hochladen</div>
               <button onClick={resetForm} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'4px 12px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>↺ Reset</button>
             </div>
-            <div style={S.uploadRow}>
-              {[0,1,2].map(idx => (
-                <label key={idx} style={S.uploadZone} htmlFor={`img-${idx}`}>
-                  <input id={`img-${idx}`} type="file" accept="image/*" style={{display:'none'}} onChange={e => handleImage(e, idx)} />
-                  {imgSrcs[idx]
-                    ? <img src={imgSrcs[idx]} style={{width:'100%',height:60,objectFit:'cover',borderRadius:6}} alt="" />
-                    : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{fontSize:10,color:'#9ca3af',lineHeight:1.3,textAlign:'center'}}>Bild {idx+1}</span></>
-                  }
-                </label>
-              ))}
+<div style={{marginBottom:8}}>
+              <label style={{...S.uploadZone, flexDirection:'row', padding:'12px 16px', justifyContent:'center', gap:10, cursor:'pointer'}} htmlFor="multi-img-upload">
+                <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
+                  const files = Array.from(e.target.files)
+                  files.forEach(file => {
+                    const r = new FileReader()
+                    r.onload = ev => setImgSrcs(prev => [...prev, ev.target.result])
+                    r.readAsDataURL(file)
+                  })
+                  e.target.value = ''
+                }} />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span style={{fontSize:13,color:'#9ca3af'}}>Bilder hochladen (mehrere möglich)</span>
+              </label>
             </div>
+            {imgSrcs.filter(Boolean).length > 0 && (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))',gap:8,marginBottom:8}}>
+                {imgSrcs.map((src, idx) => src ? (
+                  <div key={idx} style={{position:'relative',borderRadius:8,overflow:'hidden',border:'1px solid #e5e7eb'}}>
+                    <img src={src} style={{width:'100%',height:80,objectFit:'cover',display:'block'}} alt="" />
+                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px',background:'rgba(0,0,0,0.3)',opacity:0,transition:'.15s'}}
+                      onMouseEnter={e => e.currentTarget.style.opacity=1}
+                      onMouseLeave={e => e.currentTarget.style.opacity=0}>
+                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx>0){[n[idx-1],n[idx]]=[n[idx],n[idx-1]]}; return n })}
+                        style={{background:'rgba(255,255,255,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>←</button>
+                      <button onClick={() => setImgSrcs(prev => prev.filter((_,i) => i !== idx))}
+                        style={{background:'rgba(220,38,38,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12,color:'#fff'}}>✕</button>
+                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx<n.length-1){[n[idx],n[idx+1]]=[n[idx+1],n[idx]]}; return n })}
+                        style={{background:'rgba(255,255,255,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>→</button>
+                    </div>
+                    <div style={{position:'absolute',top:2,left:2,background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:9,padding:'1px 4px',borderRadius:3}}>{idx+1}</div>
+                  </div>
+                ) : null)}
+              </div>
+            )}
             <label style={{...S.uploadZone,marginTop:8,flexDirection:'row',padding:'10px 14px',justifyContent:'flex-start',gap:10}} htmlFor="pdf-upload">
               <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -952,8 +976,8 @@ return (
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" value={priceInputs.basePrice} onChange={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
+            <Field label="Listenpreis (netto)">
+                <input style={S.input} type="number" step="0.01" defaultValue={priceInputs.basePrice} onChange={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
@@ -984,9 +1008,6 @@ return (
           <div style={S.section}>
             <div style={S.sTitle}>Weitere Einstellungen</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Angebot gültig bis">
-                <input style={S.input} type="date" defaultValue={fRef.current.validUntil} onChange={e => updText('validUntil', e.target.value)} />
-              </Field>
               <Field label="Status">
                 <select style={S.select} value={selects.status} onChange={e => updSelect('status', e.target.value)}>
                   {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
