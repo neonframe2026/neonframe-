@@ -805,93 +805,51 @@ if (tab === 'home') return (
                 const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
                 const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
                 return (
-                  <div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,padding:'16px 20px',display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:16}}>
-                    <div>
-                      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6,flexWrap:'wrap'}}>
+<div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 180px 200px'}}>
+                    <div style={{padding:'16px 18px',borderRight:'1px solid #e5e7eb'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,flexWrap:'wrap'}}>
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
-                        {o.project && <span style={{fontSize:14,color:'#6b7280'}}>{o.project}</span>}
-                        <span style={{fontSize:12,fontWeight:600,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                        {o.created_at && (
-                          <span style={{display:'flex',alignItems:'center',gap:6}}>
-                            <span style={{fontSize:12,color:isRed?'#dc2626':'#9ca3af',fontWeight:isRed?700:400}}>
-                              📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}
-                            </span>
-                            <span
-                              onClick={async () => {
-                                if (!o.customer_email) {
-                                  alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.')
-                                  return
-                                }
-                                if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
-                                try {
-                                  const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
-                                  const res = await fetch('/api/recontact', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      offerId: o.id,
-                                      customerEmail: o.customer_email,
-                                      customerName: o.project,
-                                      offerLink,
-                                      price: o.final_price,
-                                      width: o.width,
-                                      height: o.height,
-                                      colors: o.colors,
-                                    }),
-                                  })
-                                  const data = await res.json()
-                                  if (data.success) {
-                                    alert('✅ E-Mail gesendet & Status aktualisiert!')
-                                    loadOffers()
-                                  } else {
-                                    alert('Fehler: ' + data.error)
-                                  }
-                                } catch (err) {
-                                  alert('Fehler: ' + err.message)
-                                }
-                              }}
-                              title={o.customer_email ? o.customer_email : 'Keine E-Mail hinterlegt'}
-                              style={{
-                                display:'inline-flex',alignItems:'center',gap:4,
-                                background: isRed ? '#fef2f2' : '#f3f4f6',
-                                border: `1px solid ${isRed ? '#fecaca' : '#e5e7eb'}`,
-                                color: isRed ? '#dc2626' : '#9ca3af',
-                                fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,
-                                whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'
-                              }}
-                            >
-                              ↩ Nochmals kontaktieren
-                            </span>
-                          </span>
-                        )}
+                        <span style={{fontSize:15,color:'#6b7280'}}>{o.project}</span>
+                        <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
                       </div>
-                      <div style={{fontSize:13,color:'#9ca3af',display:'flex',gap:16,flexWrap:'wrap'}}>
-                        {o.width && o.height && <span>{o.width} × {o.height} cm</span>}
-                        {o.colors && <span>{o.colors}</span>}
-                        {o.final_price > 0 && <span style={{fontWeight:600,color:'#374151'}}>€ {parseFloat(o.final_price).toFixed(2)}</span>}
-                        {o.valid_until && <span>Gültig bis {new Date(o.valid_until).toLocaleDateString('de-DE')}</span>}
-                      </div>
-                      <div style={{marginTop:10,display:'flex',alignItems:'center',gap:8}}>
-                        <span style={{fontSize:12,color:'#6b7280',fontWeight:500}}>Status</span>
-                        <select
-                          value={o.status || 'offer_sent'}
-                          onChange={e => updateStatus(o.id, e.target.value)}
-                          style={{fontSize:12,fontWeight:600,padding:'4px 10px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit'}}
-                        >
-                          {STATUS_OPTIONS.map(s => (
-                            <option key={s.value} value={s.value}>{s.label}</option>
-                          ))}
-                        </select>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+                        {o.created_at && <span style={{fontSize:12,color:isRed?'#dc2626':'#9ca3af',fontWeight:isRed?700:400}}>📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>}
+                        <span
+                          onClick={async () => {
+                            if (!o.customer_email) { alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.'); return }
+                            if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
+                            try {
+                              const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
+                              const res = await fetch('/api/recontact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink, price: o.final_price, width: o.width, height: o.height, colors: o.colors }) })
+                              const data = await res.json()
+                              if (data.success) { alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers() } else { alert('Fehler: ' + data.error) }
+                            } catch (err) { alert('Fehler: ' + err.message) }
+                          }}
+                          title={o.customer_email || 'Keine E-Mail hinterlegt'}
+                          style={{display:'inline-flex',alignItems:'center',gap:4,background:isRed?'#fef2f2':'#f3f4f6',border:`1px solid ${isRed?'#fecaca':'#e5e7eb'}`,color:isRed?'#dc2626':'#9ca3af',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
+                        >↩ Erneut kontaktieren</span>
                       </div>
                       {o.published && (
-                        <div style={{marginTop:8,display:'flex',alignItems:'center',gap:8}}>
-                          <span style={{fontSize:12,color:'#9ca3af',fontFamily:'monospace'}}>{link}</span>
-                          <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'3px 10px',fontSize:11}}>Kopieren</button>
-                          <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'3px 10px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <span style={{fontSize:11,color:'#9ca3af',fontFamily:'monospace'}}>{link}</span>
+                          <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'3px 9px',fontSize:11}}>Kopieren</button>
+                          <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'3px 9px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
                         </div>
                       )}
                     </div>
-                    <div style={{display:'flex',gap:8,flexShrink:0}}>
+                    <div style={{padding:'16px 18px',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
+                      <span style={{fontSize:10,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.06em'}}>Preis</span>
+                      <span style={{fontSize:20,fontWeight:700,color:'#111'}}>{o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'}</span>
+                      <span style={{fontSize:10,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.06em'}}>Status</span>
+                      <select
+                        value={o.status || 'offer_sent'}
+                        onChange={e => updateStatus(o.id, e.target.value)}
+                        style={{fontSize:12,padding:'6px 10px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit'}}
+                      >
+                        {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                      </select>
+                    </div>
+                    <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
                       <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
                       <button onClick={() => toggleOffer(o.id, o.published)} style={{...S.btnOutline,fontSize:12}}>{o.published?'Deaktivieren':'Aktivieren'}</button>
                       <button onClick={() => deleteOffer(o.id)} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Löschen</button>
