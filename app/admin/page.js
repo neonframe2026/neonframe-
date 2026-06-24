@@ -978,7 +978,7 @@ return (
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
 <Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
+                <input style={S.input} type="number" step="0.01" defaultValue="" onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" key="basePrice" />
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
