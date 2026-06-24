@@ -321,6 +321,7 @@ export default function AdminPage() {
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
   const [previewOfferId, setPreviewOfferId] = useState(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -354,6 +355,7 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => { if (authed) schedulePreview() }, [selects, priceInputs, imgSrcs, authed, previewTab])
+  useEffect(() => { if (showPreviewModal) renderPreviewFromRef() }, [showPreviewModal])
 
   function renderPreviewFromRef() {
     if (!iframeRef.current) return
@@ -616,8 +618,8 @@ let offerId = previewOfferId
       let statusMsg = `Veröffentlicht!\n\nAngebotslink\n${offerLink}`
 
       if (draftData.success) {
-        if (draftData.checkoutUrl) {
-          await fetch(`/api/offers?id=${data.id}`, {
+if (draftData.checkoutUrl) {
+          await fetch(`/api/offers?id=${offerId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ checkout_url: draftData.checkoutUrl }),
@@ -848,8 +850,20 @@ let offerId = previewOfferId
     </div>
   )
 
-  return (
+return (
     <div style={S.app}>
+      {showPreviewModal && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
+          <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <span style={{fontWeight:700,fontSize:15}}>👁 Vorschau</span>
+            <div style={{display:'flex',gap:10}}>
+              <button onClick={() => setShowPreviewModal(false)} style={{background:'transparent',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
+              <button onClick={() => { setShowPreviewModal(false); publish() }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
+            </div>
+          </div>
+          <iframe ref={iframeRef} style={{flex:1,border:'none',width:'100%',background:'#fff'}} title="Vorschau" />
+        </div>
+      )}
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
@@ -992,44 +1006,7 @@ let offerId = previewOfferId
             </div>
             <button
               style={{...S.btnGreen, background:'#1d4ed8', marginBottom:8}}
-              onClick={async () => {
-                const f = { ...fRef.current, ...selects, ...priceInputs }
-                try {
-                  const uploadedImgs = [null, null, null]
-                  for (let i = 0; i < 3; i++) {
-                    if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
-                      const blob = await (await fetch(imgSrcs[i])).blob()
-                      const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
-                      const up = await fetch('/api/upload', { method: 'POST', body: fd })
-                      const upData = await up.json()
-                      if (upData.url) uploadedImgs[i] = upData.url
-                    }
-                  }
-                  const payload = {
-                    offer_num: f.num, project: f.project,
-                    width: f.w, height: f.h,
-                    backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
-                    colors: f.color,
-                    base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
-                    disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
-                    net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-                    delivery: f.delivery,
-                    checkout_url: f.url,
-                    customer_note: f.customerNote || null,
-                    customer_email: f.customerEmail || null,
-                    valid_until: f.validUntil || null,
-                    status: f.status || 'offer_sent',
-                    preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
-                    published: false,
-                  }
-                  const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-                  const data = await res.json()
-                  if (data.error) throw new Error(data.error)
-                  const offerId = data.custom_id || data.id
-                  window.open(`${window.location.origin}/angebot/${offerId}`, '_blank')
-                  setPreviewOfferId(offerId)
-                } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
-              }}
+onClick={() => setShowPreviewModal(true)}
             >
               👁 Vorschau öffnen
             </button>
