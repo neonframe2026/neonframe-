@@ -331,6 +331,7 @@ export default function AdminPage() {
   const updText = (k, v) => { fRef.current[k] = v; schedulePreview() }
   const updSelect = (k, v) => { fRef.current[k] = v; setSelects(p => ({ ...p, [k]: v })) }
   const updPrice = (k, v) => { fRef.current[k] = v; setPriceInputs(p => ({ ...p, [k]: v })) }
+  const updPriceField = (k, v) => { fRef.current[k] = v }
 
   function resetForm() {
     fRef.current = {
@@ -977,7 +978,7 @@ return (
             <div style={S.sTitle}>Preiskalkulation</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
 <Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" onChange={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
+                <input style={S.input} type="number" step="0.01" onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
