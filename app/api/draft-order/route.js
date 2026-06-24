@@ -66,7 +66,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
           <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">Wir haben alles nach Ihren Wünschen konfiguriert – Maße, Farben und alle Details sind in Ihrem persönlichen Angebot zusammengefasst.</p>
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Das Angebot ist für Sie reserviert. Bei Fragen oder Änderungswünschen können Sie uns jederzeit direkt über die Angebotsseite oder per E-Mail unter <a href="mailto:info@neonframe.de" style="color:#60c8f0;text-decoration:none">info@neonframe.de</a> erreichen – wir melden uns schnellstmöglich.</p>
 
-<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:48px">
           <tr>
           <td align="center">
           <table cellpadding="0" cellspacing="0" border="0" role="presentation">
