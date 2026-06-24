@@ -320,6 +320,7 @@ export default function AdminPage() {
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
+  const [previewOfferId, setPreviewOfferId] = useState(null)
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -857,8 +858,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
       </div>
 
-      <div style={S.main}>
-        <div style={S.left}>
+<div style={{...S.main, display:'block', maxWidth: 720, margin: '0 auto', padding: '0 20px'}}>
+        <div style={{...S.left, maxWidth:'100%', width:'100%'}}>
           <div style={S.section}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
               <div style={S.sTitle}>Dateien hochladen</div>
@@ -978,11 +979,54 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
             </div>
           </div>
 
-          <div style={S.publishArea}>
+<div style={S.publishArea}>
             <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#166534',lineHeight:1.5}}>
               ✅ Beim Veröffentlichen wird automatisch<br/>
               • Eine E-Mail an den Kunden gesendet
             </div>
+            <button
+              style={{...S.btnGreen, background:'#1d4ed8', marginBottom:8}}
+              onClick={async () => {
+                const f = { ...fRef.current, ...selects, ...priceInputs }
+                try {
+                  const uploadedImgs = [null, null, null]
+                  for (let i = 0; i < 3; i++) {
+                    if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
+                      const blob = await (await fetch(imgSrcs[i])).blob()
+                      const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
+                      const up = await fetch('/api/upload', { method: 'POST', body: fd })
+                      const upData = await up.json()
+                      if (upData.url) uploadedImgs[i] = upData.url
+                    }
+                  }
+                  const payload = {
+                    offer_num: f.num, project: f.project,
+                    width: f.w, height: f.h,
+                    backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
+                    colors: f.color,
+                    base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
+                    disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
+                    net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
+                    delivery: f.delivery,
+                    checkout_url: f.url,
+                    customer_note: f.customerNote || null,
+                    customer_email: f.customerEmail || null,
+                    valid_until: f.validUntil || null,
+                    status: f.status || 'offer_sent',
+                    preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
+                    published: false,
+                  }
+                  const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                  const data = await res.json()
+                  if (data.error) throw new Error(data.error)
+                  const offerId = data.custom_id || data.id
+                  window.open(`${window.location.origin}/angebot/${offerId}`, '_blank')
+                  setPreviewOfferId(offerId)
+                } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
+              }}
+            >
+              👁 Vorschau öffnen
+            </button>
             <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
             {publishedLink && (
               <div style={S.linkBox}>
@@ -993,15 +1037,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
           </div>
         </div>
 
-        <div style={S.right}>
-          <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'0 20px',display:'flex',alignItems:'center',gap:4,height:44,flexShrink:0}}>
-            <button onClick={() => setPreviewTab('angebot')} style={{...S.tab(previewTab==='angebot'),fontSize:12,padding:'4px 14px'}}>Angebotsseite</button>
-            <button onClick={() => setPreviewTab('email')} style={{...S.tab(previewTab==='email'),fontSize:12,padding:'4px 14px'}}>Kunden-E-Mail</button>
-            <div style={{marginLeft:'auto',fontSize:11,color:'#9ca3af'}}>Live-Vorschau</div>
-          </div>
-          <iframe ref={iframeRef} style={{...S.iframe, display: previewTab === 'angebot' ? 'block' : 'none'}} title="Angebotsvorschau" />
-          <iframe ref={emailIframeRef} style={{...S.iframe, display: previewTab === 'email' ? 'block' : 'none'}} title="E-Mail Vorschau" />
-        </div>
       </div>
     </div>
   )
