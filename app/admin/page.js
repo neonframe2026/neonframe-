@@ -576,11 +576,17 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         published: true,
       }
 
-      const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-
-      const offerId = data.custom_id || data.id
+let offerId = previewOfferId
+      if (offerId) {
+        const res = await fetch(`/api/offers?id=${offerId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+      } else {
+        const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+        offerId = data.custom_id || data.id
+      }
       const offerLink = `${window.location.origin}/angebot/${offerId}`
 
       const draftRes = await fetch('/api/draft-order', {
