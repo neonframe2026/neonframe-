@@ -68,7 +68,7 @@ Jetzt Bewertung abgeben
 </tr>
 </table>
 
-<p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">
+<p style="margin:24px 0 16px;font-size:15px;color:#555;line-height:1.7">
 Bei Fragen oder Anliegen stehen wir Ihnen selbstverst&auml;ndlich jederzeit gerne zur Verf&uuml;gung.
 </p>
 
