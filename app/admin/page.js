@@ -796,7 +796,7 @@ if (tab === 'home') return (
            : <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {offers.filter(o => {
                 const q = manageSearch.toLowerCase()
-                const matchSearch = !q || (o.project && o.project.toLowerCase().includes(q)) || (o.custom_id && String(o.custom_id).includes(q))
+                const matchSearch = !q || (o.project && o.project.toLowerCase().includes(q)) || (o.custom_id && String(o.custom_id).includes(q)) || (o.offer_num && o.offer_num.toLowerCase().includes(q))
                 const matchStatus = !manageStatus || o.status === manageStatus
                 return matchSearch && matchStatus
               }).map(o => {
