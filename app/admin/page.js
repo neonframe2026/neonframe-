@@ -301,7 +301,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
-  const [tab, setTab] = useState('manage')
+  const [tab, setTab] = useState('home')
   const [previewTab, setPreviewTab] = useState('angebot')
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
@@ -714,6 +714,28 @@ if (draftData.checkoutUrl) {
 
   const Field = ({ label, children }) => (
     <div style={{display:'flex',flexDirection:'column',gap:5}}><label style={S.label}>{label}</label>{children}</div>
+  )
+
+  if (tab === 'home') return (
+    <div style={{position:'fixed',inset:0,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:20,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+      <div style={{background:'#0a0a0a',padding:'10px 14px',borderRadius:10,marginBottom:16}}>
+        <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:36,display:'block'}} />
+      </div>
+      <div style={{display:'flex',gap:20}}>
+        <button onClick={() => setTab('create')} style={{width:200,height:160,background:'#fff',border:'2px solid #e5e7eb',borderRadius:16,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,fontFamily:'inherit',transition:'.15s'}}
+          onMouseEnter={e => e.currentTarget.style.borderColor='#0a0a0a'}
+          onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
+          <span style={{fontSize:32}}>✏️</span>
+          <span style={{fontSize:15,fontWeight:700,color:'#111'}}>Angebot erstellen</span>
+        </button>
+        <button onClick={() => setTab('manage')} style={{width:200,height:160,background:'#fff',border:'2px solid #e5e7eb',borderRadius:16,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,fontFamily:'inherit',transition:'.15s'}}
+          onMouseEnter={e => e.currentTarget.style.borderColor='#0a0a0a'}
+          onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
+          <span style={{fontSize:32}}>📋</span>
+          <span style={{fontSize:15,fontWeight:700,color:'#111'}}>Angebote verwalten</span>
+        </button>
+      </div>
+    </div>
   )
 
   if (tab === 'manage') return (
