@@ -681,8 +681,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     topbar: {background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'0 24px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0},
     tabs: {display:'flex',gap:4},
     tab: (a) => ({padding:'6px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'none',background:a?'#0a0a0a':'transparent',color:a?'#fff':'#6b7280',fontFamily:'inherit',transition:'.15s'}),
-    main: {display:'flex',flex:1,overflow:'hidden'},
-    left: {width:390,flexShrink:0,overflowY:'auto',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',background:'#fff'},
+    main: {display:'flex',flex:1,overflowY:'auto',justifyContent:'center'},
+    left: {width:'100%',maxWidth:820,flexShrink:0,display:'flex',flexDirection:'column',background:'#fff',padding:'0 20px'},
     section: {borderBottom:'1px solid #f3f4f6',padding:'16px 20px'},
     sTitle: {fontSize:11,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:12},
     label: {fontSize:10,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.06em',display:'block',marginBottom:5},
@@ -858,8 +858,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
       </div>
 
-<div style={{...S.main, display:'block', maxWidth: 720, margin: '0 auto', padding: '0 20px'}}>
-        <div style={{...S.left, maxWidth:'100%', width:'100%'}}>
+<div style={S.main}>
+        <div style={S.left}>
           <div style={S.section}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
               <div style={S.sTitle}>Dateien hochladen</div>
