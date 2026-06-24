@@ -806,13 +806,13 @@ if (tab === 'home') return (
                 const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
                 return (
 <div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 180px 200px'}}>
-                    <div style={{padding:'16px 18px',borderRight:'1px solid #e5e7eb'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,flexWrap:'wrap'}}>
+<div style={{padding:'20px 22px',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                         <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
-                        <span style={{fontSize:15,color:'#6b7280'}}>{o.project}</span>
+                        <span style={{fontSize:15,color:'#374151'}}>{o.project}</span>
                         <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                         {o.created_at && <span style={{fontSize:12,color:isRed?'#dc2626':'#9ca3af',fontWeight:isRed?700:400}}>📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>}
                         <span
                           onClick={async () => {
@@ -826,14 +826,14 @@ if (tab === 'home') return (
                             } catch (err) { alert('Fehler: ' + err.message) }
                           }}
                           title={o.customer_email || 'Keine E-Mail hinterlegt'}
-                          style={{display:'inline-flex',alignItems:'center',gap:4,background:isRed?'#fef2f2':'#f3f4f6',border:`1px solid ${isRed?'#fecaca':'#e5e7eb'}`,color:isRed?'#dc2626':'#9ca3af',fontSize:11,fontWeight:700,padding:'2px 9px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
+                          style={{display:'inline-flex',alignItems:'center',gap:5,background:isRed?'#fef2f2':'#f3f4f6',border:`1px solid ${isRed?'#fecaca':'#e5e7eb'}`,color:isRed?'#dc2626':'#9ca3af',fontSize:11,fontWeight:700,padding:'4px 12px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
                         >↩ Erneut kontaktieren</span>
                       </div>
                       {o.published && (
-                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
                           <span style={{fontSize:11,color:'#9ca3af',fontFamily:'monospace'}}>{link}</span>
-                          <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'3px 9px',fontSize:11}}>Kopieren</button>
-                          <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'3px 9px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
+                          <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'4px 10px',fontSize:11}}>Kopieren</button>
+                          <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'4px 10px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
                         </div>
                       )}
                     </div>
@@ -844,7 +844,7 @@ if (tab === 'home') return (
                       <select
                         value={o.status || 'offer_sent'}
                         onChange={e => updateStatus(o.id, e.target.value)}
-                        style={{fontSize:12,padding:'6px 10px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit'}}
+                        style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
                       >
                         {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </select>
