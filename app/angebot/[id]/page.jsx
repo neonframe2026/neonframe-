@@ -16,9 +16,9 @@ async function getOffer(id) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
-  let { data } = await supabase.from('offers').select('*').eq('custom_id', id).eq('published', true).single()
+let { data } = await supabase.from('offers').select('*').eq('custom_id', id).single()
   if (!data) {
-    const res = await supabase.from('offers').select('*').eq('id', id).eq('published', true).single()
+    const res = await supabase.from('offers').select('*').eq('id', id).single()
     data = res.data
   }
   return data || null
