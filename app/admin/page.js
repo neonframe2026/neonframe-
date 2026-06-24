@@ -718,12 +718,10 @@ if (draftData.checkoutUrl) {
 
 if (tab === 'home') return (
     <div style={{position:'fixed',inset:0,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:32,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
-      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:0}}>
-        <div style={{background:'#0a0a0a',padding:'14px 18px',borderRadius:14,marginBottom:16}}>
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:52,display:'block'}} />
-        </div>
-        <p style={{margin:0,fontSize:14,color:'#9ca3af'}}>Was möchtest du tun?</p>
+<div style={{position:'absolute',top:0,left:0,right:0,background:'#0a0a0a',height:72,display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:48,display:'block'}} />
       </div>
+      <p style={{margin:'0 0 8px',fontSize:14,color:'#9ca3af'}}>Was möchtest du tun?</p>
       <div style={{display:'flex',gap:16}}>
         <button onClick={() => setTab('create')} style={{width:340,height:260,background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
           onMouseEnter={e => e.currentTarget.style.borderColor='#111'}
