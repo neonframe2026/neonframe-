@@ -1098,7 +1098,7 @@ setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
             >
               {previewLoading ? '⏳ Vorschau wird erstellt...' : '👁 Vorschau öffnen'}
             </button>
-            <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
+            <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'⏳ Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
             {publishedLink && (
               <div style={S.linkBox}>
                 <input value={publishedLink} readOnly style={{flex:1,background:'transparent',border:'none',fontSize:12,color:'#16a34a',outline:'none',fontFamily:'monospace'}} />
