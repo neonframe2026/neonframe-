@@ -66,15 +66,20 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
           <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">Wir haben alles nach Ihren Wünschen konfiguriert – Maße, Farben und alle Details sind in Ihrem persönlichen Angebot zusammengefasst.</p>
           <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">Das Angebot ist für Sie reserviert. Bei Fragen oder Änderungswünschen können Sie uns jederzeit direkt über die Angebotsseite oder per E-Mail unter <a href="mailto:info@neonframe.de" style="color:#60c8f0;text-decoration:none">info@neonframe.de</a> erreichen – wir melden uns schnellstmöglich.</p>
 
-          <!-- Angebot ansehen Button -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px">
-            <tr>
-              <td align="center">
-                <a href="${offerLink || '#'}" style="display:inline-block;background:#0a0a0a;color:#fff;text-align:center;padding:16px 36px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">
-                  Angebot ansehen
-                </a>
-              </td>
-            </tr>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-bottom:28px">
+          <tr>
+          <td align="center">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation">
+          <tr>
+          <td align="center" bgcolor="#16a34a" style="background:#16a34a;border-radius:12px;padding:16px 36px">
+          <a href="${offerLink || '#'}" target="_blank" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;font-weight:700;line-height:20px;color:#ffffff;text-decoration:none;display:block">
+          Angebot ansehen
+          </a>
+          </td>
+          </tr>
+          </table>
+          </td>
+          </tr>
           </table>
 
           <p style="margin:0 0 4px;font-size:15px;color:#555;line-height:1.7">Viele Grüße</p>
