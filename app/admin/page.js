@@ -721,18 +721,18 @@ if (draftData.checkoutUrl) {
       <div style={{background:'#0a0a0a',padding:'10px 14px',borderRadius:10,marginBottom:16}}>
         <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:36,display:'block'}} />
       </div>
-      <div style={{display:'flex',gap:20}}>
-        <button onClick={() => setTab('create')} style={{width:200,height:160,background:'#fff',border:'2px solid #e5e7eb',borderRadius:16,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,fontFamily:'inherit',transition:'.15s'}}
+<div style={{display:'flex',gap:28}}>
+        <button onClick={() => setTab('create')} style={{width:340,height:260,background:'#fff',border:'2px solid #e5e7eb',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18,fontFamily:'inherit',transition:'.15s'}}
           onMouseEnter={e => e.currentTarget.style.borderColor='#0a0a0a'}
           onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
-          <span style={{fontSize:32}}>✏️</span>
-          <span style={{fontSize:15,fontWeight:700,color:'#111'}}>Angebot erstellen</span>
+          <span style={{fontSize:56}}>✏️</span>
+          <span style={{fontSize:20,fontWeight:700,color:'#111'}}>Angebot erstellen</span>
         </button>
-        <button onClick={() => setTab('manage')} style={{width:200,height:160,background:'#fff',border:'2px solid #e5e7eb',borderRadius:16,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,fontFamily:'inherit',transition:'.15s'}}
+        <button onClick={() => setTab('manage')} style={{width:340,height:260,background:'#fff',border:'2px solid #e5e7eb',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:18,fontFamily:'inherit',transition:'.15s'}}
           onMouseEnter={e => e.currentTarget.style.borderColor='#0a0a0a'}
           onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
-          <span style={{fontSize:32}}>📋</span>
-          <span style={{fontSize:15,fontWeight:700,color:'#111'}}>Angebote verwalten</span>
+          <span style={{fontSize:56}}>📋</span>
+          <span style={{fontSize:20,fontWeight:700,color:'#111'}}>Angebote verwalten</span>
         </button>
       </div>
     </div>
