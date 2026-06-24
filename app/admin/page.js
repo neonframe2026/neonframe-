@@ -321,6 +321,7 @@ export default function AdminPage() {
   const [publishing, setPublishing] = useState(false)
   const [publishedLink, setPublishedLink] = useState(null)
   const [previewOfferId, setPreviewOfferId] = useState(null)
+  const [previewOfferDbId, setPreviewOfferDbId] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(null)
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
@@ -580,14 +581,15 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
 
 let offerId = previewOfferId
       if (offerId) {
-        const res = await fetch(`/api/offers?id=${offerId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        const res = await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const data = await res.json()
         if (data.error) throw new Error(data.error)
       } else {
         const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const data = await res.json()
         if (data.error) throw new Error(data.error)
-        offerId = data.custom_id || data.id
+offerId = data.custom_id || data.id
+        setPreviewOfferDbId(data.id)
       }
       const offerLink = `${window.location.origin}/angebot/${offerId}`
 
@@ -619,7 +621,7 @@ let offerId = previewOfferId
 
       if (draftData.success) {
 if (draftData.checkoutUrl) {
-          await fetch(`/api/offers?id=${offerId}`, {
+          await fetch(`/api/offers?id=${previewOfferDbId || offerId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ checkout_url: draftData.checkoutUrl }),
@@ -1024,15 +1026,16 @@ onClick={async () => {
       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       published: false,
     }
-    let offerId = previewOfferId
+let offerId = previewOfferId
     if (offerId) {
-      await fetch(`/api/offers?id=${offerId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     } else {
       const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       offerId = data.custom_id || data.id
       setPreviewOfferId(offerId)
+      setPreviewOfferDbId(data.id)
     }
     setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
   } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
