@@ -47,12 +47,8 @@ export async function POST(req) {
 Hallo ${firstName},
 </h1>
 
-<p style="margin:0 0 16px;font-size:15px;color:#333;line-height:1.7">
-wir hoffen es geht Ihnen gut.
-</p>
-
 <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.7">
-Bez&uuml;glich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine R&uuml;ckmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot f&uuml;r Sie interessant:
+bez&uuml;glich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir bisher leider noch keine R&uuml;ckmeldung von Ihnen erhalten haben. Vielleicht ist folgendes Angebot f&uuml;r Sie interessant:
 </p>
 
 <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">
