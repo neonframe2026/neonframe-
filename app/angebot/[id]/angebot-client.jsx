@@ -338,7 +338,7 @@ const final = net + vatAmt
         .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:500; color:#333; }
         .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
         .img-tt { position:relative; display:inline-flex; }
-        .img-tt-box { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; }
+        .img-tt-box { display:none; position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; }
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square img { width:260px; height:260px; object-fit:cover; }
         .img-tt-box.wide img { width:750px; height:auto; object-fit:contain; }
