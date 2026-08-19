@@ -342,7 +342,7 @@ const final = net + vatAmt
         .img-tt-box::after { content:''; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); border:8px solid transparent; border-bottom-color:#fff; }
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square img { width:260px; height:260px; object-fit:cover; }
-        .img-tt-box.wide img { width:650px; height:auto; object-fit:contain; }
+        .img-tt-box.wide img { width:700px; height:auto; object-fit:contain; }
         .img-tt:hover .img-tt-box { display:block; }
         .tt { position:relative; display:inline; }
         .tt-t { border-bottom:1px dashed #ccc; cursor:default; }
