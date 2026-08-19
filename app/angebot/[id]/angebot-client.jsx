@@ -34,7 +34,7 @@ const usageImages = {
   'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_05_10_800x800.png?v=1778724405',
   'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27_800x800.png?v=1778724405',
 }
-const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_01_58_48_800x800.png?v=1778716750'
+const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_800x800.png?v=1787155084'
 
 function getTooltipImg(val, map) {
   if (!val) return null
