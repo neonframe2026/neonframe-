@@ -52,7 +52,7 @@ bez&uuml;glich Ihres Angebots wollten wir uns nochmal bei Ihnen melden, da wir b
 </p>
 
 <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">
-Da wir aktuell Referenzen f&uuml;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&uuml;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong>weitere 10 % Rabatt on top</strong>.
+Da wir aktuell Referenzen f&uuml;r unsere Website und Social Media sammeln, haben wir ein besonderes Angebot f&uuml;r Sie. Schicken Sie uns nach Erhalt Ihres Neonschildes <strong>Vorher/Nachher Fotos/Video</strong> oder ein kurzes Video des fertigen Projekts – und wir geben Ihnen <strong>weitere 5 % Rabatt on top</strong>.
 </p>
 
 <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7">
