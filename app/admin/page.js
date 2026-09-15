@@ -41,6 +41,28 @@ function colorDot(s = '') {
   return '#9ca3af'
 }
 
+function ThemeVars() {
+  return (
+    <style>{`
+      .nf-admin { --bg:#ffffff; --bg-alt:#f9fafb; --panel:#ffffff; --border:#e5e7eb; --text:#111111; --text-muted:#6b7280; --text-faint:#9ca3af; --input-bg:#f9fafb; }
+      .nf-admin[data-theme='dark'] { --bg:#0f1115; --bg-alt:#16181d; --panel:#1a1c22; --border:#2b2e36; --text:#f3f4f6; --text-muted:#9ca3af; --text-faint:#71757f; --input-bg:#20222a; }
+    `}</style>
+  )
+}
+
+function ThemeToggle({ theme, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
+      style={{background:'transparent',border:'1px solid var(--border)',borderRadius:8,width:36,height:36,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:16,lineHeight:1}}
+    >
+      {theme === 'dark' ? '🌙' : '☀️'}
+    </button>
+  )
+}
+
 async function extractPdfText(file) {
   const pdfjsLib = (await import('pdfjs-dist')).default || (await import('pdfjs-dist'))
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
@@ -189,31 +211,31 @@ function EditModal({ offer, onClose, onSaved }) {
     setSaving(false)
   }
 
-  const inp = { background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', color: '#111', fontSize: 13, fontFamily: 'inherit', outline: 'none', width: '100%' }
+  const inp = { background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', outline: 'none', width: '100%' }
   const sel = { ...inp, cursor: 'pointer' }
-  const lbl = { fontSize: 10, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 5 }
+  const lbl = { fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 5 }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{ background: 'var(--panel)', color: 'var(--text)', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>Angebot bearbeiten</div>
-            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>#{offer.custom_id || offer.id.slice(0,8)}{offer.project ? ` · ${offer.project}` : ''}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 2 }}>#{offer.custom_id || offer.id.slice(0,8)}{offer.project ? ` · ${offer.project}` : ''}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#9ca3af', lineHeight: 1, padding: 4 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: 'var(--text-faint)', lineHeight: 1, padding: 4 }}>×</button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               {[0,1,2].map(idx => (
-                <label key={idx} htmlFor={`edit-img-${idx}`} style={{ border: '1px dashed #e5e7eb', borderRadius: 10, padding: 8, textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: '#fafafa' }}>
+                <label key={idx} htmlFor={`edit-img-${idx}`} style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: 8, textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--input-bg)' }}>
                   <input id={`edit-img-${idx}`} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImage(e, idx)} />
                   {imgSrcs[idx]
                     ? <img src={imgSrcs[idx]} style={{ width: '100%', height: 64, objectFit: 'cover', borderRadius: 6 }} alt="" />
-                    : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{ fontSize: 10, color: '#9ca3af' }}>Bild {idx+1}</span></>
+                    : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{ fontSize: 10, color: 'var(--text-faint)' }}>Bild {idx+1}</span></>
                   }
                 </label>
               ))}
@@ -221,7 +243,7 @@ function EditModal({ offer, onClose, onSaved }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Angebotsdaten</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Angebotsdaten</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>Angebotsnummer</label><input style={inp} value={form.offer_num} onChange={e => set('offer_num', e.target.value)} /></div>
@@ -237,7 +259,7 @@ function EditModal({ offer, onClose, onSaved }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Konfiguration</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Konfiguration</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               <div><label style={lbl}>Rückwandform</label>
                 <select style={sel} value={form.backplate} onChange={e => set('backplate', e.target.value)}>
@@ -258,7 +280,7 @@ function EditModal({ offer, onClose, onSaved }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Preiskalkulation</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Preiskalkulation</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div><label style={lbl}>Listenpreis (netto)</label><input style={inp} type="number" step="0.01" value={form.base_price} onChange={e => set('base_price', e.target.value)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -282,7 +304,7 @@ function EditModal({ offer, onClose, onSaved }) {
           </div>
 
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Weitere Einstellungen</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Weitere Einstellungen</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>Lieferdatum</label><input style={inp} value={form.delivery} onChange={e => set('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" /></div>
@@ -301,8 +323,8 @@ function EditModal({ offer, onClose, onSaved }) {
           </div>
         </div>
 
-        <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button onClick={onClose} style={{ flex: 1, background: 'transparent', border: '1px solid #e5e7eb', color: '#374151', borderRadius: 10, padding: 12, fontWeight: 500, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Abbrechen</button>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ flex: 1, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: 12, fontWeight: 500, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Abbrechen</button>
           <button onClick={save} disabled={saving} style={{ flex: 2, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: 12, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}>
             {saving ? 'Wird gespeichert...' : '✓ Änderungen speichern'}
           </button>
@@ -343,6 +365,7 @@ export default function AdminPage() {
   const [showPreviewModal, setShowPreviewModal] = useState(null)
   const [formKey, setFormKey] = useState(0)
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false)
+  const [theme, setTheme] = useState('light')
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -388,6 +411,19 @@ export default function AdminPage() {
 
   useEffect(() => { if (authed) schedulePreview() }, [selects, priceInputs, imgSrcs, authed, previewTab])
   useEffect(() => { if (showPreviewModal) renderPreviewFromRef() }, [showPreviewModal])
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nf_admin_theme')
+      if (saved === 'dark' || saved === 'light') setTheme(saved)
+    } catch {}
+  }, [])
+  const toggleTheme = () => {
+    setTheme(t => {
+      const next = t === 'light' ? 'dark' : 'light'
+      try { localStorage.setItem('nf_admin_theme', next) } catch {}
+      return next
+    })
+  }
 
   function renderPreviewFromRef() {
     if (!iframeRef.current) return
@@ -720,26 +756,26 @@ if (draftData.checkoutUrl) {
   )
 
   const S = {
-    app: {display:'flex',flexDirection:'column',height:'100vh',background:'#fff',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'},
-    topbar: {background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'0 24px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0},
+    app: {display:'flex',flexDirection:'column',height:'100vh',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'},
+    topbar: {background:'var(--panel)',borderBottom:'1px solid var(--border)',padding:'0 24px',height:56,display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0},
     tabs: {display:'flex',gap:4},
-    tab: (a) => ({padding:'6px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'none',background:a?'#0a0a0a':'transparent',color:a?'#fff':'#6b7280',fontFamily:'inherit',transition:'.15s'}),
+    tab: (a) => ({padding:'6px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'none',background:a?'#0a0a0a':'transparent',color:a?'#fff':'var(--text-muted)',fontFamily:'inherit',transition:'.15s'}),
     main: {display:'flex',flex:1,overflowY:'auto',justifyContent:'center'},
-    left: {width:'100%',maxWidth:820,flexShrink:0,display:'flex',flexDirection:'column',background:'#fff',padding:'0 20px'},
-    section: {borderBottom:'1px solid #f3f4f6',padding:'16px 20px'},
-    sTitle: {fontSize:11,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:12},
-    label: {fontSize:10,fontWeight:600,color:'#6b7280',textTransform:'uppercase',letterSpacing:'.06em',display:'block',marginBottom:5},
-    input: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 12px',color:'#111',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%'},
-    select: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 12px',color:'#111',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%',cursor:'pointer'},
+    left: {width:'100%',maxWidth:820,flexShrink:0,display:'flex',flexDirection:'column',background:'var(--bg)',padding:'0 20px'},
+    section: {borderBottom:'1px solid var(--border)',padding:'16px 20px'},
+    sTitle: {fontSize:11,fontWeight:700,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:12},
+    label: {fontSize:10,fontWeight:600,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.06em',display:'block',marginBottom:5},
+    input: {background:'var(--input-bg)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 12px',color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%'},
+    select: {background:'var(--input-bg)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 12px',color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',width:'100%',cursor:'pointer'},
     row2: {display:'grid',gridTemplateColumns:'1fr 1fr',gap:10},
     uploadRow: {display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8},
-    uploadZone: {border:'1px dashed #e5e7eb',borderRadius:10,padding:'14px 10px',textAlign:'center',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:6,position:'relative',background:'#fafafa'},
+    uploadZone: {border:'1px dashed var(--border)',borderRadius:10,padding:'14px 10px',textAlign:'center',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:6,position:'relative',background:'var(--input-bg)'},
     status: (t) => ({fontSize:12,padding:'8px 12px',borderRadius:8,marginTop:8,background:t==='ok'?'#f0fdf4':t==='warn'?'#fffbeb':'#fef2f2',border:`1px solid ${t==='ok'?'#bbf7d0':t==='warn'?'#fde68a':'#fecaca'}`,color:t==='ok'?'#166534':t==='warn'?'#92400e':'#991b1b'}),
-    publishArea: {padding:'16px 20px',marginTop:'auto',borderTop:'1px solid #e5e7eb'},
+    publishArea: {padding:'16px 20px',marginTop:'auto',borderTop:'1px solid var(--border)'},
     btnGreen: {background:'#16a34a',color:'#fff',border:'none',borderRadius:10,padding:'13px 20px',fontWeight:700,fontSize:14,cursor:'pointer',fontFamily:'inherit',width:'100%',marginBottom:8},
     btnDark: {background:'#0a0a0a',color:'#fff',border:'none',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
-    btnOutline: {background:'transparent',border:'1px solid #e5e7eb',color:'#374151',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
-    linkBox: {background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:10,display:'flex',alignItems:'center',gap:8,marginTop:8},
+    btnOutline: {background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'},
+    linkBox: {background:'var(--input-bg)',border:'1px solid var(--border)',borderRadius:8,padding:10,display:'flex',alignItems:'center',gap:8,marginTop:8},
     right: {flex:1,position:'relative',overflow:'hidden',background:'#f3f4f6',display:'flex',flexDirection:'column'},
     iframe: {width:'100%',flex:1,border:'none',display:'block',background:'#fff'},
   }
@@ -749,38 +785,41 @@ if (draftData.checkoutUrl) {
   )
 
 if (tab === 'home') return (
-    <div style={{position:'fixed',inset:0,background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:32,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
-<div style={{position:'absolute',top:0,left:0,right:0,background:'#0a0a0a',height:72,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:32,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+      <ThemeVars />
+<div style={{position:'absolute',top:0,left:0,right:0,background:'#0a0a0a',height:72,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px'}}>
         <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:52,display:'block'}} />
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </div>
-      <p style={{margin:'0 0 8px',fontSize:18,fontWeight:600,color:'#374151'}}>Was möchtest du tun?</p>
+      <p style={{margin:'0 0 8px',fontSize:18,fontWeight:600,color:'var(--text)'}}>Was möchtest du tun?</p>
       <div style={{display:'flex',gap:16}}>
-        <button onClick={() => setTab('create')} style={{width:340,height:260,background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
+        <button onClick={() => setTab('create')} style={{width:340,height:260,background:'var(--bg-alt)',border:'1px solid var(--border)',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
           onMouseEnter={e => e.currentTarget.style.borderColor='#111'}
-          onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
+          onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
           <span style={{fontSize:40}}>✏️</span>
           <div style={{textAlign:'left'}}>
-            <div style={{fontSize:18,fontWeight:700,color:'#111',marginBottom:6}}>Angebot erstellen</div>
-            <div style={{fontSize:13,color:'#9ca3af',lineHeight:1.5}}>Neues Angebot für einen Kunden aufsetzen</div>
+            <div style={{fontSize:18,fontWeight:700,color:'var(--text)',marginBottom:6}}>Angebot erstellen</div>
+            <div style={{fontSize:13,color:'var(--text-faint)',lineHeight:1.5}}>Neues Angebot für einen Kunden aufsetzen</div>
           </div>
-          <span style={{fontSize:18,color:'#9ca3af',alignSelf:'flex-end'}}>→</span>
+          <span style={{fontSize:18,color:'var(--text-faint)',alignSelf:'flex-end'}}>→</span>
         </button>
-        <button onClick={() => setTab('manage')} style={{width:340,height:260,background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
+        <button onClick={() => setTab('manage')} style={{width:340,height:260,background:'var(--bg-alt)',border:'1px solid var(--border)',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
           onMouseEnter={e => e.currentTarget.style.borderColor='#111'}
-          onMouseLeave={e => e.currentTarget.style.borderColor='#e5e7eb'}>
+          onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
           <span style={{fontSize:40}}>📋</span>
           <div style={{textAlign:'left'}}>
-            <div style={{fontSize:18,fontWeight:700,color:'#111',marginBottom:6}}>Angebote verwalten</div>
-            <div style={{fontSize:13,color:'#9ca3af',lineHeight:1.5}}>Bestehende Angebote einsehen und bearbeiten</div>
+            <div style={{fontSize:18,fontWeight:700,color:'var(--text)',marginBottom:6}}>Angebote verwalten</div>
+            <div style={{fontSize:13,color:'var(--text-faint)',lineHeight:1.5}}>Bestehende Angebote einsehen und bearbeiten</div>
           </div>
-          <span style={{fontSize:18,color:'#9ca3af',alignSelf:'flex-end'}}>→</span>
+          <span style={{fontSize:18,color:'var(--text-faint)',alignSelf:'flex-end'}}>→</span>
         </button>
       </div>
     </div>
   )
 
   if (tab === 'manage') return (
-    <div style={S.app}>
+    <div className="nf-admin" data-theme={theme} style={S.app}>
+      <ThemeVars />
       {editingOffer && (
         <EditModal
           offer={editingOffer}
@@ -799,30 +838,33 @@ if (tab === 'home') return (
             </button>
           </div>
         </div>
-        <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
+        </div>
       </div>
-      <div style={{padding:32,overflowY:'auto',flex:1,background:'#f9fafb'}}>
+      <div style={{padding:32,overflowY:'auto',flex:1,background:'var(--bg-alt)'}}>
         <div style={{maxWidth:900,margin:'0 auto'}}>
 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-            <h2 style={{fontSize:20,fontWeight:700}}>Alle Angebote {offers.length > 0 && <span style={{fontSize:14,fontWeight:500,color:'#9ca3af'}}>({offers.length})</span>}</h2>
+            <h2 style={{fontSize:20,fontWeight:700,color:'var(--text)'}}>Alle Angebote {offers.length > 0 && <span style={{fontSize:14,fontWeight:500,color:'var(--text-faint)'}}>({offers.length})</span>}</h2>
             <button style={S.btnDark} onClick={loadOffers}>Aktualisieren</button>
           </div>
           <div style={{display:'flex',gap:10,marginBottom:20}}>
             <input
               placeholder="Nach Name oder Angebots-ID suchen..."
               onChange={e => setManageSearch(e.target.value)}
-              style={{flex:1,background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'#111'}}
+              style={{flex:1,background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'var(--text)'}}
             />
             <select
               onChange={e => setManageStatus(e.target.value)}
-              style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'#111',cursor:'pointer'}}
+              style={{background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'var(--text)',cursor:'pointer'}}
             >
               <option value="">Alle Status</option>
               {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
-          {loadingOffers ? <div style={{textAlign:'center',padding:60,color:'#9ca3af',fontSize:14}}>Wird geladen...</div>
-           : offers.length === 0 ? <div style={{textAlign:'center',padding:60,color:'#9ca3af',fontSize:14}}>Noch keine Angebote.</div>
+          {loadingOffers ? <div style={{textAlign:'center',padding:60,color:'var(--text-faint)',fontSize:14}}>Wird geladen...</div>
+           : offers.length === 0 ? <div style={{textAlign:'center',padding:60,color:'var(--text-faint)',fontSize:14}}>Noch keine Angebote.</div>
            : <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {offers.filter(o => {
                 const q = manageSearch.toLowerCase()
@@ -835,11 +877,11 @@ if (tab === 'home') return (
                 const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
                 const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
                 return (
-<div key={o.id} style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 220px 200px'}}>
-<div style={{padding:'20px 22px',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
+<div key={o.id} style={{background:'var(--panel)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 220px 200px'}}>
+<div style={{padding:'20px 22px',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
                       <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                        <span style={{fontSize:15,fontWeight:700}}>#{id}</span>
-                        <span style={{fontSize:15,color:'#374151'}}>{o.project}</span>
+                        <span style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>#{id}</span>
+                        <span style={{fontSize:15,color:'var(--text-muted)'}}>{o.project}</span>
                         <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
                       </div>
                       <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
@@ -861,19 +903,19 @@ if (tab === 'home') return (
                       </div>
                       {o.published && (
                         <div style={{display:'flex',alignItems:'center',gap:8}}>
-                          <span style={{fontSize:11,color:'#9ca3af',fontFamily:'monospace'}}>{link}</span>
+                          <span style={{fontSize:11,color:'var(--text-faint)',fontFamily:'monospace'}}>{link}</span>
                           <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'4px 10px',fontSize:11}}>Kopieren</button>
                           <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'4px 10px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
                         </div>
                       )}
                     </div>
-                    <div style={{padding:'16px 18px',borderRight:'1px solid #e5e7eb',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
-                      <span style={{fontSize:10,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.06em'}}>Preis</span>
-                      <span style={{fontSize:20,fontWeight:700,color:'#111'}}>{o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'}</span>
-                      <span style={{fontSize:10,fontWeight:600,color:'#9ca3af',textTransform:'uppercase',letterSpacing:'.06em'}}>Status</span>
+                    <div style={{padding:'16px 18px',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
+                      <span style={{fontSize:10,fontWeight:600,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'.06em'}}>Preis</span>
+                      <span style={{fontSize:20,fontWeight:700,color:'var(--text)'}}>{o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'}</span>
+                      <span style={{fontSize:10,fontWeight:600,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'.06em'}}>Status</span>
                       <select
                         value={o.status || 'offer_sent'}
-                        onChange={e => updateStatus(o.id, e.target.value)}style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid #e5e7eb',background:'#f9fafb',color:'#111',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
+                        onChange={e => updateStatus(o.id, e.target.value)}style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--input-bg)',color:'var(--text)',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
                       >
                         {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                       </select>
@@ -904,13 +946,14 @@ if (tab === 'home') return (
   )
 
 return (
-    <div style={S.app}>
+    <div className="nf-admin" data-theme={theme} style={S.app}>
+      <ThemeVars />
       {showPreviewModal && showPreviewModal !== null && (
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
-          <div style={{background:'#fff',borderBottom:'1px solid #e5e7eb',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-            <span style={{fontWeight:700,fontSize:15}}>👁 Vorschau</span>
+          <div style={{background:'var(--panel)',borderBottom:'1px solid var(--border)',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <span style={{fontWeight:700,fontSize:15,color:'var(--text)'}}>👁 Vorschau</span>
             <div style={{display:'flex',gap:10}}>
-              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
+              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
               <button onClick={() => { setShowPreviewModal(null); publish() }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
             </div>
           </div>
@@ -928,7 +971,10 @@ return (
             </button>
           </div>
         </div>
-        <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
+        </div>
       </div>
 
 <div style={S.main}>
@@ -950,7 +996,7 @@ return (
                   e.target.value = ''
                 }} />
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span style={{fontSize:13,color:'#9ca3af'}}>Bilder hochladen (max. 3 möglich)</span>
+                <span style={{fontSize:13,color:'var(--text-faint)'}}>Bilder hochladen (max. 3 möglich)</span>
               </label>
             </div>
             {imgSrcs.filter(Boolean).length > 0 && (
@@ -976,7 +1022,7 @@ return (
             <label style={{...S.uploadZone,marginTop:8,flexDirection:'row',padding:'10px 14px',justifyContent:'flex-start',gap:10}} htmlFor="pdf-upload">
               <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span style={{fontSize:12,color:'#9ca3af'}}>PDF hochladen (automatisch ausfüllen)</span>
+              <span style={{fontSize:12,color:'var(--text-faint)'}}>PDF hochladen (automatisch ausfüllen)</span>
             </label>
             {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
           </div>
@@ -998,22 +1044,30 @@ return (
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
               <Field label="Farbe(n) – kommagetrennt">
-                <div style={{position:'relative'}}>
-                  <input style={{...S.input, paddingRight: 96}} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="z.B. Soft Orange, Pink" />
+                <div
+                  style={{position:'relative'}}
+                  onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setColorDropdownOpen(false) }}
+                >
+                  <input
+                    style={{...S.input, paddingRight: 96}}
+                    defaultValue={fRef.current.color}
+                    onChange={e => updText('color', e.target.value)}
+                    onFocus={() => setColorDropdownOpen(true)}
+                    placeholder="z.B. Soft Orange, Pink"
+                  />
                   <button type="button" onClick={() => setColorDropdownOpen(o => !o)} style={{position:'absolute',right:6,top:6,bottom:6,background:'#fff',border:'1px solid #e5e7eb',borderRadius:6,padding:'0 10px',fontSize:11,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit'}}>Farbe wählen ▾</button>
                   {colorDropdownOpen && (
-                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:6,zIndex:20,boxShadow:'0 4px 12px rgba(0,0,0,.1)',display:'flex',flexDirection:'column',gap:2,maxHeight:240,overflowY:'auto'}}>
+                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:6,zIndex:20,boxShadow:'0 4px 12px rgba(0,0,0,.1)',display:'flex',flexDirection:'column',gap:2,maxHeight:240,overflowY:'auto'}}>
                       {COLOR_OPTIONS.map(c => {
                         const active = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
                         return (
-                          <label key={c} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
+                          <label key={c} tabIndex={-1} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
                             <input type="checkbox" checked={active} onChange={() => toggleColor(c)} style={{cursor:'pointer'}} />
                             <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c),display:'inline-block',border:'1px solid rgba(0,0,0,.08)'}}></span>
                             {c}
                           </label>
                         )
                       })}
-                      <button type="button" onClick={() => setColorDropdownOpen(false)} style={{marginTop:4,background:'#0a0a0a',color:'#fff',border:'none',borderRadius:6,padding:'6px 0',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Fertig</button>
                     </div>
                   )}
                 </div>
