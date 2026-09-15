@@ -997,7 +997,7 @@ return (
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
-              <Field label="Farbe(n)">
+              <Field label="Farbe(n) – kommagetrennt">
                 <div
                   style={{position:'relative'}}
                   onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setColorDropdownOpen(false) }}
