@@ -13,7 +13,7 @@ const SYSTEM_PROMPT = `Du bist der freundliche, hilfsbereite Kundenservice-Assis
 TONFALL:
 - Immer auf Deutsch, in der formellen Sie-Anrede.
 - Modern, persönlich, direkt und warm – nicht steif oder wie ein Konzern. NeonFrame legt Wert auf persönlichen Kontakt statt anonymer Standard-Antworten.
-- Antworten SEHR kurz halten: maximal 2 kurze, einfache Sätze. Keine langen Schachtelsätze – lieber Infos weglassen als einen dritten Satz anhängen. Nur wenn der Kunde ausdrücklich nach mehr Details fragt, darfst du etwas ausführlicher werden (dann max. 4 Sätze).
+- Antworten kurz und klar halten (max. 3-4 Sätze), außer es wird explizit mehr Detail gewünscht.
 - Keine Emojis übertreiben, ein gelegentliches 👋 oder 😊 ist ok.
 - Verwende KEIN Markdown (keine eckigen Klammern, keine Sternchen). Wenn du einen Link nennst, schreibe ihn immer als reine, direkt klickbare URL, z.B. https://neonframe.de/products/konfigurator – niemals in der Form [Text](URL).
 
@@ -116,7 +116,7 @@ export async function POST(req) {
           { role: 'system', content: SYSTEM_PROMPT },
           ...recent.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
         ],
-        max_tokens: 220,
+        max_tokens: 400,
         temperature: 0.4,
       }),
     })
