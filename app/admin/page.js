@@ -397,6 +397,14 @@ export default function AdminPage() {
     setImgSrcs([])
     setPublishedLink(null)
     setParseStatus(null)
+    setPreviewOfferId(null)
+    setPreviewOfferDbId(null)
+    setShowPreviewModal(null)
+    setColorDropdownOpen(false)
+    const pdfInput = document.getElementById('pdf-upload')
+    if (pdfInput) pdfInput.value = ''
+    const imgInput = document.getElementById('multi-img-upload')
+    if (imgInput) imgInput.value = ''
     setFormKey(k => k + 1)
   }
 
@@ -829,7 +837,7 @@ if (tab === 'home') return (
       )}
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
+          <div onClick={() => setTab('home')} title="Zur Startseite" style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8,cursor:'pointer'}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
           <div style={S.tabs}>
             <button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button>
             <button style={{...S.tab(true), position:'relative'}}>
@@ -962,7 +970,7 @@ return (
       )}
       <div style={S.topbar}>
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
+          <div onClick={() => setTab('home')} title="Zur Startseite" style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8,cursor:'pointer'}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
           <div style={S.tabs}>
             <button style={S.tab(true)}>Erstellen</button>
             <button style={{...S.tab(false), position:'relative'}} onClick={() => setTab('manage')}>
