@@ -51,26 +51,26 @@ async function extractPdfText(file) {
 
 function parsePdfFields(txt) {
   const get = (patterns) => { for (const p of patterns) { const m = txt.match(p); if (m) return (m[1] || m[0]).trim() } return '' }
-  const num = get([/Angebotsnummer:\s+(\d{8,})/i, /Angebotsnummer:\s+[\d-]+\s+(\d{8,})/i])
-  const project = get([/Project:\s+(.+?)\s+Beschreibung/i, /Projekt:\s+(.+?)\s+Beschreibung/i, /Project:\s+(\S+)/, /Projekt:\s+(\S+)/])
+  const num = get([/Angebotsnummer\s*:\s*(\d{8,})/i, /Angebotsnummer\s*:\s*[\d-]+\s+(\d{8,})/i])
+  const project = get([/Project\s*:\s*(.+?)\s*Beschreibung/i, /Projekt\s*:\s*(.+?)\s*Beschreibung/i, /Project\s*:\s*(\S+)/i, /Projekt\s*:\s*(\S+)/i])
   let w = '', h = ''
-  for (const p of [/Abmessungen:\s+(\d+)\s+x\s+(\d+)/i, /(\d+)\s+x\s+(\d+)\s+CM/i]) {
+  for (const p of [/Abmessungen\s*:\s*(\d+)\s*x\s*(\d+)/i, /(\d+)\s*x\s*(\d+)\s*CM/i]) {
     const m = txt.match(p); if (m) { w = m[1]; h = m[2]; break }
   }
-  const colors = get([/Farbe\(n\):\s+(.+?)\s+Gesamt/i, /Farbe\(n\):\s+(\S+)/])
+  const colors = get([/Farbe\(n\)\s*:\s*(.+?)\s*Gesamt/i, /Farbe\(n\)\s*:\s*(\S+)/i])
   let price = ''
-  for (const p of [/Gesamt \(excl MwSt\.\): € ([\d.,]+)/, /Gesamt: € ([\d.,]+)/]) {
+  for (const p of [/Gesamt\s*\(excl\s*MwSt\.\)\s*:\s*€\s*([\d.,]+)/i, /Gesamt\s*:\s*€\s*([\d.,]+)/i]) {
     const m = txt.match(p)
     if (m) { price = m[1].replace(/\./g, '').replace(',', '.'); break }
   }
-  const backplateRaw = get([/Rückplatte:\s+(.+?)\s+Verwendung/i, /Rückplatte:\s+(\S+)/])
+  const backplateRaw = get([/Rückplatte\s*:\s*(.+?)\s*Verwendung/i, /Rückplatte\s*:\s*(\S+)/i])
   let backplate = ''
   const bp = backplateRaw.toLowerCase()
   if (bp.includes('ausschneiden') || bp.includes('ausgeschnitten')) backplate = 'Ausgeschnitten'
   else if (bp.includes('quadrat')) backplate = 'Quadratisch'
   else if (bp.includes('ohne')) backplate = 'Ohne'
 
-  const usageRaw = get([/Verwendung:\s+(\S+)/i])
+  const usageRaw = get([/Verwendung\s*:\s*(\S+)/i])
   let usage = ''
   const uw = usageRaw.toLowerCase()
   if (uw.includes('innen')) usage = 'Innen'
