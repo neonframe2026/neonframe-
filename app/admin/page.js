@@ -44,8 +44,8 @@ function colorDot(s = '') {
 function ThemeVars() {
   return (
     <style>{`
-      .nf-admin { --bg:#ffffff; --bg-alt:#f9fafb; --panel:#ffffff; --border:#e5e7eb; --text:#111111; --text-muted:#6b7280; --text-faint:#9ca3af; --input-bg:#f9fafb; }
-      .nf-admin[data-theme='dark'] { --bg:#0f1115; --bg-alt:#16181d; --panel:#1a1c22; --border:#2b2e36; --text:#f3f4f6; --text-muted:#9ca3af; --text-faint:#71757f; --input-bg:#20222a; }
+      .nf-admin { --bg:#ffffff; --bg-alt:#f9fafb; --panel:#ffffff; --border:#e5e7eb; --text:#111111; --text-muted:#6b7280; --text-faint:#9ca3af; --input-bg:#f9fafb; --email-bg:#f0fbff; --email-border:#60c8f044; }
+      .nf-admin[data-theme='dark'] { --bg:#0f1115; --bg-alt:#16181d; --panel:#1a1c22; --border:#2b2e36; --text:#f3f4f6; --text-muted:#9ca3af; --text-faint:#71757f; --input-bg:#20222a; --email-bg:#132732; --email-border:#3a7ca844; }
     `}</style>
   )
 }
@@ -249,7 +249,7 @@ function EditModal({ offer, onClose, onSaved }) {
                 <div><label style={lbl}>Angebotsnummer</label><input style={inp} value={form.offer_num} onChange={e => set('offer_num', e.target.value)} /></div>
                 <div><label style={lbl}>Projekt / Kundenname</label><input style={inp} value={form.project} onChange={e => set('project', e.target.value)} /></div>
               </div>
-              <div><label style={lbl}>Kunden-E-Mail</label><input style={{...inp, borderColor: '#60c8f044', background: '#f0fbff'}} type="email" value={form.customer_email} onChange={e => set('customer_email', e.target.value)} placeholder="kunde@email.de" /></div>
+              <div><label style={lbl}>Kunden-E-Mail</label><input style={{...inp, borderColor: 'var(--email-border)', background: 'var(--email-bg)'}} type="email" value={form.customer_email} onChange={e => set('customer_email', e.target.value)} placeholder="kunde@email.de" /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>Breite (cm)</label><input style={inp} type="number" value={form.width} onChange={e => set('width', e.target.value)} /></div>
                 <div><label style={lbl}>Höhe (cm)</label><input style={inp} type="number" value={form.height} onChange={e => set('height', e.target.value)} /></div>
@@ -1045,7 +1045,7 @@ return (
                 <input style={S.input} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" />
               </Field>
               <Field label="Kunden-E-Mail">
-                <input style={{...S.input, borderColor: '#60c8f044', background: '#f0fbff'}} type="email" defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" />
+                <input style={{...S.input, borderColor: 'var(--email-border)', background: 'var(--email-bg)'}} type="email" defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" />
               </Field>
               <div style={S.row2}>
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
