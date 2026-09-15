@@ -998,30 +998,22 @@ return (
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
               <Field label="Farbe(n) – kommagetrennt">
-                <div
-                  style={{position:'relative'}}
-                  onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setColorDropdownOpen(false) }}
-                >
-                  <input
-                    style={{...S.input, paddingRight: 96}}
-                    defaultValue={fRef.current.color}
-                    onChange={e => updText('color', e.target.value)}
-                    onFocus={() => setColorDropdownOpen(true)}
-                    placeholder="z.B. Soft Orange, Pink"
-                  />
+                <div style={{position:'relative'}}>
+                  <input style={{...S.input, paddingRight: 96}} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="z.B. Soft Orange, Pink" />
                   <button type="button" onClick={() => setColorDropdownOpen(o => !o)} style={{position:'absolute',right:6,top:6,bottom:6,background:'#fff',border:'1px solid #e5e7eb',borderRadius:6,padding:'0 10px',fontSize:11,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit'}}>Farbe wählen ▾</button>
                   {colorDropdownOpen && (
                     <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:6,zIndex:20,boxShadow:'0 4px 12px rgba(0,0,0,.1)',display:'flex',flexDirection:'column',gap:2,maxHeight:240,overflowY:'auto'}}>
                       {COLOR_OPTIONS.map(c => {
                         const active = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
                         return (
-                          <label key={c} tabIndex={-1} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
+                          <label key={c} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
                             <input type="checkbox" checked={active} onChange={() => toggleColor(c)} style={{cursor:'pointer'}} />
                             <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c),display:'inline-block',border:'1px solid rgba(0,0,0,.08)'}}></span>
                             {c}
                           </label>
                         )
                       })}
+                      <button type="button" onClick={() => setColorDropdownOpen(false)} style={{marginTop:4,background:'#0a0a0a',color:'#fff',border:'none',borderRadius:6,padding:'6px 0',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Fertig</button>
                     </div>
                   )}
                 </div>
