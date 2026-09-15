@@ -58,11 +58,6 @@ function parsePdfFields(txt) {
     const m = txt.match(p); if (m) { w = m[1]; h = m[2]; break }
   }
   const colors = get([/Farbe\(n\)\s*:\s*(.+?)\s*Gesamt/i, /Farbe\(n\)\s*:\s*(\S+)/i])
-  let price = ''
-  for (const p of [/Gesamt\s*\(excl\s*MwSt\.\)\s*:\s*€\s*([\d.,]+)/i, /Gesamt\s*:\s*€\s*([\d.,]+)/i]) {
-    const m = txt.match(p)
-    if (m) { price = m[1].replace(/\./g, '').replace(',', '.'); break }
-  }
   const backplateRaw = get([/Rückplatte\s*:\s*(.+?)\s*Verwendung/i, /Rückplatte\s*:\s*(\S+)/i])
   let backplate = ''
   const bp = backplateRaw.toLowerCase()
@@ -76,7 +71,7 @@ function parsePdfFields(txt) {
   if (uw.includes('innen')) usage = 'Innen'
   else if (uw.includes('außen') || uw.includes('aussen')) usage = 'Außen IP65'
 
-  return { num, project, w, h, colors, price, backplate, usage }
+  return { num, project, w, h, colors, backplate, usage }
 }
 
 const BACKPLATE_OPTIONS = ['Ausgeschnitten', 'Quadratisch', 'Ohne']
@@ -552,7 +547,6 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       if (p.w) fRef.current.w = p.w
       if (p.h) fRef.current.h = p.h
       if (p.colors) fRef.current.color = p.colors
-      if (p.price) { fRef.current.basePrice = p.price; setPriceInputs(prev => ({ ...prev, basePrice: p.price })) }
       if (p.backplate) updSelect('backplate', p.backplate)
       if (p.usage) updSelect('usage', p.usage)
       setFormKey(k => k + 1)
