@@ -23,15 +23,21 @@ function calcPrices(basePrice, discType, discVal, vatPct) {
 
 function colorDot(s = '') {
   const c = s.toLowerCase()
-  if (c.includes('ice blue') || c.includes('blue') || c.includes('blau')) return '#60c8f0'
+  if (c.includes('lake blue')) return '#06b6d4'
+  if (c.includes('ice blue')) return '#38bdf8'
+  if (c.includes('blue') || c.includes('blau')) return '#2563eb'
   if (c.includes('warm white') || c.includes('warm')) return '#fef3c7'
   if (c.includes('white') || c.includes('weiß')) return '#e5e5e5'
-  if (c.includes('red') || c.includes('rot')) return '#ef4444'
-  if (c.includes('green') || c.includes('grün')) return '#22c55e'
+  if (c.includes('peachy pink')) return '#fb7185'
+  if (c.includes('soft pink')) return '#f9a8d4'
   if (c.includes('pink')) return '#ec4899'
+  if (c.includes('red') || c.includes('rot')) return '#ef4444'
+  if (c.includes('light green')) return '#84cc16'
+  if (c.includes('green') || c.includes('grün')) return '#22c55e'
   if (c.includes('purple') || c.includes('lila')) return '#a855f7'
-  if (c.includes('yellow') || c.includes('gelb')) return '#f59e0b'
-  if (c.includes('soft orange') || c.includes('orange')) return '#fb923c'
+  if (c.includes('yellow') || c.includes('gelb')) return '#eab308'
+  if (c.includes('soft orange')) return '#fdba74'
+  if (c.includes('orange')) return '#f97316'
   return '#9ca3af'
 }
 
@@ -77,6 +83,7 @@ function parsePdfFields(txt) {
 const BACKPLATE_OPTIONS = ['Ausgeschnitten', 'Quadratisch', 'Ohne']
 const BACKPLATE_COLOR_OPTIONS = ['Transparent', 'Schwarz', 'Weiß']
 const USAGE_OPTIONS = ['Innen', 'Außen IP65']
+const COLOR_OPTIONS = ['White', 'Warm White', 'Soft Orange', 'Orange', 'Red', 'Purple', 'Peachy Pink', 'Soft Pink', 'Pink', 'Light Green', 'Green', 'Yellow', 'Lake Blue', 'Ice Blue', 'Blue']
 
 const PAYMENT_ICONS_HTML = `
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
@@ -335,6 +342,7 @@ export default function AdminPage() {
   const [previewOfferDbId, setPreviewOfferDbId] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(null)
   const [formKey, setFormKey] = useState(0)
+  const [colorDropdownOpen, setColorDropdownOpen] = useState(false)
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -344,6 +352,15 @@ export default function AdminPage() {
   const updSelect = (k, v) => { fRef.current[k] = v; setSelects(p => ({ ...p, [k]: v })) }
   const updPrice = (k, v) => { fRef.current[k] = v; setPriceInputs(p => ({ ...p, [k]: v })) }
   const updPriceField = (k, v) => { fRef.current[k] = v }
+  const toggleColor = (c) => {
+    const current = fRef.current.color.split(',').map(s => s.trim()).filter(Boolean)
+    const idx = current.findIndex(x => x.toLowerCase() === c.toLowerCase())
+    if (idx >= 0) current.splice(idx, 1)
+    else current.push(c)
+    fRef.current.color = current.join(', ')
+    setFormKey(k => k + 1)
+    schedulePreview()
+  }
 
   function resetForm() {
     fRef.current = {
@@ -981,7 +998,25 @@ return (
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
               <Field label="Farbe(n) – kommagetrennt">
-                <input style={S.input} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="z.B. Soft Orange, Pink" />
+                <div style={{position:'relative'}}>
+                  <input style={{...S.input, paddingRight: 96}} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="z.B. Soft Orange, Pink" />
+                  <button type="button" onClick={() => setColorDropdownOpen(o => !o)} style={{position:'absolute',right:6,top:6,bottom:6,background:'#fff',border:'1px solid #e5e7eb',borderRadius:6,padding:'0 10px',fontSize:11,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit'}}>Farbe wählen ▾</button>
+                  {colorDropdownOpen && (
+                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:6,zIndex:20,boxShadow:'0 4px 12px rgba(0,0,0,.1)',display:'flex',flexDirection:'column',gap:2,maxHeight:240,overflowY:'auto'}}>
+                      {COLOR_OPTIONS.map(c => {
+                        const active = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
+                        return (
+                          <label key={c} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
+                            <input type="checkbox" checked={active} onChange={() => toggleColor(c)} style={{cursor:'pointer'}} />
+                            <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c),display:'inline-block',border:'1px solid rgba(0,0,0,.08)'}}></span>
+                            {c}
+                          </label>
+                        )
+                      })}
+                      <button type="button" onClick={() => setColorDropdownOpen(false)} style={{marginTop:4,background:'#0a0a0a',color:'#fff',border:'none',borderRadius:6,padding:'6px 0',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Fertig</button>
+                    </div>
+                  )}
+                </div>
               </Field>
             </div>
           </div>
