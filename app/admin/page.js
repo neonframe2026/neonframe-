@@ -52,18 +52,31 @@ async function extractPdfText(file) {
 function parsePdfFields(txt) {
   const get = (patterns) => { for (const p of patterns) { const m = txt.match(p); if (m) return (m[1] || m[0]).trim() } return '' }
   const num = get([/Angebotsnummer:\s+(\d{8,})/i, /Angebotsnummer:\s+[\d-]+\s+(\d{8,})/i])
-  const project = get([/Project:\s+(\S+)/, /Projekt:\s+(\S+)/])
+  const project = get([/Project:\s+(.+?)\s+Beschreibung/i, /Projekt:\s+(.+?)\s+Beschreibung/i, /Project:\s+(\S+)/, /Projekt:\s+(\S+)/])
   let w = '', h = ''
   for (const p of [/Abmessungen:\s+(\d+)\s+x\s+(\d+)/i, /(\d+)\s+x\s+(\d+)\s+CM/i]) {
     const m = txt.match(p); if (m) { w = m[1]; h = m[2]; break }
   }
-  const colors = get([/Farbe\(n\):\s+(\S+)/, /Farbe\(n\):(\S+)/])
+  const colors = get([/Farbe\(n\):\s+(.+?)\s+Gesamt/i, /Farbe\(n\):\s+(\S+)/])
   let price = ''
   for (const p of [/Gesamt \(excl MwSt\.\): € ([\d.,]+)/, /Gesamt: € ([\d.,]+)/]) {
     const m = txt.match(p)
     if (m) { price = m[1].replace(/\./g, '').replace(',', '.'); break }
   }
-  return { num, project, w, h, colors, price }
+  const backplateRaw = get([/Rückplatte:\s+(.+?)\s+Verwendung/i, /Rückplatte:\s+(\S+)/])
+  let backplate = ''
+  const bp = backplateRaw.toLowerCase()
+  if (bp.includes('ausschneiden') || bp.includes('ausgeschnitten')) backplate = 'Ausgeschnitten'
+  else if (bp.includes('quadrat')) backplate = 'Quadratisch'
+  else if (bp.includes('ohne')) backplate = 'Ohne'
+
+  const usageRaw = get([/Verwendung:\s+(\S+)/i])
+  let usage = ''
+  const uw = usageRaw.toLowerCase()
+  if (uw.includes('innen')) usage = 'Innen'
+  else if (uw.includes('außen') || uw.includes('aussen')) usage = 'Außen IP65'
+
+  return { num, project, w, h, colors, price, backplate, usage }
 }
 
 const BACKPLATE_OPTIONS = ['Ausgeschnitten', 'Quadratisch', 'Ohne']
@@ -326,6 +339,7 @@ export default function AdminPage() {
   const [previewOfferId, setPreviewOfferId] = useState(null)
   const [previewOfferDbId, setPreviewOfferDbId] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(null)
+  const [formKey, setFormKey] = useState(0)
   const iframeRef = useRef(null)
   const emailIframeRef = useRef(null)
 
@@ -348,6 +362,7 @@ export default function AdminPage() {
     setImgSrcs([])
     setPublishedLink(null)
     setParseStatus(null)
+    setFormKey(k => k + 1)
   }
 
   const debounceRef = useRef(null)
@@ -538,6 +553,9 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       if (p.h) fRef.current.h = p.h
       if (p.colors) fRef.current.color = p.colors
       if (p.price) { fRef.current.basePrice = p.price; setPriceInputs(prev => ({ ...prev, basePrice: p.price })) }
+      if (p.backplate) updSelect('backplate', p.backplate)
+      if (p.usage) updSelect('usage', p.usage)
+      setFormKey(k => k + 1)
       setParseStatus({ type: 'ok', msg: `${Object.values(p).filter(Boolean).length} Felder erkannt – bitte prüfen` })
       schedulePreview()
     } catch (err) {
@@ -954,7 +972,7 @@ return (
 
           <div style={S.section}>
             <div style={S.sTitle}>Angebotsdaten</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
               <Field label="Angebotsnummer">
                 <input style={S.input} defaultValue={fRef.current.num} onChange={e => updText('num', e.target.value)} placeholder="NF-1001" />
               </Field>
@@ -997,9 +1015,9 @@ return (
 
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
 <Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" defaultValue="" onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" key="basePrice" />
+                <input style={S.input} type="number" step="0.01" defaultValue={priceInputs.basePrice} onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
@@ -1029,7 +1047,7 @@ return (
 
           <div style={S.section}>
             <div style={S.sTitle}>Weitere Einstellungen</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
               <Field label="Status">
                 <select style={S.select} value={selects.status} onChange={e => updSelect('status', e.target.value)}>
                   {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
