@@ -566,25 +566,23 @@ const final = net + vatAmt
           .faq-question { font-size:14px; padding:15px 18px; }
           .faq-answer { font-size:13.5px; padding:14px 18px 18px; }
         }
-        .site-footer { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
-        @media(max-width:960px){ .site-footer { padding:0 14px 40px; } }
-        .footer-card { border-top:1px solid #f0f0f0; padding:44px 0 0; display:grid; grid-template-columns:1.2fr 1fr; gap:32px; }
-        .footer-logo-mark { display:inline-flex; flex-direction:column; align-items:flex-start; line-height:1; margin-bottom:12px; }
-        .footer-logo-top { font-size:15px; font-weight:800; color:#0091c9; border:1.5px solid #60c8f0; border-radius:5px; padding:3px 8px; letter-spacing:.02em; }
-        .footer-logo-bottom { font-size:15px; font-weight:800; color:#111; letter-spacing:.02em; margin-top:3px; }
-        .footer-tagline { font-size:13px; color:#888; margin:0 0 18px; line-height:1.6; max-width:340px; }
+        .site-footer { background:#0a0a0a; }
+        .footer-inner { max-width:1380px; margin:0 auto; padding:44px 52px 40px; display:grid; grid-template-columns:1.2fr 1fr; gap:32px; }
+        @media(max-width:960px){ .footer-inner { padding:32px 14px 30px; } }
+        .footer-logo img { height:48px; display:block; margin-bottom:14px; }
+        .footer-tagline { font-size:13px; color:#999; margin:0 0 18px; line-height:1.6; max-width:340px; }
         .footer-contact { display:flex; flex-direction:column; gap:8px; }
-        .footer-contact-row { display:flex; align-items:center; gap:9px; font-size:13.5px; color:#444; text-decoration:none; }
-        .footer-contact-row svg { width:15px; height:15px; color:#0091c9; flex-shrink:0; }
-        .footer-right { border-left:1px solid #f0f0f0; padding-left:32px; }
-        .footer-col-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#aaa; margin-bottom:12px; }
+        .footer-contact-row { display:flex; align-items:center; gap:9px; font-size:13.5px; color:#ccc; text-decoration:none; }
+        .footer-contact-row svg { width:15px; height:15px; color:#60c8f0; flex-shrink:0; }
+        .footer-right { border-left:1px solid rgba(255,255,255,.1); padding-left:32px; }
+        .footer-col-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#666; margin-bottom:12px; }
         .footer-links { display:flex; flex-direction:column; gap:9px; }
-        .footer-links a { font-size:13.5px; color:#444; text-decoration:none; }
-        .footer-links a:hover { color:#0091c9; }
-        .footer-copy { font-size:12px; color:#bbb; padding-top:24px; margin-top:28px; border-top:1px solid #f0f0f0; grid-column:1/-1; text-align:center; }
+        .footer-links a { font-size:13.5px; color:#ccc; text-decoration:none; }
+        .footer-links a:hover { color:#60c8f0; }
+        .footer-copy { font-size:12px; color:#555; padding-top:24px; margin-top:28px; border-top:1px solid rgba(255,255,255,.08); grid-column:1/-1; text-align:center; }
         @media(max-width:760px){
-          .footer-card { grid-template-columns:1fr; padding-top:32px; }
-          .footer-right { border-left:none; border-top:1px solid #f0f0f0; padding-left:0; padding-top:24px; }
+          .footer-inner { grid-template-columns:1fr; }
+          .footer-right { border-left:none; border-top:1px solid rgba(255,255,255,.1); padding-left:0; padding-top:24px; }
         }
       `}</style>
 
@@ -930,11 +928,10 @@ const final = net + vatAmt
 
       {/* FOOTER */}
       <footer className="site-footer">
-        <div className="footer-card">
+        <div className="footer-inner">
           <div>
-            <div className="footer-logo-mark">
-              <span className="footer-logo-top">NEON</span>
-              <span className="footer-logo-bottom">FRAME</span>
+            <div className="footer-logo">
+              <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" />
             </div>
             <p className="footer-tagline">Handgefertigte LED-Neon-Schilder – individuell für dich designed. Fragen? Wir sind für dich da.</p>
             <div className="footer-contact">
