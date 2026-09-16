@@ -257,6 +257,15 @@ function EditModal({ offer, onClose, onSaved }) {
                 <div><label style={lbl}>Breite (cm)</label><input style={inp} type="number" value={form.width} onChange={e => set('width', e.target.value)} /></div>
                 <div><label style={lbl}>Höhe (cm)</label><input style={inp} type="number" value={form.height} onChange={e => set('height', e.target.value)} /></div>
               </div>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: form.size_warning_enabled ? 8 : 0 }}>
+                  <input type="checkbox" checked={form.size_warning_enabled} onChange={e => set('size_warning_enabled', e.target.checked)} />
+                  <span style={lbl}>Mindestgröße-Hinweis anzeigen</span>
+                </label>
+                {form.size_warning_enabled && (
+                  <textarea style={{ ...inp, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }} value={form.size_warning_text} onChange={e => set('size_warning_text', e.target.value)} placeholder="Warntext für den Kunden..." />
+                )}
+              </div>
               <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
             </div>
           </div>
@@ -322,15 +331,6 @@ function EditModal({ offer, onClose, onSaved }) {
               <div><label style={lbl}>Notizen für den Kunden</label>
                 <textarea style={{ ...inp, minHeight: 72, resize: 'vertical', lineHeight: 1.5 }} value={form.customer_note} onChange={e => set('customer_note', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
               </div>
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: form.size_warning_enabled ? 8 : 0 }}>
-                  <input type="checkbox" checked={form.size_warning_enabled} onChange={e => set('size_warning_enabled', e.target.checked)} />
-                  <span style={lbl}>Mindestgröße-Hinweis anzeigen</span>
-                </label>
-                {form.size_warning_enabled && (
-                  <textarea style={{ ...inp, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }} value={form.size_warning_text} onChange={e => set('size_warning_text', e.target.value)} placeholder="Warntext für den Kunden..." />
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -363,9 +363,10 @@ export default function AdminPage() {
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
     delivery: '', url: '', validUntil: '', status: 'offer_sent',
+    sizeWarningText: 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
 
-  const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent' })
+  const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
   const [priceInputs, setPriceInputs] = useState({ basePrice: '', discVal: '20', vat: '19' })
   const [imgSrcs, setImgSrcs] = useState([])
   const [parseStatus, setParseStatus] = useState(null)
@@ -403,8 +404,9 @@ export default function AdminPage() {
       backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
       color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
       delivery: '', url: '', validUntil: '', status: 'offer_sent',
+      sizeWarningText: 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
     }
-    setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent' })
+    setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
     setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
     setImgSrcs([])
     setPublishedLink(null)
@@ -530,7 +532,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     <div class="stars-row"><span style="color:#f59e0b;font-size:16px">★★★★</span><span style="color:#e5e7eb;font-size:16px">★</span><span style="font-size:12px;color:#666;margin-left:4px">4,5 / 5 Sternen</span></div>
     ${f.project ? `<div class="badge-made"><span style="font-size:12px;color:#555">Individuell angefertigt für <strong style="color:#111">${f.project}</strong></span></div>` : ''}
     <div class="sz-row">
-      ${f.w && f.h ? `<div><span class="cfg-lbl">Maße (Breite × Höhe)</span><div class="pill" style="margin-top:3px">${f.w} × ${f.h} cm</div></div>` : ''}
+      ${f.w && f.h ? `<div><span class="cfg-lbl">Maße (Breite × Höhe)</span><div style="display:flex;align-items:center;gap:6px;margin-top:3px"><div class="pill" style="margin-top:0">${f.w} × ${f.h} cm</div>${f.sizeWarningEnabled ? `<span title="${(f.sizeWarningText||'').replace(/"/g,'&quot;')}" style="color:#dc2626;font-weight:800;font-size:15px;cursor:help">&#9888;</span>` : ''}</div></div>` : ''}
       ${colors.length > 0 ? `<div><span class="cfg-lbl">Farbe</span><div style="margin-top:3px">${colorPills}</div></div>` : ''}
     </div>
     <div class="cfg-row">
@@ -664,6 +666,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         customer_email: f.customerEmail || null,
         valid_until: f.validUntil || null,
         status: f.status || 'offer_sent',
+        size_warning_enabled: f.sizeWarningEnabled || false,
+        size_warning_text: f.sizeWarningText || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -1063,6 +1067,15 @@ return (
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: selects.sizeWarningEnabled ? 8 : 0 }}>
+                  <input type="checkbox" checked={selects.sizeWarningEnabled} onChange={e => updSelect('sizeWarningEnabled', e.target.checked)} />
+                  <span style={S.label}>Mindestgröße-Hinweis anzeigen</span>
+                </label>
+                {selects.sizeWarningEnabled && (
+                  <textarea style={{...S.input, minHeight: 90, resize: 'vertical', lineHeight: 1.5, paddingTop: 9}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
+                )}
+              </div>
               <Field label="Farbe(n) – kommagetrennt">
                 <div
                   style={{position:'relative'}}
@@ -1198,6 +1211,7 @@ onClick={async () => {
       delivery: f.delivery, checkout_url: f.url,
       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
+      size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       published: false,
     }
