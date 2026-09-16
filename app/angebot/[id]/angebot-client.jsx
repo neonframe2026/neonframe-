@@ -458,6 +458,22 @@ const final = net + vatAmt
           .compare-row, .compare-row-head { grid-template-columns:1.2fr 1fr 1fr; padding-left:16px; padding-right:16px; }
           .cmp-feat, .cmp-brand-val, .cmp-other-val { font-size:12.5px; }
         }
+        .video-section { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
+        @media(max-width:960px){ .video-section { padding:0 14px 40px; } }
+        .video-card { display:grid; grid-template-columns:1.1fr 1fr; border:1px solid #eaeaea; border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(0,0,0,.04); }
+        .video-wrap { position:relative; background:#000; }
+        .montage-video { width:100%; height:100%; display:block; object-fit:cover; }
+        .video-text { padding:36px 40px; display:flex; flex-direction:column; justify-content:center; }
+        .video-badge { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#0091c9; background:rgba(96,200,240,.12); padding:5px 12px; border-radius:20px; width:fit-content; margin-bottom:14px; text-transform:uppercase; letter-spacing:.05em; }
+        .video-text h3 { font-size:22px; font-weight:800; margin:0 0 14px; letter-spacing:-.01em; color:#111; }
+        .video-steps { display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; }
+        .video-steps li { display:flex; align-items:flex-start; gap:12px; font-size:14px; color:#444; line-height:1.5; }
+        .step-num { width:24px; height:24px; border-radius:50%; background:#60c8f0; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+        @media(max-width:760px){
+          .video-card { grid-template-columns:1fr; }
+          .montage-video { aspect-ratio:16/9; }
+          .video-text { padding:26px 24px; }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -758,6 +774,26 @@ const final = net + vatAmt
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* MONTAGE VIDEO */}
+      <div className="video-section">
+        <div className="video-card">
+          <div className="video-wrap">
+            <video className="montage-video" autoPlay muted loop playsInline>
+              <source src="https://cdn.shopify.com/videos/c/o/v/4e0cc9c3f4714cc18e7aab49a2b46a8b.mp4" type="video/mp4" />
+            </video>
+          </div>
+          <div className="video-text">
+            <span className="video-badge">In 3 Schritten montiert</span>
+            <h3>So einfach geht's</h3>
+            <ul className="video-steps">
+              <li><span className="step-num">1</span><span>Schild auspacken und Position an der Wand markieren</span></li>
+              <li><span className="step-num">2</span><span>Mit dem mitgelieferten Montagematerial befestigen</span></li>
+              <li><span className="step-num">3</span><span>Netzteil anschließen – fertig zum Leuchten</span></li>
+            </ul>
+          </div>
         </div>
       </div>
 
