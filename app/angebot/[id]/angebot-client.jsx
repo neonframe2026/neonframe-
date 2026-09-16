@@ -569,7 +569,10 @@ const final = net + vatAmt
         .site-footer { background:#0a0a0a; }
         .footer-inner { max-width:1380px; margin:0 auto; padding:44px 52px 40px; display:grid; grid-template-columns:1.2fr 1fr; gap:32px; }
         @media(max-width:960px){ .footer-inner { padding:32px 14px 30px; } }
-        .footer-logo img { height:48px; display:block; margin-bottom:14px; }
+        .footer-logo { margin-bottom:14px; }
+        .footer-logo-text { font-size:28px; font-weight:800; letter-spacing:-.01em; }
+        .footer-logo-text .neon { color:#fff; }
+        .footer-logo-text .frame { color:#60c8f0; text-shadow:0 0 18px rgba(96,200,240,.55); }
         .footer-tagline { font-size:13px; color:#999; margin:0 0 18px; line-height:1.6; max-width:340px; }
         .footer-contact { display:flex; flex-direction:column; gap:8px; }
         .footer-contact-row { display:flex; align-items:center; gap:9px; font-size:13.5px; color:#ccc; text-decoration:none; }
@@ -931,7 +934,7 @@ const final = net + vatAmt
         <div className="footer-inner">
           <div>
             <div className="footer-logo">
-              <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" />
+              <span className="footer-logo-text"><span className="neon">NEON</span><span className="frame">FRAME</span></span>
             </div>
             <p className="footer-tagline">Handgefertigte LED-Neon-Schilder – individuell für dich designed. Fragen? Wir sind für dich da.</p>
             <div className="footer-contact">
