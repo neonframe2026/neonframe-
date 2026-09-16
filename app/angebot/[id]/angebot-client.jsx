@@ -97,6 +97,8 @@ function Gallery({ images }) {
   const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
   const [lightbox, setLightbox] = useState(false)
+  const [lbVisible, setLbVisible] = useState(false)
+  const [ratios, setRatios] = useState({})
   const total = images.length
   const DURATION = 320
 
@@ -112,9 +114,13 @@ function Gallery({ images }) {
   const goNext = useCallback((e) => { e?.stopPropagation(); goTo(current + 1, 'left') }, [current, goTo])
 
   useEffect(() => {
-    if (lightbox) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
-    return () => { document.body.style.overflow = '' }
+    if (lightbox) {
+      document.body.style.overflow = 'hidden'
+      const t = setTimeout(() => setLbVisible(true), 10)
+      return () => { clearTimeout(t); document.body.style.overflow = '' }
+    }
+    setLbVisible(false)
+    document.body.style.overflow = ''
   }, [lightbox])
 
   useEffect(() => {
@@ -146,6 +152,16 @@ function Gallery({ images }) {
     return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchend', onEnd) }
   }, [goPrev, goNext])
 
+  useEffect(() => {
+    images.forEach(src => {
+      if (ratios[src]) return
+      const im = new window.Image()
+      im.onload = () => setRatios(prev => (prev[src] ? prev : { ...prev, [src]: im.naturalWidth / im.naturalHeight }))
+      im.src = src
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images])
+
   if (total === 0) return (
     <div style={{ borderRadius: 18, background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ fontSize: 14, color: '#ccc' }}>Vorschau-Bild</span>
@@ -158,7 +174,7 @@ function Gallery({ images }) {
       {lightbox && (
         <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <button onClick={(e) => { e.stopPropagation(); setLightbox(false) }} style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 38, cursor: 'pointer', lineHeight: 1, opacity: 0.75 }}>×</button>
-          <img src={images[current]} alt="Vollbild" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 6, display: 'block', userSelect: 'none' }} />
+                    <img src={images[current]} alt="Vollbild" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '96vw', maxHeight: '94vh', objectFit: 'contain', borderRadius: 6, display: 'block', userSelect: 'none', transform: lbVisible ? 'scale(1)' : 'scale(0.85)', opacity: lbVisible ? 1 : 0, transition: 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease' }} />
           {total > 1 && current > 0 && (
             <button onClick={(e) => { e.stopPropagation(); setCurrent(c => c - 1) }} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
@@ -174,7 +190,7 @@ function Gallery({ images }) {
       )}
 
       {/* MAIN */}
-      <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', cursor: 'zoom-in' }}>
+        <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: ratios[images[current]] || 4 / 3, position: 'relative', cursor: 'zoom-in' }}>
         <img src={images[current]} alt={`Neon Sign ${current + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: animating ? (slideDir === 'left' ? 'translateX(-100%)' : 'translateX(100%)') : 'translateX(0)', transition: animating ? `transform ${DURATION}ms ease` : 'none', zIndex: 1 }} />
         {animating && next !== null && (
           <img src={images[next]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} ${DURATION}ms ease forwards`, zIndex: 2 }} />
