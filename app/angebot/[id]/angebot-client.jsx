@@ -782,7 +782,7 @@ const final = net + vatAmt
         <div className="video-card">
           <div className="video-wrap">
             <video className="montage-video" autoPlay muted loop playsInline>
-              <source src="https://cdn.shopify.com/videos/c/o/v/4e0cc9c3f4714cc18e7aab49a2b46a8b.mp4" type="video/mp4" />
+              <source src="https://cdn.shopify.com/videos/c/o/v/b0a9e0702e6d4969aee87f2499310f52.mp4" type="video/mp4" />
             </video>
           </div>
           <div className="video-text">
