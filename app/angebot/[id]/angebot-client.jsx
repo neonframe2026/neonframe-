@@ -98,6 +98,8 @@ function Gallery({ images }) {
   const [animating, setAnimating] = useState(false)
   const [lightbox, setLightbox] = useState(false)
   const [lbVisible, setLbVisible] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 })
   const total = images.length
   const DURATION = 320
 
@@ -122,6 +124,8 @@ function Gallery({ images }) {
     setLbVisible(false)
     document.body.style.overflow = ''
   }, [lightbox])
+
+  useEffect(() => { setZoomed(false) }, [current, lightbox])
 
   useEffect(() => {
     const handler = (e) => {
@@ -165,10 +169,35 @@ function Gallery({ images }) {
         <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <div style={{ position: 'absolute', top: 20, left: 24, display: 'flex', alignItems: 'center', gap: 14, zIndex: 2, color: '#fff' }}>
             {total > 1 && <span style={{ fontSize: 13, opacity: 0.75 }}>{current + 1} / {total}</span>}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.75 }}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+            <button onClick={(e) => { e.stopPropagation(); setZoomOrigin({ x: 50, y: 50 }); setZoomed(z => !z) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: '#fff' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.75 }}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+            </button>
           </div>
           <button onClick={(e) => { e.stopPropagation(); setLightbox(false) }} style={{ position: 'absolute', top: 20, right: 24, background: 'none', border: 'none', color: '#fff', fontSize: 38, cursor: 'pointer', lineHeight: 1, opacity: 0.75, zIndex: 2 }}>×</button>
-          <img src={images[current]} alt="Vollbild" onClick={(e) => e.stopPropagation()} style={{ height: '100vh', width: 'auto', maxWidth: '100vw', objectFit: 'contain', display: 'block', userSelect: 'none', transform: lbVisible ? 'scale(1)' : 'scale(0.9)', opacity: lbVisible ? 1 : 0, transition: 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease' }} />
+          <img
+            src={images[current]}
+            alt="Vollbild"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (zoomed) { setZoomed(false); return }
+              const rect = e.currentTarget.getBoundingClientRect()
+              setZoomOrigin({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 })
+              setZoomed(true)
+            }}
+            style={{
+              height: '100vh',
+              width: 'auto',
+              maxWidth: '100vw',
+              objectFit: 'contain',
+              display: 'block',
+              userSelect: 'none',
+              cursor: zoomed ? 'zoom-out' : 'zoom-in',
+              transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+              transform: `scale(${(lbVisible ? 1 : 0.9) * (zoomed ? 2.2 : 1)})`,
+              opacity: lbVisible ? 1 : 0,
+              transition: zoomed ? 'transform .25s ease' : 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease',
+            }}
+          />
           {total > 1 && current > 0 && (
             <button onClick={(e) => { e.stopPropagation(); setCurrent(c => c - 1) }} style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
