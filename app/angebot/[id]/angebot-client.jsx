@@ -99,7 +99,10 @@ function Gallery({ images }) {
   const [lightbox, setLightbox] = useState(false)
   const [lbVisible, setLbVisible] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 })
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef({ dragging: false, moved: false, startX: 0, startY: 0, startPan: { x: 0, y: 0 } })
+  const ZOOM = 1.6
   const total = images.length
   const DURATION = 320
 
@@ -125,7 +128,7 @@ function Gallery({ images }) {
     document.body.style.overflow = ''
   }, [lightbox])
 
-  useEffect(() => { setZoomed(false) }, [current, lightbox])
+  useEffect(() => { setZoomed(false); setPan({ x: 0, y: 0 }) }, [current, lightbox])
 
   useEffect(() => {
     const handler = (e) => {
@@ -169,7 +172,7 @@ function Gallery({ images }) {
         <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <div style={{ position: 'absolute', top: 20, left: 24, display: 'flex', alignItems: 'center', gap: 14, zIndex: 2, color: '#fff' }}>
             {total > 1 && <span style={{ fontSize: 13, opacity: 0.75 }}>{current + 1} / {total}</span>}
-            <button onClick={(e) => { e.stopPropagation(); setZoomOrigin({ x: 50, y: 50 }); setZoomed(z => !z) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: '#fff' }}>
+                       <button onClick={(e) => { e.stopPropagation(); setPan({ x: 0, y: 0 }); setZoomed(z => !z) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: '#fff' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.75 }}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
             </button>
           </div>
@@ -177,13 +180,35 @@ function Gallery({ images }) {
           <img
             src={images[current]}
             alt="Vollbild"
-            onClick={(e) => {
+            draggable={false}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => {
               e.stopPropagation()
-              if (zoomed) { setZoomed(false); return }
-              const rect = e.currentTarget.getBoundingClientRect()
-              setZoomOrigin({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 })
-              setZoomed(true)
+              if (!zoomed) return
+              dragRef.current = { dragging: true, moved: false, startX: e.clientX, startY: e.clientY, startPan: { ...pan } }
+              setIsDragging(true)
             }}
+            onMouseMove={(e) => {
+              if (!dragRef.current.dragging) return
+              const dx = e.clientX - dragRef.current.startX
+              const dy = e.clientY - dragRef.current.startY
+              if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragRef.current.moved = true
+              const maxPanX = (window.innerWidth * (ZOOM - 1)) / 2
+              const maxPanY = (window.innerHeight * (ZOOM - 1)) / 2
+              setPan({
+                x: Math.max(-maxPanX, Math.min(maxPanX, dragRef.current.startPan.x + dx)),
+                y: Math.max(-maxPanY, Math.min(maxPanY, dragRef.current.startPan.y + dy)),
+              })
+            }}
+            onMouseUp={(e) => {
+              e.stopPropagation()
+              const wasDragging = dragRef.current.moved
+              dragRef.current.dragging = false
+              setIsDragging(false)
+              if (!zoomed) { setZoomed(true); return }
+              if (!wasDragging) { setZoomed(false); setPan({ x: 0, y: 0 }) }
+            }}
+            onMouseLeave={() => { if (dragRef.current.dragging) { dragRef.current.dragging = false; setIsDragging(false) } }}
             style={{
               height: '100vh',
               width: 'auto',
@@ -191,11 +216,10 @@ function Gallery({ images }) {
               objectFit: 'contain',
               display: 'block',
               userSelect: 'none',
-              cursor: zoomed ? 'zoom-out' : 'zoom-in',
-              transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-              transform: `scale(${(lbVisible ? 1 : 0.9) * (zoomed ? 2.2 : 1)})`,
+              cursor: zoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${(lbVisible ? 1 : 0.9) * (zoomed ? ZOOM : 1)})`,
               opacity: lbVisible ? 1 : 0,
-              transition: zoomed ? 'transform .25s ease' : 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease',
+              transition: isDragging ? 'none' : (zoomed ? 'transform .25s ease' : 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease'),
             }}
           />
           {total > 1 && current > 0 && (
