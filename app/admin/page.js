@@ -155,6 +155,8 @@ function EditModal({ offer, onClose, onSaved }) {
     valid_until: offer.valid_until ? offer.valid_until.slice(0, 10) : '',
     status: offer.status || 'offer_sent',
     customer_email: offer.customer_email || '',
+    size_warning_enabled: offer.size_warning_enabled || false,
+    size_warning_text: offer.size_warning_text || 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
   const [saving, setSaving] = useState(false)
   const [imgSrcs, setImgSrcs] = useState([
@@ -199,6 +201,7 @@ function EditModal({ offer, onClose, onSaved }) {
         customer_note: form.customer_note || null,
         valid_until: form.valid_until || null, status: form.status,
         customer_email: form.customer_email || null,
+        size_warning_enabled: form.size_warning_enabled, size_warning_text: form.size_warning_text || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       }
       const res = await fetch(`/api/offers?id=${offer.id}`, {
@@ -318,6 +321,15 @@ function EditModal({ offer, onClose, onSaved }) {
               <div><label style={lbl}>Checkout-URL</label><input style={inp} value={form.checkout_url} onChange={e => set('checkout_url', e.target.value)} placeholder="https..." /></div>
               <div><label style={lbl}>Notizen für den Kunden</label>
                 <textarea style={{ ...inp, minHeight: 72, resize: 'vertical', lineHeight: 1.5 }} value={form.customer_note} onChange={e => set('customer_note', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
+              </div>
+              <div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: form.size_warning_enabled ? 8 : 0 }}>
+                  <input type="checkbox" checked={form.size_warning_enabled} onChange={e => set('size_warning_enabled', e.target.checked)} />
+                  <span style={lbl}>Mindestgröße-Hinweis anzeigen</span>
+                </label>
+                {form.size_warning_enabled && (
+                  <textarea style={{ ...inp, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }} value={form.size_warning_text} onChange={e => set('size_warning_text', e.target.value)} placeholder="Warntext für den Kunden..." />
+                )}
               </div>
             </div>
           </div>
