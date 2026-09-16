@@ -513,8 +513,8 @@ const final = net + vatAmt
         .tt:hover .tt-box { display:block; }
         .tt-box.warn-box { white-space:normal; width:260px; text-align:left; background:#fff; color:#111; font-size:14px; border:1px solid #eee; box-shadow:0 8px 24px rgba(0,0,0,.12); }
         .tt-box.warn-box::after { border-top-color:#fff; }
-        .size-warn-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#dc2626; color:#fff; font-size:13px; font-weight:800; cursor:help; flex-shrink:0; animation: warnPulse 1.8s ease-in-out infinite; }
-        @keyframes warnPulse { 0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,.5); } 50% { box-shadow:0 0 0 6px rgba(220,38,38,0); } }
+        .size-warn-badge { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:#dc2626; color:#fff; font-size:10px; font-weight:800; cursor:help; flex-shrink:0; animation: warnPulse 1.8s ease-in-out infinite; }
+        @keyframes warnPulse { 0%,100% { box-shadow:0 0 0 0 rgba(220,38,38,.5); } 50% { box-shadow:0 0 0 5px rgba(220,38,38,0); } }
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
         @media(max-width:960px){ .prod-title { font-size:24px; } }
         .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
