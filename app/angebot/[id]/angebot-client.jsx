@@ -60,6 +60,30 @@ const compareRows = [
   { feature: '100% geräuschlos', brandIcon: 'yes', otherIcon: 'no' },
 ]
 
+const faqCategories = [
+  { id: 'order-payment', label: 'Bestellung & Zahlung', icon: '💳' },
+  { id: 'shipping-delivery', label: 'Versand & Lieferung', icon: '📦' },
+  { id: 'product-usage', label: 'Produkt & Nutzung', icon: '💡' },
+  { id: 'installation', label: 'Montage', icon: '🛠️' },
+  { id: 'warranty-return', label: 'Garantie & Rückgabe', icon: '🛡️' },
+]
+
+const faqItems = [
+  { id: 0, category: 'order-payment', question: 'Welche Zahlungsarten werden akzeptiert?', answer: 'Wir akzeptieren Zahlungen per PayPal, Klarna, Visa, Mastercard, Apple Pay, Google Pay, American Express und Maestro. Alle Zahlungen werden direkt verarbeitet, sodass wir deine Bestellung schnellstmöglich anfertigen und versenden können.' },
+  { id: 1, category: 'order-payment', question: 'Bietet ihr Mengenrabatte für Events oder Businesses an?', answer: 'Ja! Für größere Bestellungen (z. B. Firmen oder Events) bieten wir individuelle Angebote an. Kontaktiere uns einfach direkt per E-Mail: info@neonframe.de' },
+  { id: 2, category: 'shipping-delivery', question: 'Wie lange dauert die Lieferzeit?', answer: 'Die Lieferzeit beträgt in der Regel 2-3 Wochen nach Auftragsbestätigung.' },
+  { id: 3, category: 'shipping-delivery', question: 'Bietet ihr auch Express-Versand an?', answer: 'Es ist möglich, eine Eilbestellung zu machen und in vielen Fällen können wir bereits innerhalb von 10 Tagen liefern. Bitte kontaktieren Sie uns, um weiteres zu besprechen: info@neonframe.de' },
+  { id: 4, category: 'shipping-delivery', question: 'Kann ich mein Paket verfolgen?', answer: 'Sobald die Produktion abgeschlossen ist und dein Neonschild verschickt wurde, erhältst du eine E-Mail mit deiner Sendungsnummer. Mit dieser ist es möglich, die Sendung zu verfolgen.' },
+  { id: 5, category: 'shipping-delivery', question: 'Wie wird mein Neonschild verpackt?', answer: 'Die Neonschilder werden mit Schutzecken geliefert, um so gut wie möglich Transportschäden zu meiden. Die Neonschilder sind in Luftpolsterfolie verpackt und das externe Zubehör wie das Montagematerial, Adapter, Dimmer und Kontroller sind in einem stabilen Karton verpackt.' },
+  { id: 6, category: 'shipping-delivery', question: 'Muss ich für den internationalen Versand Steuern zahlen?', answer: 'Innerhalb der EU fallen keine zusätzlichen Einfuhrgebühren an. Die Mehrwertsteuer ist bereits im Preis enthalten. Bei Lieferungen aus Nicht-EU-Ländern können Einfuhrsteuern und ggf. Zollgebühren anfallen. Diese sind vom Empfänger zu tragen und hängen vom Warenwert und Zielland ab.' },
+  { id: 7, category: 'product-usage', question: 'Für welche Anlässe eignen sich die LED-Schilder?', answer: 'Unsere personalisierten LED-Schilder sind perfekt für Hochzeiten, Geburtstage, Kinderzimmer, Gaming-Setups, Unternehmen, Events oder als besonderes Geschenk.' },
+  { id: 8, category: 'product-usage', question: 'Sind die LED-Schilder sicher und energiesparend?', answer: 'Ja! Unsere LED-Schilder sind energieeffizient, langlebig und werden nicht heiß wie herkömmliche Neonröhren. Sie sind sicher für Wohnräume, Events etc.' },
+  { id: 9, category: 'product-usage', question: 'Kann ich die Neonschilder auch draußen im Freien verwenden?', answer: 'Ja, Sie können bei der Konfiguration drinnen oder draußen wählen. Unsere Outdoor-Modelle haben die Schutzart IP65.' },
+  { id: 10, category: 'installation', question: 'Muss ich für die Montage handwerklich begabt sein?', answer: 'Nein, da die Leuchtreklamen einschließlich sämtlichen Zubehörs gebrauchsfertig geliefert und an einer Acryl-Trägerplatte befestigt werden, sind keine technischen Kenntnisse erforderlich. Die Rückplatte selbst ist bereits mit Befestigungspunkten versehen.' },
+  { id: 11, category: 'warranty-return', question: 'Sind personalisierte Neonschilder vom Austausch ausgeschlossen?', answer: 'Da es sich um eine individuelle Sonderanfertigung handelt, sind personalisierte Produkte vom Widerruf ausgeschlossen. Sollte aber eine Beschädigung oder ein Fehler vorhanden sein, finden wir selbstverständlich eine schnelle Lösung.' },
+  { id: 12, category: 'warranty-return', question: 'Gibt es eine Garantie?', answer: 'Ja, die Garantie auf unsere LED-Neonschilder für den Innenbereich umfasst eine Garantie von 2 Jahren. Die Garantie auf die Außenleuchtreklamen hat eine Garantie von 1 Jahr.' },
+]
+
 function getTooltipImg(val, map) {
   if (!val) return null
   const lower = val.toLowerCase()
@@ -287,6 +311,53 @@ function Stepper({ status }) {
   )
 }
 
+// ─── FAQ ─────────────────────────────────────────────────────────────────────
+function FaqSection() {
+  const [activeCat, setActiveCat] = useState('order-payment')
+  const [openIds, setOpenIds] = useState([])
+
+  const toggleOpen = (id) => {
+    setOpenIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  }
+
+  const visibleItems = activeCat === 'all' ? faqItems : faqItems.filter(f => f.category === activeCat)
+
+  return (
+    <div className="faq-section">
+      <div className="faq-header">
+        <h2>FAQ</h2>
+        <p>Alles, was du über dein Neon-Schild wissen musst.</p>
+      </div>
+      <div className="faq-filters">
+        {faqCategories.map(cat => (
+          <button key={cat.id} className={`faq-filter${activeCat === cat.id ? ' active' : ''}`} onClick={() => setActiveCat(cat.id)}>
+            {cat.icon} {cat.label}
+          </button>
+        ))}
+        <button className={`faq-filter${activeCat === 'all' ? ' active' : ''}`} onClick={() => setActiveCat('all')}>✨ Alle</button>
+      </div>
+      <div className="faq-list">
+        {visibleItems.length === 0 ? (
+          <div className="faq-empty">Keine Fragen in dieser Kategorie.</div>
+        ) : (
+          visibleItems.map((item) => {
+            const isOpen = openIds.includes(item.id)
+            return (
+              <div key={item.id} className={`faq-item${isOpen ? ' open' : ''}`}>
+                <button className="faq-question" onClick={() => toggleOpen(item.id)}>
+                  {item.question}
+                  <span className="faq-plus">{isOpen ? '−' : '+'}</span>
+                </button>
+                {isOpen && <div className="faq-answer">{item.answer}</div>}
+              </div>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function AngebotPage({ offer }) {
   const [descOpen, setDescOpen] = useState(false)
@@ -473,6 +544,27 @@ const final = net + vatAmt
           .video-card { grid-template-columns:1fr; }
           .montage-video { aspect-ratio:16/9; }
           .video-text { padding:26px 24px; }
+        }
+        .faq-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
+        @media(max-width:960px){ .faq-section { padding:0 14px 60px; } }
+        .faq-header { text-align:center; margin-bottom:26px; }
+        .faq-header h2 { font-size:clamp(26px,4vw,36px); font-weight:900; color:#111; letter-spacing:-.02em; margin-bottom:8px; }
+        .faq-header p { font-size:14.5px; color:#6b6b6b; }
+        .faq-filters { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:28px; }
+        .faq-filter { border:1px solid #e0e0e0; background:#fff; color:#111; border-radius:999px; padding:10px 16px; font-size:13.5px; font-weight:700; cursor:pointer; transition:.2s; display:inline-flex; align-items:center; gap:7px; font-family:inherit; }
+        .faq-filter:hover { border-color:#60c8f0; color:#0091c9; background:#f0fbff; }
+        .faq-filter.active { background:linear-gradient(90deg,#60c8f0,#0091c9); color:#fff; border-color:transparent; }
+        .faq-list { display:flex; flex-direction:column; gap:12px; }
+        .faq-item { border:1px solid #eee; border-radius:14px; overflow:hidden; background:#fff; }
+        .faq-question { width:100%; background:#fafafa; border:none; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; gap:16px; cursor:pointer; color:#111; font-size:15px; font-weight:700; text-align:left; font-family:inherit; }
+        .faq-item.open .faq-question { background:#fff; border-bottom:1px solid #f0f0f0; }
+        .faq-plus { flex-shrink:0; color:#0091c9; font-size:18px; font-weight:700; }
+        .faq-answer { padding:16px 22px 20px; font-size:14px; color:#555; line-height:1.7; }
+        .faq-empty { text-align:center; padding:24px; color:#999; font-size:14px; }
+        @media(max-width:960px){
+          .faq-filter { font-size:12.5px; padding:9px 13px; }
+          .faq-question { font-size:14px; padding:15px 18px; }
+          .faq-answer { font-size:13.5px; padding:14px 18px 18px; }
         }
       `}</style>
 
@@ -812,6 +904,9 @@ const final = net + vatAmt
           </div>
         </div>
       </div>
+
+      {/* FAQ */}
+      <FaqSection />
     </>
   )
 }
