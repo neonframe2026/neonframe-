@@ -511,6 +511,7 @@ const final = net + vatAmt
         .tt-box { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#111; color:#f0f0f0; font-size:12px; padding:9px 13px; border-radius:8px; white-space:nowrap; z-index:50; pointer-events:none; line-height:1.6; }
         .tt-box::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#111; }
         .tt:hover .tt-box { display:block; }
+        .tt-box.warn-box { white-space:normal; width:260px; text-align:left; }
         .prod-title { font-size:30px; font-weight:800; line-height:1.2; color:#111; margin-bottom:10px; letter-spacing:-.02em; }
         @media(max-width:960px){ .prod-title { font-size:24px; } }
         .stars-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
@@ -716,7 +717,15 @@ const final = net + vatAmt
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12, alignItems: 'flex-start' }}>
               {(offer.width || offer.height) && (
                 <div>
-                  <span className="cfg-label">Maße (Breite × Höhe)</span>
+                  <span className="cfg-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    Maße (Breite × Höhe)
+                    {offer.size_warning_enabled && offer.size_warning_text && (
+                      <span className="tt">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" style={{ display: 'block', cursor: 'help' }}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="13" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                        <span className="tt-box warn-box">{offer.size_warning_text}</span>
+                      </span>
+                    )}
+                  </span>
                   <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
                 </div>
               )}
