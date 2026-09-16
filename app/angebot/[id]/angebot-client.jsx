@@ -706,8 +706,7 @@ const final = net + vatAmt
       <div className="gallery-section">
         <div className="gallery-wrap">
           <div className="gallery-header">
-            <h2>Kundenprojekte</h2>
-            <div className="gallery-badge-pill">Echte Kundenfotos</div>
+            <h2>Projekte in Aktion</h2>
           </div>
           <div className="customer-grid">
             {customerGalleryImages.map((src, i) => (
