@@ -566,6 +566,26 @@ const final = net + vatAmt
           .faq-question { font-size:14px; padding:15px 18px; }
           .faq-answer { font-size:13.5px; padding:14px 18px 18px; }
         }
+        .site-footer { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
+        @media(max-width:960px){ .site-footer { padding:0 14px 40px; } }
+        .footer-card { border-top:1px solid #f0f0f0; padding:44px 0 0; display:grid; grid-template-columns:1.2fr 1fr; gap:32px; }
+        .footer-logo-mark { display:inline-flex; flex-direction:column; align-items:flex-start; line-height:1; margin-bottom:12px; }
+        .footer-logo-top { font-size:15px; font-weight:800; color:#0091c9; border:1.5px solid #60c8f0; border-radius:5px; padding:3px 8px; letter-spacing:.02em; }
+        .footer-logo-bottom { font-size:15px; font-weight:800; color:#111; letter-spacing:.02em; margin-top:3px; }
+        .footer-tagline { font-size:13px; color:#888; margin:0 0 18px; line-height:1.6; max-width:340px; }
+        .footer-contact { display:flex; flex-direction:column; gap:8px; }
+        .footer-contact-row { display:flex; align-items:center; gap:9px; font-size:13.5px; color:#444; text-decoration:none; }
+        .footer-contact-row svg { width:15px; height:15px; color:#0091c9; flex-shrink:0; }
+        .footer-right { border-left:1px solid #f0f0f0; padding-left:32px; }
+        .footer-col-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#aaa; margin-bottom:12px; }
+        .footer-links { display:flex; flex-direction:column; gap:9px; }
+        .footer-links a { font-size:13.5px; color:#444; text-decoration:none; }
+        .footer-links a:hover { color:#0091c9; }
+        .footer-copy { font-size:12px; color:#bbb; padding-top:24px; margin-top:28px; border-top:1px solid #f0f0f0; grid-column:1/-1; text-align:center; }
+        @media(max-width:760px){
+          .footer-card { grid-template-columns:1fr; padding-top:32px; }
+          .footer-right { border-left:none; border-top:1px solid #f0f0f0; padding-left:0; padding-top:24px; }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -907,6 +927,39 @@ const final = net + vatAmt
 
       {/* FAQ */}
       <FaqSection />
+
+      {/* FOOTER */}
+      <footer className="site-footer">
+        <div className="footer-card">
+          <div>
+            <div className="footer-logo-mark">
+              <span className="footer-logo-top">NEON</span>
+              <span className="footer-logo-bottom">FRAME</span>
+            </div>
+            <p className="footer-tagline">Handgefertigte LED-Neon-Schilder – individuell für dich designed. Fragen? Wir sind für dich da.</p>
+            <div className="footer-contact">
+              <a href="mailto:info@neonframe.de" className="footer-contact-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
+                info@neonframe.de
+              </a>
+              <a href="tel:+4917656197641" className="footer-contact-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                +49 176 56197641
+              </a>
+            </div>
+          </div>
+          <div className="footer-right">
+            <div className="footer-col-title">Rechtliches</div>
+            <div className="footer-links">
+              <a href="https://neonframe.de/pages/impressum" target="_blank" rel="noopener noreferrer">Impressum</a>
+              <a href="https://neonframe.de/pages/datenschutz" target="_blank" rel="noopener noreferrer">Datenschutz</a>
+              <a href="https://neonframe.de/pages/agb" target="_blank" rel="noopener noreferrer">AGB</a>
+              <a href="https://neonframe.de/pages/widerrufsrecht" target="_blank" rel="noopener noreferrer">Widerrufsrecht</a>
+            </div>
+          </div>
+          <div className="footer-copy">© {new Date().getFullYear()} NeonFrame. Alle Rechte vorbehalten.</div>
+        </div>
+      </footer>
     </>
   )
 }
