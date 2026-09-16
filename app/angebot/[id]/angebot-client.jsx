@@ -485,7 +485,18 @@ const final = net + vatAmt
         /* Config */
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:5px; }
         .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:500; color:#333; }
-        .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; }
+        .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; animation: dotPulse 2s ease-in-out infinite; }
+        .color-dot.rgb { width:14px; height:14px; border:none; animation: colorCycleRGB 6s ease-in-out infinite, dotPulse 2s ease-in-out infinite; }
+        @keyframes dotPulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.18); opacity:.72; } }
+        @keyframes colorCycleRGB {
+          0%   { background:#ff0055; box-shadow:0 0 9px #ff0055; }
+          16%  { background:#ff9900; box-shadow:0 0 9px #ff9900; }
+          33%  { background:#ffee00; box-shadow:0 0 9px #ffee00; }
+          50%  { background:#33ff00; box-shadow:0 0 9px #33ff00; }
+          66%  { background:#00eeff; box-shadow:0 0 9px #00eeff; }
+          83%  { background:#3300ff; box-shadow:0 0 9px #3300ff; }
+          100% { background:#ff0055; box-shadow:0 0 9px #ff0055; }
+        }
         .img-tt { position:relative; display:inline-flex; }
         .img-tt-box { display:block; opacity:0; visibility:hidden; position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%) translateY(-6px); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; transition: opacity .18s ease, transform .18s ease, visibility .38s; }
         .img-tt-box::after { content:''; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); border:8px solid transparent; border-bottom-color:#fff; }
@@ -715,7 +726,12 @@ const final = net + vatAmt
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                     {colors.map((c, i) => (
                       <div key={i} className="img-tt">
-                        <div className="cfg-pill"><span className="color-dot" style={{ background: colorDot(c) }} />{c}</div>
+                        <div className="cfg-pill">
+                          {c.toLowerCase().includes('full color')
+                            ? <span className="color-dot rgb" />
+                            : <span className="color-dot" style={{ background: colorDot(c) }} />}
+                          {c}
+                        </div>
                         <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
                       </div>
                     ))}
