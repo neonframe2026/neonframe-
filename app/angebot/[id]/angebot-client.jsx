@@ -490,7 +490,8 @@ const final = net + vatAmt
         .img-tt-box { display:block; opacity:0; visibility:hidden; position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%) translateY(-6px); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; transition: opacity .18s ease, transform .18s ease, visibility .38s; }
         .img-tt-box::after { content:''; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); border:8px solid transparent; border-bottom-color:#fff; }
         .img-tt-box img { display:block; border-radius:8px; }
-        .img-tt-box.square img { width:350px; height:350px; object-fit:cover; }
+        .img-tt-box.square { background:#000; }
+        .img-tt-box.square img { width:350px; height:350px; object-fit:contain; }
         .img-tt-box.wide img { width:650px; height:auto; object-fit:contain; }
         .img-tt:hover .img-tt-box { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
         .tt { position:relative; display:inline; }
