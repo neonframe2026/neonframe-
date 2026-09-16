@@ -486,7 +486,7 @@ const final = net + vatAmt
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:5px; }
         .cfg-pill { display:inline-flex; align-items:center; gap:7px; background:#f5f5f5; border:1px solid #e8e8e8; border-radius:20px; padding:7px 14px; font-size:13px; font-weight:500; color:#333; }
         .color-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(0,0,0,.08); display:inline-block; flex-shrink:0; animation: dotPulse 2s ease-in-out infinite; }
-        .color-dot.rgb { width:14px; height:14px; border:none; animation: colorCycleRGB 6s ease-in-out infinite, dotPulse 2s ease-in-out infinite; }
+        .color-dot.rgb { border:none; animation: colorCycleRGB 6s ease-in-out infinite, dotPulse 2s ease-in-out infinite; }
         @keyframes dotPulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.18); opacity:.72; } }
         @keyframes colorCycleRGB {
           0%   { background:#ff0055; box-shadow:0 0 9px #ff0055; }
