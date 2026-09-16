@@ -36,6 +36,19 @@ const usageImages = {
 }
 const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_c82bb103-80c9-4be2-9f32-109215a4b5fe_800x800.png?v=1787156882'
 
+const customerGalleryImages = [
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as1_800x800.jpg?v=1789570862',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as5_800x800.png?v=1789570860',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as7_800x800.jpg?v=1789570859',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as10_800x800.jpg?v=1789570858',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as6_800x800.jpg?v=1789570858',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as8_800x800.jpg?v=1789570858',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as4_800x800.jpg?v=1789570857',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as9_800x800.jpg?v=1789570857',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as3_800x800.jpg?v=1789570858',
+  'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as2_800x800.jpg?v=1789570856',
+]
+
 function getTooltipImg(val, map) {
   if (!val) return null
   const lower = val.toLowerCase()
@@ -397,6 +410,21 @@ const final = net + vatAmt
         .mehr-btn:hover { background:#60c8f0; color:#fff; }
         .weniger-btn { display:inline-flex; align-items:center; gap:7px; background:none; border:1.5px solid #60c8f0; color:#60c8f0; border-radius:24px; padding:8px 20px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:14px; transition:background .15s,color .15s; }
         .weniger-btn:hover { background:#60c8f0; color:#fff; }
+        .gallery-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
+        @media(max-width:960px){ .gallery-section { padding:0 14px 60px; } }
+        .gallery-wrap { border:1px solid #eee; border-radius:18px; overflow:hidden; }
+        .gallery-header { padding:22px 32px; border-bottom:1px solid #f0f0f0; background:#fafafa; display:flex; align-items:center; justify-content:space-between; }
+        .gallery-header h2 { font-size:20px; font-weight:800; color:#111; }
+        .gallery-badge-pill { font-size:12px; color:#888; background:#fff; border:1px solid #eee; border-radius:20px; padding:5px 14px; }
+        .customer-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; padding:28px 32px; }
+        .customer-tile { position:relative; aspect-ratio:1/1; border-radius:12px; overflow:hidden; border:1px solid #eee; background:#f5f5f5; }
+        .customer-tile.tall { grid-row:span 2; aspect-ratio:1/2; }
+        .customer-tile img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s ease; }
+        .customer-tile:hover img { transform:scale(1.06); }
+        @media(max-width:960px){
+          .customer-grid { grid-template-columns:repeat(2,1fr); padding:20px; }
+          .customer-tile.tall { grid-row:span 1; aspect-ratio:1/1; }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -671,6 +699,23 @@ const final = net + vatAmt
               </div>
             </>
           )}
+        </div>
+      </div>
+
+      {/* KUNDENGALERIE */}
+      <div className="gallery-section">
+        <div className="gallery-wrap">
+          <div className="gallery-header">
+            <h2>Kundenprojekte</h2>
+            <div className="gallery-badge-pill">Echte Kundenfotos</div>
+          </div>
+          <div className="customer-grid">
+            {customerGalleryImages.map((src, i) => (
+              <div key={i} className={`customer-tile${i % 3 === 0 ? ' tall' : ''}`}>
+                <img src={src} alt={`Kundenprojekt ${i + 1}`} loading="lazy" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </>
