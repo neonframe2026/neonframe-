@@ -20,16 +20,8 @@ function parseColors(s = '') {
   return s.split(',').map(c => c.trim()).filter(Boolean)
 }
 
-const backplateImages = {
-  'ausgeschnitten': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/backing-cutout_800x800.png?v=1777906190',
-  'quadratisch': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/backing-square_800x800.png?v=1777580592',
-  'ohne': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/backing-none_800x800.png?v=1777580593',
-}
-const backplateColorImages = {
-  'transparent': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_02_34_00_800x800.png?v=1778719148',
-  'schwarz': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_02_39_25_800x800.png?v=1778719182',
-  'weiß': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_02_36_15_800x800.png?v=1778719148',
-}
+const backplateFormImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandart_800x800.png?v=1789583341'
+const backplateColorImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandfarbe_800x800.png?v=1789583341'
 const usageImages = {
   'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_05_10_800x800.png?v=1778724405',
   'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27_800x800.png?v=1778724405',
@@ -445,8 +437,8 @@ const final = net + vatAmt
   if (offer.preview_image_2) images.push(offer.preview_image_2)
   if (offer.preview_image_3) images.push(offer.preview_image_3)
 
-  const backplateImg = getTooltipImg(offer.backplate, backplateImages)
-  const backplateColorImg = getTooltipImg(offer.backplate_color, backplateColorImages)
+  const backplateImg = offer.backplate ? backplateFormImageUrl : null
+  const backplateColorImg = offer.backplate_color ? backplateColorImageUrl : null
   const usageImg = getTooltipImg(offer.usage, usageImages)
 
   return (
