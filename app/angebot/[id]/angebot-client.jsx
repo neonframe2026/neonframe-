@@ -49,6 +49,17 @@ const customerGalleryImages = [
   'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as2_800x800.jpg?v=1789570856',
 ]
 
+const compareRows = [
+  { feature: 'LED Technologie', brandValue: 'Ultra Power LED', otherValue: 'Standard LED' },
+  { feature: 'Garantie', brandValue: '24-36 Monate', otherValue: 'max. 12 Monate' },
+  { feature: 'LED Lebensdauer', brandValue: '100.000 Stunden', otherValue: '50.000 Stunden' },
+  { feature: 'Stromverbrauch', brandValue: 'Bis zu 40% geringerer Stromverbrauch', otherValue: 'Sehr hoher Energieverbrauch' },
+  { feature: 'Helligkeit', brandValue: '1000-1400 Lumen', otherValue: '400-600 Lumen' },
+  { feature: 'Qualitäts- und Sicherheitsprüfung', brandIcon: 'yes', otherValue: 'optional' },
+  { feature: 'Dimmer und Fernbedienung', brandIcon: 'yes', otherValue: 'optional' },
+  { feature: '100% geräuschlos', brandIcon: 'yes', otherIcon: 'no' },
+]
+
 function getTooltipImg(val, map) {
   if (!val) return null
   const lower = val.toLowerCase()
@@ -425,6 +436,28 @@ const final = net + vatAmt
           .customer-grid { grid-template-columns:repeat(2,1fr); padding:20px; }
           .customer-tile.tall { grid-row:span 1; aspect-ratio:1/1; }
         }
+        .compare-section { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
+        @media(max-width:960px){ .compare-section { padding:0 14px 40px; } }
+        .compare-header { text-align:center; margin-bottom:28px; }
+        .compare-header h2 { font-size:clamp(26px,4vw,36px); font-weight:900; color:#111; letter-spacing:-.02em; margin-bottom:10px; }
+        .compare-header .brand-accent { background:linear-gradient(90deg,#60c8f0,#0091c9); -webkit-background-clip:text; background-clip:text; color:transparent; }
+        .compare-header p { max-width:600px; margin:0 auto; font-size:14.5px; color:#6b6b6b; line-height:1.6; }
+        .compare-table { border:1px solid #eaeaea; border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(0,0,0,.04); }
+        .compare-row { display:grid; grid-template-columns:1.4fr 1fr 1fr; padding:18px 28px; align-items:center; gap:12px; border-bottom:1px solid #f4f4f4; }
+        .compare-row:last-child { border-bottom:none; }
+        .compare-row-head { background:#fafafa; }
+        .compare-row-head .cmp-cell { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#999; }
+        .cmp-brand { color:#0091c9; }
+        .cmp-feat { font-size:14px; font-weight:600; color:#111; }
+        .cmp-brand-val { font-size:14px; font-weight:700; color:#111; }
+        .cmp-other-val { font-size:14px; color:#9a9a9a; }
+        .cmp-icon { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:900; }
+        .cmp-check { background:#60c8f0; color:#fff; box-shadow:0 0 0 4px rgba(96,200,240,.14); }
+        .cmp-cross { background:#f0f0f0; color:#bbb; }
+        @media(max-width:960px){
+          .compare-row, .compare-row-head { grid-template-columns:1.2fr 1fr 1fr; padding-left:16px; padding-right:16px; }
+          .cmp-feat, .cmp-brand-val, .cmp-other-val { font-size:12.5px; }
+        }
       `}</style>
 
       {/* HEADER */}
@@ -699,6 +732,32 @@ const final = net + vatAmt
               </div>
             </>
           )}
+        </div>
+      </div>
+
+      {/* VERGLEICH */}
+      <div className="compare-section">
+        <div className="compare-header">
+          <h2><span className="brand-accent">NeonFrame</span> vs. andere Anbieter</h2>
+          <p>Ein klarer Vergleich – damit du sofort siehst, worauf es bei LED-Schildern wirklich ankommt.</p>
+        </div>
+        <div className="compare-table">
+          <div className="compare-row compare-row-head">
+            <div className="cmp-cell">Feature</div>
+            <div className="cmp-cell cmp-brand">NeonFrame</div>
+            <div className="cmp-cell">Andere Anbieter</div>
+          </div>
+          {compareRows.map((row, i) => (
+            <div key={i} className="compare-row">
+              <div className="cmp-cell cmp-feat">{row.feature}</div>
+              <div className="cmp-cell cmp-brand-val">
+                {row.brandIcon === 'yes' ? <span className="cmp-icon cmp-check">✓</span> : row.brandValue}
+              </div>
+              <div className="cmp-cell cmp-other-val">
+                {row.otherIcon === 'no' ? <span className="cmp-icon cmp-cross">✕</span> : row.otherValue}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
