@@ -734,7 +734,7 @@ const final = net + vatAmt
               )}
               {colors.length > 0 && (
                 <div>
-                  <span className="cfg-label">Farbe</span>
+                  <span className="cfg-label">Farbe{colors.length > 1 ? '(n)' : ''}</span>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                     {colors.map((c, i) => (
                       <div key={i} className="img-tt">
