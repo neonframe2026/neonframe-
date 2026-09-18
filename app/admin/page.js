@@ -41,6 +41,36 @@ function colorDot(s = '') {
   return '#9ca3af'
 }
 
+// Verkleinert & komprimiert ein hochgeladenes Bild im Browser, BEVOR es irgendwo
+// hochgeladen oder in eine Anfrage gepackt wird. Ohne das können z.B. KI-generierte
+// Bilder (ElevenLabs, Canva AI, etc.) mehrere MB groß sein und die Server-Anfrage
+// sprengen ("Request Entity Too Large" -> Vorschau-Fehler).
+function compressImage(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxDim || height > maxDim) {
+          if (width > height) { height = Math.round(height * (maxDim / width)); width = maxDim }
+          else { width = Math.round(width * (maxDim / height)); height = maxDim }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = () => reject(new Error('Bild konnte nicht gelesen werden.'))
+      img.src = ev.target.result
+    }
+    reader.onerror = () => reject(new Error('Datei konnte nicht gelesen werden.'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function ThemeVars() {
   return (
     <style>{`
@@ -168,11 +198,14 @@ function EditModal({ offer, onClose, onSaved }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
   const prices = calcPrices(form.base_price, form.disc_type, form.disc_val, form.vat_pct)
 
-  function handleImage(e, idx) {
+  async function handleImage(e, idx) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader()
-    r.onload = ev => setImgSrcs(prev => { const next = [...prev]; next[idx] = ev.target.result; return next })
-    r.readAsDataURL(file)
+    try {
+      const compressed = await compressImage(file)
+      setImgSrcs(prev => { const next = [...prev]; next[idx] = compressed; return next })
+    } catch (err) {
+      alert('Bild konnte nicht verarbeitet werden: ' + err.message)
+    }
   }
 
   async function save() {
@@ -632,9 +665,14 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     }
   }
 
-  function handleImage(e, idx) {
+  async function handleImage(e, idx) {
     const file = e.target.files[0]; if (!file) return
-    const r = new FileReader(); r.onload = ev => setImgSrcs(prev => { const next=[...prev]; next[idx]=ev.target.result; return next; }); r.readAsDataURL(file)
+    try {
+      const compressed = await compressImage(file)
+      setImgSrcs(prev => { const next = [...prev]; next[idx] = compressed; return next })
+    } catch (err) {
+      alert('Bild konnte nicht verarbeitet werden: ' + err.message)
+    }
   }
 
   async function publish() {
@@ -1012,11 +1050,9 @@ return (
               <label style={{...S.uploadZone, flexDirection:'row', padding:'12px 16px', justifyContent:'center', gap:10, cursor:'pointer'}} htmlFor="multi-img-upload">
                 <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
                   const files = Array.from(e.target.files)
-                  files.forEach(file => {
-                    const r = new FileReader()
-                    r.onload = ev => setImgSrcs(prev => [...prev, ev.target.result])
-                    r.readAsDataURL(file)
-                  })
+                  Promise.all(files.map(file => compressImage(file)))
+                    .then(compressed => setImgSrcs(prev => [...prev, ...compressed]))
+                    .catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
                   e.target.value = ''
                 }} />
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
