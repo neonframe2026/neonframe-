@@ -23,7 +23,7 @@ function parseColors(s = '') {
 const backplateFormImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandart_800x800.png?v=1789583341'
 const backplateColorImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandfarbe_800x800.png?v=1789583341'
 const usageImages = {
-  'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_05_10_800x800.png?v=1778724405',
+  'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Logo-Neonschild_800x800.png?v=1789479108',
   'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27_800x800.png?v=1778724405',
 }
 const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_c82bb103-80c9-4be2-9f32-109215a4b5fe_800x800.png?v=1787156882'
