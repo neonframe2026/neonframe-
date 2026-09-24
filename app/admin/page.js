@@ -379,6 +379,103 @@ function EditModal({ offer, onClose, onSaved }) {
   )
 }
 
+// ===================== STARTSEITE =====================
+const NF_LOGO = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735'
+const NEON = '#60c8f0'
+const SHOPIFY_DRAFTS = 'https://admin.shopify.com/store/atcbcn-sh/draft_orders'
+
+const daysSince = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
+
+function HomeCSS() {
+  return <style>{`
+    .nf-b{transition:transform .15s,box-shadow .15s,filter .15s,border-color .15s}
+    .nf-b:hover{transform:translateY(-2px);box-shadow:0 0 22px ${NEON}66;border-color:${NEON}!important;filter:brightness(1.06)}
+    @keyframes nfPulse{0%,100%{opacity:1}50%{opacity:.35}}
+  `}</style>
+}
+
+function HomeBtn({ c }) {
+  const s = {
+    marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+    padding: '14px 16px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+    textDecoration: 'none', boxSizing: 'border-box',
+    background: c.primary ? NEON : 'transparent', color: c.primary ? '#0a0a0a' : (c.dark ? '#fff' : 'var(--text)'),
+    border: c.primary ? `1px solid ${NEON}` : `1px solid ${c.dark ? '#2b2e36' : 'var(--border)'}`,
+  }
+  return c.href
+    ? <a className="nf-b" href={c.href} target="_blank" rel="noopener" style={s}>{c.btn}</a>
+    : <button className="nf-b" onClick={c.onClick} style={s}>{c.btn}</button>
+}
+
+function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
+  const n = offers.filter(o => daysSince(o.created_at) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed').length
+  const card = { background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 18, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }
+  const redPill = { background: '#dc2626', color: '#fff', borderRadius: 20, fontSize: 12, fontWeight: 800, padding: '3px 9px' }
+
+  const main = [
+    { icon: '✏️', title: 'Neues Angebot', text: 'Angebot inkl. Vorschau, Angebotsseite und Kunden-E-Mail erstellen – PDF hochladen, Preis setzen, fertig.', btn: '＋ Angebot erstellen', primary: true, dark: true, onClick: () => setTab('create') },
+    { icon: '📋', title: 'Meine Angebote', text: 'Alle Angebote im Überblick – Status ändern, bearbeiten, Links kopieren.', btn: '⚡ Zu meinen Angeboten', onClick: () => setTab('manage') },
+  ]
+  const small = [
+    { icon: '↩️', title: 'Nachfassen', badge: n, text: n ? `${n} Angebote sind älter als 3 Tage und warten auf eine Erinnerung.` : 'Alles erledigt – aktuell keine Erinnerungen fällig.', btn: '↩ Erinnerungen senden', onClick: () => setTab('manage') },
+    { icon: '🌐', title: 'Shop', text: 'neonframe.de aus Kundensicht prüfen.', btn: '🌐 neonframe.de öffnen', href: 'https://neonframe.de' },
+    { icon: '🛒', title: 'Bestellentwürfe', text: 'Direkt zu den Shopify Draft Orders.', btn: '🛒 Shopify öffnen', href: SHOPIFY_DRAFTS },
+  ]
+
+  return (
+    <>
+      <HomeCSS />
+      <div style={{ background: '#0a0a0a', height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px' }}>
+        <img src={NF_LOGO} alt="NeonFrame" style={{ height: 52, display: 'block' }} />
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
+        </div>
+      </div>
+
+      <div
+        onClick={() => n && setTab('manage')}
+        style={{ background: n ? 'linear-gradient(90deg,#7f1d1d,#b91c1c)' : 'linear-gradient(90deg,#14532d,#16a34a)', padding: '13px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#fff', fontSize: 14, fontWeight: 700, cursor: n ? 'pointer' : 'default' }}
+      >
+        <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', animation: n ? 'nfPulse 1.4s infinite' : 'none' }} />
+        {n
+          ? <>{n} {n === 1 ? 'Angebot wartet' : 'Angebote warten'} seit über 3 Tagen auf eine Erinnerung <span style={{ textDecoration: 'underline' }}>Jetzt nachfassen →</span></>
+          : 'Alles erledigt – keine offenen Erinnerungen ✓'}
+      </div>
+
+      <div style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 64px' }}>
+        <h1 style={{ fontSize: 38, fontWeight: 800, margin: '0 0 32px' }}>Willkommen zurück 👋</h1>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(420px,1fr))', gap: 24, marginBottom: 24 }}>
+          {main.map(c => (
+            <div key={c.title} style={{ ...card, minHeight: 360, padding: 40, background: c.dark ? 'radial-gradient(ellipse at 20% 0%,#0e3a4a 0%,#0a0a0a 70%)' : 'var(--panel)', color: c.dark ? '#fff' : 'var(--text)', borderColor: c.dark ? NEON + '66' : 'var(--border)' }}>
+              <div style={{ fontSize: 48 }}>{c.icon}</div>
+              <h3 style={{ margin: '8px 0 0', fontSize: 34, fontWeight: 800 }}>{c.title}</h3>
+              <p style={{ margin: '0 0 24px', fontSize: 16, lineHeight: 1.6, color: c.dark ? '#9ca3af' : 'var(--text-muted)', maxWidth: 460 }}>{c.text}</p>
+              <HomeBtn c={c} />
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 24 }}>
+          {small.map(c => (
+            <div key={c.title} style={{ ...card, minHeight: 240 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 26 }}>{c.icon}</span>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{c.title}</h3>
+                {c.badge > 0 && <span style={redPill}>{c.badge}</span>}
+              </div>
+              <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)' }}>{c.text}</p>
+              <HomeBtn c={c} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+// =================== ENDE STARTSEITE ===================
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
@@ -847,35 +944,9 @@ if (draftData.checkoutUrl) {
   )
 
 if (tab === 'home') return (
-    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:32,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
       <ThemeVars />
-<div style={{position:'absolute',top:0,left:0,right:0,background:'#0a0a0a',height:72,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px'}}>
-        <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:52,display:'block'}} />
-        <ThemeToggle theme={theme} onToggle={toggleTheme} />
-      </div>
-      <p style={{margin:'0 0 8px',fontSize:18,fontWeight:600,color:'var(--text)'}}>Was möchtest du tun?</p>
-      <div style={{display:'flex',gap:16}}>
-        <button onClick={() => setTab('create')} style={{width:340,height:260,background:'var(--bg-alt)',border:'1px solid var(--border)',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
-          onMouseEnter={e => e.currentTarget.style.borderColor='#111'}
-          onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
-          <span style={{fontSize:40}}>✏️</span>
-          <div style={{textAlign:'left'}}>
-            <div style={{fontSize:18,fontWeight:700,color:'var(--text)',marginBottom:6}}>Angebot erstellen</div>
-            <div style={{fontSize:13,color:'var(--text-faint)',lineHeight:1.5}}>Neues Angebot für einen Kunden aufsetzen</div>
-          </div>
-          <span style={{fontSize:18,color:'var(--text-faint)',alignSelf:'flex-end'}}>→</span>
-        </button>
-        <button onClick={() => setTab('manage')} style={{width:340,height:260,background:'var(--bg-alt)',border:'1px solid var(--border)',borderRadius:20,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'flex-start',justifyContent:'space-between',padding:'28px',fontFamily:'inherit',transition:'.15s'}}
-          onMouseEnter={e => e.currentTarget.style.borderColor='#111'}
-          onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
-          <span style={{fontSize:40}}>📋</span>
-          <div style={{textAlign:'left'}}>
-            <div style={{fontSize:18,fontWeight:700,color:'var(--text)',marginBottom:6}}>Angebote verwalten</div>
-            <div style={{fontSize:13,color:'var(--text-faint)',lineHeight:1.5}}>Bestehende Angebote einsehen und bearbeiten</div>
-          </div>
-          <span style={{fontSize:18,color:'var(--text-faint)',alignSelf:'flex-end'}}>→</span>
-        </button>
-      </div>
+      <HomePage offers={offers} setTab={setTab} theme={theme} toggleTheme={toggleTheme} onLogout={() => setAuthed(false)} />
     </div>
   )
 
