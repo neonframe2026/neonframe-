@@ -476,6 +476,299 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
 }
 // =================== ENDE STARTSEITE ===================
 
+// ===================== VERWALTEN (Liste + Detail) =====================
+const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
+const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
+const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
+const mIsRed = (o) => mDays(o.created_at) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
+const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
+const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
+const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
+const mImgs = (o) => [o.preview_image, o.preview_image_2, o.preview_image_3].filter(Boolean)
+const mTint = (c) => ({ background: c + '1a', border: `1px solid ${c}55`, color: c })
+const M_NEON = '#60c8f0'
+const M_KINDS = {
+  outline: { background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' },
+  neon: { background: M_NEON, border: `1px solid ${M_NEON}`, color: '#0a0a0a' },
+  edit: mTint('#3b82f6'), del: mTint('#ef4444'), review: mTint('#eab308'), red: mTint('#ef4444'),
+  muted: { background: 'var(--bg-alt)', border: '1px solid var(--border)', color: 'var(--text-muted)' },
+}
+
+function MCSS() {
+  return <style>{`
+    .nf-mb{transition:transform .15s,box-shadow .15s,filter .15s}
+    .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 16px ${M_NEON}55;filter:brightness(1.1)}
+  `}</style>
+}
+function MB({ children, kind = 'outline', onClick, small, title, style }) {
+  return <button type="button" className="nf-mb" title={title} onClick={onClick} style={{ borderRadius: 10, padding: small ? '5px 10px' : '11px 14px', fontSize: small ? 11 : 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', ...M_KINDS[kind], ...style }}>{children}</button>
+}
+const MLbl = ({ children, style }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--text-faint)', marginBottom: 8, ...style }}>{children}</div>
+const MCard = ({ title, children }) => <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>{title && <MLbl>{title}</MLbl>}{children}</div>
+const MKv = ({ k, v, color }) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderBottom: '1px dashed var(--border)', fontSize: 13 }}><span style={{ color: 'var(--text-muted)' }}>{k}</span><span style={{ fontWeight: 600, color: color || 'var(--text)', textAlign: 'right' }}>{v}</span></div>
+const MAktiv = ({ o }) => <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...(o.published ? mTint('#22c55e') : mTint('#6b7280')) }}>{o.published ? 'Aktiv' : 'Inaktiv'}</span>
+const MDateTxt = ({ o }) => <span style={{ fontSize: 12, color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
+
+function MGallery({ o }) {
+  const list = mImgs(o)
+  const [i, setI] = useState(0)
+  useEffect(() => { setI(0) }, [o.id])
+  if (!list.length) return <div style={{ height: 260, borderRadius: 14, border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Kein Vorschaubild</div>
+  return (
+    <div>
+      <div style={{ height: 260, borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', background: '#0b0d12' }}>
+        <img src={list[i] || list[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+      </div>
+      {list.length > 1 && (
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          {list.map((s, j) => <img key={j} src={s} alt="" onClick={() => setI(j)} style={{ width: 70, height: 52, objectFit: 'cover', borderRadius: 8, cursor: 'pointer', border: `2px solid ${j === i ? M_NEON : 'transparent'}` }} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MTimeline({ o }) {
+  const ev = [
+    { t: 'Angebot erstellt & gesendet', d: mDate(o.created_at), c: '#16a34a', done: true },
+    { t: 'Erinnerung gesendet', d: o.status !== 'offer_sent' ? 'erledigt' : '—', c: '#d97706', done: o.status !== 'offer_sent' },
+    { t: 'Bestellt', d: o.status === 'confirmed' ? 'erledigt' : '—', c: '#2563eb', done: o.status === 'confirmed' },
+  ]
+  return (
+    <div>
+      {ev.map((e, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, position: 'relative', paddingBottom: i < ev.length - 1 ? 16 : 0 }}>
+          {i < ev.length - 1 && <span style={{ position: 'absolute', left: 6, top: 16, bottom: 0, width: 2, background: 'var(--border)' }} />}
+          <span style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, marginTop: 2, background: e.done ? e.c : 'transparent', border: `2px solid ${e.done ? e.c : 'var(--border)'}`, boxShadow: e.done ? `0 0 10px ${e.c}88` : 'none' }} />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: e.done ? 'var(--text)' : 'var(--text-faint)' }}>{e.t}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{e.d}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MLinkRow({ label, url, on, offText }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <MLbl style={{ marginBottom: 5 }}>{label}</MLbl>
+      {on && url ? (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url}</span>
+          <MB small onClick={() => navigator.clipboard.writeText(url)}>Kopieren</MB>
+          <MB small onClick={() => window.open(url, '_blank')}>Öffnen</MB>
+        </div>
+      ) : <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{offText}</span>}
+    </div>
+  )
+}
+
+function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus }) {
+  const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct)
+  const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
+  return (
+    <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1400 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 30, fontWeight: 900 }}>#{mId(o)}</span>
+            <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-muted)' }}>{o.project}</span>
+            <MAktiv o={o} />
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+            {o.offer_num && <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px' }}>Nr. {o.offer_num}</span>}
+            <MDateTxt o={o} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
+          <MB kind={mIsRed(o) ? 'red' : 'muted'} onClick={onContact} title={o.customer_email || 'Keine E-Mail hinterlegt'}>↩ Kontaktieren</MB>
+          {o.status === 'confirmed' && <MB kind="review" onClick={onReview}>⭐ Bewertung</MB>}
+          <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
+          <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
+        </div>
+      </div>
+
+      {mIsRed(o) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
+          ⚠️ Seit {mDays(o.created_at)} Tagen keine Rückmeldung – Zeit zum Nachfassen.
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
+        <MCard title="Vorschau"><MGallery o={o} /></MCard>
+        <MCard title="Konfiguration">
+          <div style={{ marginBottom: 12 }}>
+            <MKv k="Maße" v={o.width && o.height ? `${o.width} × ${o.height} cm${o.size_warning_enabled ? ' ⚠️' : ''}` : '–'} />
+            <MKv k="Rückwandform" v={o.backplate || '–'} />
+            <MKv k="Rückwandfarbe" v={o.backplate_color || '–'} />
+            <MKv k="Verwendung" v={o.usage || '–'} />
+          </div>
+          <MLbl style={{ marginBottom: 6 }}>Farben</MLbl>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {colors.length === 0 && <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>–</span>}
+            {colors.map(c => (
+              <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 600 }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: colorDot(c), border: '1px solid rgba(0,0,0,.15)' }} />{c}
+              </span>
+            ))}
+          </div>
+        </MCard>
+        <MCard title="Preis">
+          <MKv k="Listenpreis (netto)" v={mEur(o.base_price)} />
+          {p.discAmt > 0 && <MKv k={`Rabatt (${o.disc_type === 'pct' ? o.disc_val + '%' : mEur(o.disc_val)})`} v={'− ' + mEur(p.discAmt)} color="#22c55e" />}
+          <MKv k="Netto nach Rabatt" v={mEur(p.net)} />
+          <MKv k={`MwSt. (${o.vat_pct || 19}%)`} v={'+ ' + mEur(p.vatAmt)} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
+            <span style={{ fontWeight: 800 }}>Gesamt</span>
+            <span style={{ fontSize: 26, fontWeight: 900 }}>{o.final_price > 0 ? mEur(o.final_price) : '–'}</span>
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <MLbl>Status</MLbl>
+            <select value={o.status || 'offer_sent'} onChange={e => onStatus(e.target.value)} style={{ fontSize: 13, padding: '10px 12px', borderRadius: 10, border: `1px solid ${mStatus(o.status).color}88`, background: 'var(--input-bg)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
+              {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+        </MCard>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
+        <MCard title="Links">
+          <MLinkRow label="Angebotslink" url={mLink(o)} on={o.published} offText="Angebot deaktiviert – Link nicht erreichbar" />
+          <MLinkRow label="Checkout-Link (Shopify)" url={o.checkout_url} on={true} offText="Nicht vorhanden" />
+        </MCard>
+        <MCard title="Verlauf"><MTimeline o={o} /></MCard>
+        <MCard title="Kunde & Notiz">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 12, background: `${M_NEON}22`, border: `1px solid ${M_NEON}55`, color: M_NEON, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18, flexShrink: 0 }}>{(o.project || '?')[0].toUpperCase()}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>{o.project || '–'}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>✉️ {o.customer_email || 'keine E-Mail'}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.6, color: o.customer_note ? 'var(--text)' : 'var(--text-faint)', whiteSpace: 'pre-wrap' }}>{o.customer_note || 'Keine Notiz hinterlegt.'}</div>
+        </MCard>
+      </div>
+    </div>
+  )
+}
+
+function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTheme, onLogout, updateStatus, toggleOffer, deleteOffer }) {
+  const [q, setQ] = useState('')
+  const [st, setSt] = useState('')
+  const [sel, setSel] = useState(null)
+  const [editing, setEditing] = useState(null)
+
+  const ql = q.toLowerCase()
+  const list = offers.filter(o =>
+    (!ql || (o.project || '').toLowerCase().includes(ql) || String(o.custom_id || '').includes(ql) || String(o.offer_num || '').toLowerCase().includes(ql)) &&
+    (!st || o.status === st)
+  )
+  const o = list.find(x => x.id === sel) || list[0]
+  const due = offers.filter(mIsRed).length
+  const inp = { background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: 'var(--text)', width: '100%' }
+
+  async function contact(o) {
+    if (!o.customer_email) { alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.'); return }
+    if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
+    try {
+      const res = await fetch('/api/recontact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink: mLink(o), price: o.final_price, width: o.width, height: o.height, colors: o.colors }) })
+      const data = await res.json()
+      if (data.success) { alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers() } else { alert('Fehler: ' + data.error) }
+    } catch (err) { alert('Fehler: ' + err.message) }
+  }
+  async function review(o) {
+    if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
+    if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
+    try {
+      const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project }) })
+      const data = await res.json()
+      if (data.success) { alert('✅ Bewertungsanfrage gesendet!') } else { alert('Fehler: ' + data.error) }
+    } catch (err) { alert('Fehler: ' + err.message) }
+  }
+
+  return (
+    <div className="nf-admin" data-theme={theme} style={{ position: 'fixed', inset: 0, background: 'var(--bg)', color: 'var(--text)', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif' }}>
+      <ThemeVars />
+      <MCSS />
+      {editing && <EditModal offer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); loadOffers() }} />}
+
+      <div style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid #1f2937', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{ height: 40, cursor: 'pointer' }} />
+          <button onClick={() => setTab('create')} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: 'transparent', color: '#9ca3af', cursor: 'pointer', fontFamily: 'inherit' }}>Erstellen</button>
+          <button style={{ position: 'relative', padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, border: `1px solid ${M_NEON}66`, background: `${M_NEON}1a`, color: M_NEON, cursor: 'default', fontFamily: 'inherit' }}>
+            Verwalten
+            {due > 0 && <span style={{ position: 'absolute', top: -7, right: -9, background: '#dc2626', color: '#fff', borderRadius: 10, minWidth: 18, height: 18, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>{due}</span>}
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        <div style={{ width: 400, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--panel)', flexShrink: 0 }}>
+          <div style={{ padding: 16, borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 800, fontSize: 18 }}>Alle Angebote <span style={{ fontSize: 13, color: 'var(--text-faint)', fontWeight: 500 }}>({offers.length})</span></span>
+              <MB small kind="neon" onClick={loadOffers} title="Aktualisieren">⟳</MB>
+            </div>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Name, ID oder Angebotsnummer..." style={inp} />
+            <select value={st} onChange={e => setSt(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+              <option value="">Alle Status</option>
+              {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {loadingOffers && offers.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Wird geladen...</div>}
+            {!loadingOffers && list.length === 0 && <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-faint)', fontSize: 13 }}>Keine Angebote gefunden.</div>}
+            {list.map(x => {
+              const act = o && x.id === o.id
+              const img = mImgs(x)[0]
+              return (
+                <div key={x.id} onClick={() => setSel(x.id)} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: act ? `${M_NEON}14` : 'transparent', boxShadow: act ? `inset 3px 0 0 ${M_NEON}` : 'none' }}>
+                  {img ? <img src={img} alt="" style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} /> : <div style={{ width: 48, height: 40, borderRadius: 8, background: 'var(--bg-alt)', flexShrink: 0 }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: mStatus(x.status).color, flexShrink: 0 }} />
+                      <span style={{ fontWeight: 800 }}>#{mId(x)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.project}</span>
+                      <span style={{ marginLeft: 'auto', fontWeight: 800, whiteSpace: 'nowrap' }}>{x.final_price > 0 ? mEur(x.final_price) : '–'}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <MDateTxt o={x} />
+                      <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{mStatus(x.status).label}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {o ? (
+            <MDetail
+              o={o}
+              onEdit={() => setEditing(o)}
+              onContact={() => contact(o)}
+              onReview={() => review(o)}
+              onToggle={() => toggleOffer(o.id, o.published)}
+              onDelete={() => deleteOffer(o.id)}
+              onStatus={(v) => updateStatus(o.id, v)}
+            />
+          ) : <div style={{ padding: 40, color: 'var(--text-faint)' }}>Kein Angebot ausgewählt.</div>}
+        </div>
+      </div>
+    </div>
+  )
+}
+// =================== ENDE VERWALTEN ===================
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
@@ -950,7 +1243,22 @@ if (tab === 'home') return (
     </div>
   )
 
-  if (tab === 'manage') return (
+if (tab === 'manage') return (
+    <ManagePage
+      offers={offers}
+      loadingOffers={loadingOffers}
+      loadOffers={loadOffers}
+      setTab={setTab}
+      theme={theme}
+      toggleTheme={toggleTheme}
+      onLogout={() => setAuthed(false)}
+      updateStatus={updateStatus}
+      toggleOffer={toggleOffer}
+      deleteOffer={deleteOffer}
+    />
+  )
+
+  if (tab === 'manage_old') return (
     <div className="nf-admin" data-theme={theme} style={S.app}>
       <ThemeVars />
       {editingOffer && (
