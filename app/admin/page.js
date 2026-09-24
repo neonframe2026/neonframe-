@@ -769,6 +769,48 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
 }
 // =================== ENDE VERWALTEN ===================
 
+// ===================== ERSTELLEN (Design) =====================
+const C_NEON = '#60c8f0'
+const cLbl = { fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.07em', display: 'block', marginBottom: 6 }
+const cIn = { background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '11px 13px', color: 'var(--text)', fontSize: 14, fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }
+const cDrop = { border: '1px dashed var(--border)', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--input-bg)', color: 'var(--text-muted)', fontSize: 13, transition: '.15s' }
+
+function CCSS() {
+  return <style>{`
+    .nf-cb{transition:transform .15s,box-shadow .15s,filter .15s}
+    .nf-cb:hover{transform:translateY(-1px);box-shadow:0 0 18px ${C_NEON}55;filter:brightness(1.08)}
+    .nf-cin{transition:border-color .15s,box-shadow .15s}
+    .nf-cin:focus{border-color:${C_NEON}!important;box-shadow:0 0 0 3px ${C_NEON}22}
+    .nf-cdrop:hover{border-color:${C_NEON}!important}
+  `}</style>
+}
+
+function CCard({ t, sub, children }) {
+  return (
+    <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 18, padding: 22 }}>
+      {t && <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}><span style={{ fontSize: 15, fontWeight: 800 }}>{t}</span>{sub && <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{sub}</span>}</div>}
+      {children}
+    </div>
+  )
+}
+
+function CSeg({ label, value, opts, onChange }) {
+  return (
+    <div>
+      <label style={cLbl}>{label}</label>
+      <div style={{ display: 'flex', gap: 4, background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+        {opts.map(o => {
+          const v = typeof o === 'string' ? o : o.value
+          const l = typeof o === 'string' ? o : o.label
+          const act = value === v
+          return <button key={v} type="button" onClick={() => onChange(v)} style={{ flex: 1, padding: '8px 6px', borderRadius: 7, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', background: act ? C_NEON : 'transparent', color: act ? '#0a0a0a' : 'var(--text-muted)', boxShadow: act ? `0 0 12px ${C_NEON}66` : 'none' }}>{l}</button>
+        })}
+      </div>
+    </div>
+  )
+}
+// =================== ENDE ERSTELLEN (Design) ===================
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
@@ -1256,6 +1298,233 @@ if (tab === 'manage') return (
       toggleOffer={toggleOffer}
       deleteOffer={deleteOffer}
     />
+  )
+
+if (tab === 'create') return (
+    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+      <ThemeVars />
+      <CCSS />
+      {showPreviewModal && showPreviewModal !== null && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
+          <div style={{background:'var(--panel)',borderBottom:'1px solid var(--border)',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <span style={{fontWeight:700,fontSize:15,color:'var(--text)'}}>👁 Vorschau</span>
+            <div style={{display:'flex',gap:10}}>
+              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
+              <button onClick={() => { setShowPreviewModal(null); publish() }} style={{background:C_NEON,color:'#0a0a0a',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
+            </div>
+          </div>
+          <iframe src={showPreviewModal} style={{flex:1,border:'none',width:'100%',background:'#fff'}} title="Vorschau" />
+        </div>
+      )}
+
+      <div style={{background:'#0a0a0a',height:64,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',borderBottom:'1px solid #1f2937',position:'sticky',top:0,zIndex:50}}>
+        <div style={{display:'flex',alignItems:'center',gap:18}}>
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{height:40,cursor:'pointer'}} />
+          <button style={{padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:700,border:`1px solid ${C_NEON}66`,background:`${C_NEON}1a`,color:C_NEON,cursor:'default',fontFamily:'inherit'}}>Erstellen</button>
+          <button onClick={() => setTab('manage')} style={{position:'relative',padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:600,border:'none',background:'transparent',color:'#9ca3af',cursor:'pointer',fontFamily:'inherit'}}>
+            Verwalten
+            {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:10,minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+          </button>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button onClick={() => setAuthed(false)} style={{background:'transparent',border:'1px solid #2b2e36',color:'#9ca3af',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Abmelden</button>
+        </div>
+      </div>
+
+      <div style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px 60px',display:'flex',flexDirection:'column',gap:16}}>
+        <h1 style={{margin:0,fontSize:30,fontWeight:900}}>Neues Angebot</h1>
+
+        <CCard t="Dateien">
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <label className="nf-cdrop" htmlFor="multi-img-upload" style={{...cDrop,padding:'14px 16px',justifyContent:'center'}}>
+              <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
+                const files = Array.from(e.target.files)
+                Promise.all(files.map(file => compressImage(file)))
+                  .then(compressed => setImgSrcs(prev => [...prev, ...compressed]))
+                  .catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
+                e.target.value = ''
+              }} />
+              <span style={{fontSize:18}}>🖼️</span><span><b style={{color:'var(--text)'}}>Bilder hochladen</b> (max. 3 möglich)</span>
+            </label>
+            {imgSrcs.filter(Boolean).length > 0 && (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                {imgSrcs.map((src, idx) => src ? (
+                  <div key={idx} style={{position:'relative',borderRadius:10,overflow:'hidden',border:'1px solid var(--border)'}}>
+                    <img src={src} style={{width:'100%',height:90,objectFit:'cover',display:'block'}} alt="" />
+                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:4,background:'rgba(0,0,0,0.35)',opacity:0,transition:'.15s'}}
+                      onMouseEnter={e => e.currentTarget.style.opacity=1}
+                      onMouseLeave={e => e.currentTarget.style.opacity=0}>
+                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx>0){[n[idx-1],n[idx]]=[n[idx],n[idx-1]]}; return n })}
+                        style={{background:'rgba(255,255,255,0.85)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>←</button>
+                      <button onClick={() => setImgSrcs(prev => prev.filter((_,i) => i !== idx))}
+                        style={{background:'rgba(220,38,38,0.9)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12,color:'#fff'}}>✕</button>
+                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx<n.length-1){[n[idx],n[idx+1]]=[n[idx+1],n[idx]]}; return n })}
+                        style={{background:'rgba(255,255,255,0.85)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>→</button>
+                    </div>
+                    <div style={{position:'absolute',top:4,left:4,background:'rgba(0,0,0,0.6)',color:'#fff',fontSize:10,padding:'1px 6px',borderRadius:4}}>{idx+1}</div>
+                  </div>
+                ) : null)}
+              </div>
+            )}
+            <div style={{display:'flex',gap:8}}>
+              <label className="nf-cdrop" htmlFor="pdf-upload" style={{...cDrop,flex:1,padding:'11px 14px'}}>
+                <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
+                📄 PDF hochladen <span style={{color:'var(--text-faint)'}}>(automatisch ausfüllen)</span>
+              </label>
+              <button className="nf-cb" onClick={resetForm} style={{background:'#ef44441a',border:'1px solid #ef444455',color:'#ef4444',borderRadius:12,padding:'0 16px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>↺ Reset</button>
+            </div>
+            {parseStatus && (
+              <div style={{fontSize:12,padding:'8px 12px',borderRadius:8,...(parseStatus.type==='ok'?{background:'#22c55e1a',border:'1px solid #22c55e55',color:'#22c55e'}:parseStatus.type==='err'?{background:'#ef44441a',border:'1px solid #ef444455',color:'#ef4444'}:{background:'#f59e0b1a',border:'1px solid #f59e0b55',color:'#f59e0b'})}}>{parseStatus.msg}</div>
+            )}
+          </div>
+        </CCard>
+
+        <CCard t="Angebotsdaten">
+          <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div><label style={cLbl}>Angebotsnummer</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.num} onChange={e => updText('num', e.target.value)} placeholder="NF-1001" /></div>
+              <div><label style={cLbl}>Projekt / Kundenname</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" /></div>
+            </div>
+            <div><label style={cLbl}>Kunden-E-Mail</label><input className="nf-cin" type="email" style={{...cIn,borderColor:C_NEON+'55',background:C_NEON+'0d'}} defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" /></div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div><label style={cLbl}>Breite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></div>
+              <div><label style={cLbl}>Höhe (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></div>
+            </div>
+            <div>
+              <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+                <input type="checkbox" checked={selects.sizeWarningEnabled} onChange={e => updSelect('sizeWarningEnabled', e.target.checked)} style={{accentColor:C_NEON,width:16,height:16}} />
+                <span style={{...cLbl,marginBottom:0}}>Mindestgröße-Hinweis anzeigen</span>
+              </label>
+              {selects.sizeWarningEnabled && (
+                <textarea className="nf-cin" style={{...cIn,minHeight:84,marginTop:8,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
+              )}
+            </div>
+          </div>
+        </CCard>
+
+        <CCard t="Farben" sub="klick zum Auswählen">
+          <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {COLOR_OPTIONS.map(c => {
+                const act = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
+                return (
+                  <button key={c} type="button" onClick={() => toggleColor(c)} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'6px 11px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',border:`1px solid ${act ? colorDot(c) : 'var(--border)'}`,background:act ? colorDot(c)+'22' : 'var(--input-bg)',color:'var(--text)',boxShadow:act ? `0 0 10px ${colorDot(c)}66` : 'none'}}>
+                    <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c)}} />{c}
+                  </button>
+                )
+              })}
+            </div>
+            <input className="nf-cin" style={cIn} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="oder selbst eintippen, kommagetrennt – z.B. Soft Orange, Pink" />
+          </div>
+        </CCard>
+
+        <CCard t="Konfiguration">
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <CSeg label="Rückwandform" value={selects.backplate} opts={BACKPLATE_OPTIONS} onChange={v => updSelect('backplate', v)} />
+            <CSeg label="Rückwandfarbe" value={selects.backplate_color} opts={BACKPLATE_COLOR_OPTIONS} onChange={v => updSelect('backplate_color', v)} />
+            <CSeg label="Verwendungszweck" value={selects.usage} opts={USAGE_OPTIONS} onChange={v => updSelect('usage', v)} />
+          </div>
+        </CCard>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
+          <CCard t="Preiskalkulation">
+            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
+              <div><label style={cLbl}>Listenpreis (netto)</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={priceInputs.basePrice} onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" /></div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <CSeg label="Rabatt-Typ" value={selects.discType} opts={[{value:'pct',label:'Prozent %'},{value:'eur',label:'Euro €'}]} onChange={v => updSelect('discType', v)} />
+                <div><label style={cLbl}>{`Rabatt (${selects.discType==='pct'?'%':'€'})`}</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={priceInputs.discVal} onChange={e => updPrice('discVal', e.target.value)} /></div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <div><label style={cLbl}>MwSt. (%)</label><input className="nf-cin" type="number" step="0.1" style={cIn} value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} /></div>
+                <div><label style={cLbl}>Lieferdatum</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" /></div>
+              </div>
+              <div style={{background:`linear-gradient(135deg,${C_NEON}14,transparent)`,border:`1px solid ${C_NEON}44`,borderRadius:14,padding:14,display:'grid',gridTemplateColumns:'1fr 1fr 1.2fr',gap:10,alignItems:'end'}}>
+                <div><div style={{...cLbl,marginBottom:3}}>Netto</div><div style={{fontSize:15,fontWeight:800}}>{prices.net > 0 ? `€ ${prices.net.toFixed(2)}` : '–'}</div></div>
+                <div><div style={{...cLbl,marginBottom:3}}>+ MwSt.</div><div style={{fontSize:15,fontWeight:800}}>{prices.vatAmt > 0 ? `€ ${prices.vatAmt.toFixed(2)}` : '–'}</div></div>
+                <div style={{textAlign:'right'}}><div style={{...cLbl,marginBottom:3,color:C_NEON}}>Endpreis</div><div style={{fontSize:22,fontWeight:900,color:C_NEON,textShadow:`0 0 12px ${C_NEON}66`}}>{prices.total > 0 ? `€ ${prices.total.toFixed(2)}` : '–'}</div></div>
+              </div>
+            </div>
+          </CCard>
+
+          <CCard t="Weitere Einstellungen">
+            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
+              <CSeg label="Status" value={selects.status} opts={STATUS_OPTIONS} onChange={v => updSelect('status', v)} />
+              <div><label style={cLbl}>Checkout-URL (Shopify Draft Order Link)</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https..." /></div>
+              <div><label style={cLbl}>Notizen für den Kunden</label><textarea className="nf-cin" style={{...cIn,minHeight:84,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." /></div>
+            </div>
+          </CCard>
+        </div>
+
+        <CCard>
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:12,color:'var(--text-muted)'}}>✉️ Beim Veröffentlichen wird automatisch eine E-Mail an den Kunden gesendet.</div>
+            <div style={{display:'flex',gap:10}}>
+              <button
+                className="nf-cb"
+                style={{flex:1,background:'transparent',border:`1px solid ${C_NEON}`,color:C_NEON,borderRadius:12,padding:14,fontSize:14,fontWeight:800,fontFamily:'inherit',opacity: previewLoading ? 0.7 : 1, cursor: previewLoading ? 'not-allowed' : 'pointer'}}
+                disabled={previewLoading}
+                onClick={async () => {
+                  setPreviewLoading(true)
+                  const f = { ...fRef.current, ...selects, ...priceInputs }
+                  try {
+                    const uploadedImgs = [...imgSrcs]
+                    for (let i = 0; i < 3; i++) {
+                      if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
+                        const blob = await (await fetch(imgSrcs[i])).blob()
+                        const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
+                        const up = await fetch('/api/upload', { method: 'POST', body: fd })
+                        const upData = await up.json()
+                        if (upData.url) uploadedImgs[i] = upData.url
+                      }
+                    }
+                    const payload = {
+                      offer_num: f.num, project: f.project,
+                      width: f.w, height: f.h,
+                      backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
+                      colors: f.color,
+                      base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
+                      disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
+                      net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
+                      delivery: f.delivery, checkout_url: f.url,
+                      customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
+                      valid_until: f.validUntil || null, status: f.status || 'offer_sent',
+                      size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
+                      preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
+                      published: false,
+                    }
+                    let offerId = previewOfferId
+                    if (offerId) {
+                      await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                    } else {
+                      const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                      const data = await res.json()
+                      if (data.error) throw new Error(data.error)
+                      offerId = data.custom_id || data.id
+                      setPreviewOfferId(offerId)
+                      setPreviewOfferDbId(data.id)
+                    }
+                    setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
+                  } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
+                  finally { setPreviewLoading(false) }
+                }}
+              >
+                {previewLoading ? '⏳ Vorschau wird erstellt...' : '👁 Vorschau öffnen'}
+              </button>
+              <button className="nf-cb" onClick={publish} disabled={publishing} style={{flex:1.4,background:C_NEON,border:'none',color:'#0a0a0a',borderRadius:12,padding:14,fontSize:14,fontWeight:900,cursor:publishing?'not-allowed':'pointer',fontFamily:'inherit',opacity:publishing?0.7:1}}>
+                {publishing ? '⏳ Wird veröffentlicht...' : '🚀 Angebotsseite veröffentlichen'}
+              </button>
+            </div>
+            {publishedLink && (
+              <div style={{background:'var(--input-bg)',border:'1px solid #22c55e55',borderRadius:10,padding:10,display:'flex',alignItems:'center',gap:8}}>
+                <input value={publishedLink} readOnly style={{flex:1,background:'transparent',border:'none',fontSize:12,color:'#22c55e',outline:'none',fontFamily:'monospace'}} />
+                <button onClick={() => navigator.clipboard.writeText(publishedLink)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'5px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Kopieren</button>
+              </div>
+            )}
+          </div>
+        </CCard>
+      </div>
+    </div>
   )
 
   if (tab === 'manage_old') return (
