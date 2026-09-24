@@ -1226,7 +1226,18 @@ if (draftData.checkoutUrl) {
     loadOffers()
   }
 
-  useEffect(() => { if (authed) loadOffers() }, [authed, tab])
+useEffect(() => { if (authed) loadOffers() }, [authed, tab])
+
+  useEffect(() => {
+    const titles = {
+      home: 'Angebote - NeonFrame',
+      create: 'Neues Angebot erstellen - NeonFrame',
+      manage: 'Angebote verwalten - NeonFrame',
+    }
+    const due = offers.filter(o => Math.floor((Date.now() - new Date(o.created_at).getTime()) / 86400000) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed').length
+    const base = !authed ? 'Login - NeonFrame Admin' : (titles[tab] || titles.home)
+    document.title = authed && due > 0 ? `(${due}) ${base}` : base
+  }, [tab, authed, offers])
 
   if (!authed) return (
     <div style={{position:'fixed',inset:0,background:'#f9fafb',display:'flex',alignItems:'center',justifyContent:'center'}}>
