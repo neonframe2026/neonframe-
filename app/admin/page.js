@@ -584,7 +584,7 @@ function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus 
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
-          <MB kind={mIsRed(o) ? 'red' : 'muted'} onClick={onContact} title={o.customer_email || 'Keine E-Mail hinterlegt'}>↩ Kontaktieren</MB>
+          <MB kind={mIsRed(o) ? 'red' : 'muted'} onClick={onContact} title={o.customer_email || 'Keine E-Mail hinterlegt'}>↩ Erneut kontaktieren</MB>
           {o.status === 'confirmed' && <MB kind="review" onClick={onReview}>⭐ Bewertung</MB>}
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
           <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
