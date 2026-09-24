@@ -444,7 +444,7 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
       </div>
 
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 64px' }}>
-        <h1 style={{ fontSize: 38, fontWeight: 800, margin: '0 0 32px' }}>Willkommen zurück 👋</h1>
+        <h1 style={{ fontSize: 38, fontWeight: 800, margin: '0 0 32px' }}>Willkommen 👋</h1>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(420px,1fr))', gap: 24, marginBottom: 24 }}>
           {main.map(c => (
