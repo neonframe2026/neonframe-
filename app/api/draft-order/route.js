@@ -109,16 +109,15 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     ['Produktion & Versand', 'Wir fertigen Ihr Schild und halten Sie bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
+    const h = last ? 48 : 80
     return `<tr>
-      <td colspan="2" width="48" valign="top" style="width:48px;padding:0;font-size:0;line-height:0">
-        <img src="${EMAIL_ASSETS}/step-${i + 1}.png" width="48" height="48" alt="${i + 1}" style="display:block;width:48px;height:48px;border:0">
+      <td width="48" height="${h}" valign="top" style="width:48px;height:${h}px;padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly">
+        <img src="${EMAIL_ASSETS}/step-${i + 1}-v2.png" width="48" height="${h}" alt="${i + 1}" style="display:block;width:48px;height:${h}px;border:0">
       </td>
-      <td valign="top" style="${FONT}padding:15px 0 0 14px;font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</td>
-    </tr>
-    <tr>
-      <td width="23" style="width:23px;padding:0;font-size:1px;line-height:1px">&nbsp;</td>
-      <td width="25" style="width:25px;padding:0;font-size:1px;line-height:1px;${last ? '' : 'border-left:2px solid #1a8cff;'}">&nbsp;</td>
-      <td valign="top" style="${FONT}padding:0 0 ${last ? '0' : '16px'} 14px;font-size:14px;line-height:21px;color:#666666">${d}</td>
+      <td valign="top" style="${FONT}padding:13px 0 0 14px">
+        <div style="${FONT}font-size:15px;line-height:22px;font-weight:bold;color:#111111;margin:0">${t}</div>
+        <div style="${FONT}font-size:14px;line-height:20px;color:#666666;margin:0">${d}</div>
+      </td>
     </tr>`
   }).join('')
 
