@@ -56,7 +56,7 @@ export async function POST(request) {
       body: JSON.stringify({
         from: 'NeonFrame <angebote@neonframe.de>',
         to: [customerEmail],
-        subject: `Ihr persönliches Neon-Schild – Angebot ist bereit 🎉`,
+        subject: `Dein persönliches Neon-Schild – Angebot ist bereit 🎉`,
         html: buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, finalPrice, width, height, colors, delivery, imageUrl, discount, variant }),
       }),
     })
