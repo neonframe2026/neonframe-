@@ -90,15 +90,17 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
       <td valign="top" style="${FONT}padding:6px 0;font-size:14px;line-height:20px;color:#111111">${v}</td>
     </tr>`).join('')
 
-  const discountBadge = discount ? `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:10px auto 0">
-      <tr><td bgcolor="#10b981" style="${FONT}padding:5px 12px;font-size:12px;line-height:16px;font-weight:bold;color:#ffffff;border-radius:6px">${discount} % RABATT</td></tr>
-    </table>` : ''
-
   const imageCell = imageUrl ? `
     <td class="stack" width="160" valign="top" align="center" style="width:160px;padding:0 18px 0 0">
-      <img class="stack-img" src="${imageUrl}" width="140" alt="Ihre Vorschau" style="display:block;width:140px;max-width:140px;height:auto;border:2px solid #0ea5e9;border-radius:10px;margin:0 auto">
-      ${discountBadge}
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td align="center"><a href="${offerLink || '#'}" target="_blank" style="text-decoration:none;border:0"><img class="stack-img" src="${imageUrl}" width="140" alt="Ihre Vorschau" style="display:block;width:140px;max-width:140px;height:auto;border:2px solid #0ea5e9;border-radius:10px;margin:0 auto"></a></td></tr>
+        ${discount ? `<tr><td height="10" style="height:10px;font-size:1px;line-height:1px">&nbsp;</td></tr>
+        <tr><td align="center">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+            <tr><td bgcolor="#10b981" style="${FONT}padding:5px 12px;font-size:12px;line-height:16px;font-weight:bold;color:#ffffff;border-radius:6px">${discount} % RABATT</td></tr>
+          </table>
+        </td></tr>` : ''}
+      </table>
     </td>` : ''
 
   const steps = [
@@ -108,19 +110,19 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
     return `<tr>
-      <td colspan="2" width="48" valign="middle" style="width:48px;padding:0;font-size:0;line-height:0">
+      <td colspan="2" width="48" valign="top" style="width:48px;padding:0;font-size:0;line-height:0">
         <img src="${EMAIL_ASSETS}/step-${i + 1}.png" width="48" height="48" alt="${i + 1}" style="display:block;width:48px;height:48px;border:0">
       </td>
-      <td valign="middle" style="${FONT}padding:0 0 0 14px;font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</td>
+      <td valign="top" style="${FONT}padding:15px 0 0 14px;font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</td>
     </tr>
     <tr>
-      <td width="23" style="width:23px;padding:0"></td>
-      <td width="25" style="width:25px;padding:0;${last ? '' : 'border-left:2px solid #1a8cff;'}"></td>
-      <td valign="top" style="${FONT}padding:0 0 ${last ? '0' : '14px'} 14px;font-size:14px;line-height:21px;color:#666666">${d}</td>
+      <td width="23" style="width:23px;padding:0;font-size:1px;line-height:1px">&nbsp;</td>
+      <td width="25" style="width:25px;padding:0;font-size:1px;line-height:1px;${last ? '' : 'border-left:2px solid #1a8cff;'}">&nbsp;</td>
+      <td valign="top" style="${FONT}padding:0 0 ${last ? '0' : '16px'} 14px;font-size:14px;line-height:21px;color:#666666">${d}</td>
     </tr>`
   }).join('')
 
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -168,8 +170,8 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
             <tr><td height="24" style="height:24px;font-size:1px;line-height:1px">&nbsp;</td></tr>
             <tr><td align="center">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr><td align="center" bgcolor="#16a34a" style="background:#16a34a;border-radius:10px;padding:15px 36px">
-                  <a href="${offerLink || '#'}" target="_blank" style="${FONT}font-size:16px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;display:inline-block">Angebot ansehen</a>
+                <tr><td align="center" bgcolor="#0ea5e9" style="background:#0ea5e9;border-radius:12px;padding:18px 56px">
+                  <a href="${offerLink || '#'}" target="_blank" style="${FONT}font-size:18px;line-height:22px;font-weight:bold;color:#ffffff;text-decoration:none;display:inline-block"><span style="color:#ffffff;text-decoration:none">Angebot ansehen</span></a>
                 </td></tr>
               </table>
             </td></tr>
@@ -195,4 +197,5 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
   </table>
 </body>
 </html>`
+  return html.replace(/>\s+</g, '><')
 }
