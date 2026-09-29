@@ -1,9 +1,29 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Holt Bild, Ausführung und Rabatt direkt aus dem Angebot in Supabase
+async function loadOfferExtras(offerLink) {
+  try {
+    const key = decodeURIComponent(String(offerLink || '').split('/angebot/')[1] || '').split(/[?#]/)[0]
+    if (!key) return null
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const cols = 'preview_image, usage, disc_type, disc_val'
+    let { data } = await supabase.from('offers').select(cols).eq('custom_id', key).maybeSingle()
+    if (!data && /^\d+$/.test(key)) {
+      const res = await supabase.from('offers').select(cols).eq('id', key).maybeSingle()
+      data = res.data
+    }
+    return data || null
+  } catch (e) {
+    console.error('Offer lookup error:', e)
+    return null
+  }
+}
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    const {
+    let {
       customerEmail, customerName, offerNum,
       finalPrice, width, height, colors,
       delivery, offerLink, checkoutUrl,
@@ -18,6 +38,13 @@ export async function POST(request) {
 
     if (!RESEND_KEY) {
       return NextResponse.json({ error: 'E-Mail nicht konfiguriert' }, { status: 500 })
+    }
+
+    const offer = await loadOfferExtras(offerLink)
+    if (offer) {
+      if (!imageUrl && offer.preview_image && String(offer.preview_image).startsWith('http')) imageUrl = offer.preview_image
+      if (!variant && offer.usage) variant = offer.usage
+      if (!discount && offer.disc_type === 'pct' && parseFloat(offer.disc_val) > 0) discount = offer.disc_val
     }
 
     const emailRes = await fetch('https://api.resend.com/emails', {
@@ -80,18 +107,16 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     ['Produktion & Versand', 'Wir fertigen Ihr Schild und halten Sie bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
-    const line = last ? '' : `
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
-          <tr><td width="2" height="40" bgcolor="#1a8cff" style="width:2px;height:40px;font-size:1px;line-height:1px">&nbsp;</td></tr>
-        </table>`
     return `<tr>
-      <td width="48" valign="top" align="center" style="width:48px">
-        <img src="${EMAIL_ASSETS}/step-${i + 1}.png" width="48" height="48" alt="${i + 1}" style="display:block;width:48px;height:48px;border:0">${line}
+      <td colspan="2" width="48" valign="middle" style="width:48px;padding:0;font-size:0;line-height:0">
+        <img src="${EMAIL_ASSETS}/step-${i + 1}.png" width="48" height="48" alt="${i + 1}" style="display:block;width:48px;height:48px;border:0">
       </td>
-      <td valign="top" style="${FONT}padding:13px 0 0 14px">
-        <div style="${FONT}font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</div>
-        <div style="${FONT}font-size:14px;line-height:21px;color:#666666;padding-top:2px">${d}</div>
-      </td>
+      <td valign="middle" style="${FONT}padding:0 0 0 14px;font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</td>
+    </tr>
+    <tr>
+      <td width="23" style="width:23px;padding:0"></td>
+      <td width="25" style="width:25px;padding:0;${last ? '' : 'border-left:2px solid #1a8cff;'}"></td>
+      <td valign="top" style="${FONT}padding:0 0 ${last ? '0' : '14px'} 14px;font-size:14px;line-height:21px;color:#666666">${d}</td>
     </tr>`
   }).join('')
 
@@ -117,10 +142,9 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     <tr><td align="center" style="padding:32px 10px">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
 
-        <tr><td align="center" bgcolor="#0a0a0a" style="background:#0a0a0a;padding:8px 36px;border-radius:16px 16px 0 0">
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" width="110" height="110" style="display:block;width:110px;height:110px;border:0;margin:0 auto">
+        <tr><td bgcolor="#09080a" style="background:#09080a;padding:0;font-size:0;line-height:0">
+          <img src="${EMAIL_ASSETS}/header.png" width="600" alt="NeonFrame" style="display:block;width:100%;max-width:600px;height:auto;border:0">
         </td></tr>
-        <tr><td height="3" bgcolor="#0ea5e9" style="height:3px;font-size:3px;line-height:3px;background:#0ea5e9">&nbsp;</td></tr>
 
         <tr><td class="pad" bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 28px">
 
