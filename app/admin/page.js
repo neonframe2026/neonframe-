@@ -243,6 +243,12 @@ function EditModal({ offer, onClose, onSaved }) {
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
+      if (form.status === 'confirmed' && (offer.status !== 'confirmed' || NF_TEST_MODE)) {
+        const r = await fetch('/api/order-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, delayMinutes: NF_TEST_MODE ? 0 : 15, force: NF_TEST_MODE }) })
+        const d = await r.json()
+        if (d.error) alert('Produktions-Mail Fehler: ' + d.error)
+        else alert(NF_TEST_MODE ? '✅ Produktions-Mail sofort gesendet (Testmodus)' : '✅ Produktions-Mail wird in 15 Minuten gesendet')
+      }
       onSaved()
     } catch (err) { alert('Fehler: ' + err.message) }
     setSaving(false)
@@ -1282,8 +1288,19 @@ if (draftData.checkoutUrl) {
     loadOffers()
   }
 
+  async function sendOrderEmail(id) {
+    try {
+      const res = await fetch('/api/order-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: id, delayMinutes: NF_TEST_MODE ? 0 : 15, force: NF_TEST_MODE }) })
+      const data = await res.json()
+      if (data.error) alert('Produktions-Mail Fehler: ' + data.error)
+      else if (data.skipped) alert('ℹ️ ' + data.skipped)
+      else alert(NF_TEST_MODE ? '✅ Produktions-Mail sofort gesendet (Testmodus)' : '✅ Produktions-Mail wird in 15 Minuten gesendet')
+    } catch (err) { alert('Fehler: ' + err.message) }
+  }
+
   async function updateStatus(id, newStatus) {
     await fetch(`/api/offers?id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus, unsubscribed: newStatus === 'unsubscribed' }) })
+    if (newStatus === 'confirmed') await sendOrderEmail(id)
     loadOffers()
   }
 
