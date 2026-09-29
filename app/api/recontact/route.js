@@ -41,6 +41,9 @@ export async function POST(req) {
     const imageUrl = offer?.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
     const discount = offer?.disc_type === 'pct' && parseFloat(offer?.disc_val) > 0 ? offer.disc_val : null
 
+        const personalImageUrl = `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=recontact&v=${Date.now()}`
+    await fetch(personalImageUrl).catch(() => {})
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -53,7 +56,7 @@ export async function POST(req) {
         subject: `Dein Angebot wartet noch auf dich – NeonFrame 💡`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildRecontactEmail({
-          personalImageUrl: `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=recontact&v=${Date.now()}`,
+          personalImageUrl,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink,
           unsubscribeUrl,
