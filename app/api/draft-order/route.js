@@ -188,7 +188,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
             </tr>
           </table>
 
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px"><tr><td bgcolor="#0b1220" style="background:#0b1220;border-radius:12px;mso-line-height-rule:exactly;line-height:0;font-size:0"><a href="mailto:info@neonframe.de" style="text-decoration:none;border:0"><img src="${EMAIL_ASSETS}/kontakt.jpg" width="528" alt="Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de" style="display:block;width:100%;max-width:528px;height:auto;border:0;border-radius:12px;${FONT}font-size:14px;line-height:20px;color:#ffffff"></a></td></tr></table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px"><tr><td bgcolor="#0b1220" style="background:#0b1220;border-radius:12px;mso-line-height-rule:exactly;line-height:0;font-size:0"><a href="mailto:info@neonframe.de" style="text-decoration:none;border:0"><img src="${EMAIL_ASSETS}/kontakt.png" width="528" alt="Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de" style="display:block;width:100%;max-width:528px;height:auto;border:0;border-radius:12px;${FONT}font-size:14px;line-height:20px;color:#ffffff"></a></td></tr></table>
 
           <div style="${FONT}margin:26px 0 4px;font-size:15px;line-height:22px;color:#555555">Viele Grüße</div>
           <div style="${FONT}margin:0;font-size:15px;line-height:22px;font-weight:bold;color:#111111">Dein NeonFrame-Team</div>
