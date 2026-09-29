@@ -34,6 +34,7 @@ export async function POST(req) {
         subject: `+10 % extra auf dein Neon-Schild – NeonFrame`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildDiscountEmail({
+          personalImageUrl: `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=discount&v=${Date.now()}`,
           oldPct, newPct,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink, unsubscribeUrl, imageUrl,
@@ -57,7 +58,7 @@ export async function POST(req) {
   }
 }
 
-function buildDiscountEmail({ oldPct, newPct, firstName, offerLink, unsubscribeUrl, imageUrl, discount, width, height, colors, variant }) {
+function buildDiscountEmail({ personalImageUrl, oldPct, newPct, firstName, offerLink, unsubscribeUrl, imageUrl, discount, width, height, colors, variant }) {
   const MID = '#0b1321'
   const colorText = Array.isArray(colors) ? colors.join(', ') : (colors || '')
   const sizeText = width && height ? `${width} × ${height} cm` : ''
@@ -112,24 +113,8 @@ function buildDiscountEmail({ oldPct, newPct, firstName, offerLink, unsubscribeU
 
         ${img('rabatt-1-header.jpg', 'NeonFrame – +10 % extra auf dein Neon-Schild, nur für dich')}
 
-        <tr><td class="pad" bgcolor="${MID}" style="background:${MID};padding:8px 44px 28px">
-
-          <div style="${FONT}margin:0 0 12px;font-size:20px;line-height:26px;font-weight:bold;color:#ffffff">Hallo ${firstName},</div>
-          <div style="${FONT}margin:0 0 22px;font-size:15px;line-height:24px;color:#cbd5e1">unsere Produktion hat in den kommenden Tagen noch etwas Luft. Statt sie leer stehen zu lassen, geben wir dir lieber einen besseren Preis.<br><br>Auf deine bisherigen ${oldPct} % bekommst du <strong style="color:#ffffff">noch einmal 10 % obendrauf – insgesamt also ${newPct} %</strong>. Den Rabatt haben wir schon direkt in deinem Angebot eingetragen, du musst nichts weiter tun.</div>
-
-          ${previewCard}
-
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td height="26" style="height:26px;font-size:1px;line-height:1px">&nbsp;</td></tr>
-            <tr><td align="center">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr><td align="center" bgcolor="#0ea5e9" style="background:#0ea5e9;border-radius:12px;padding:18px 56px">
-                  <a href="${offerLink || '#'}" target="_blank" style="${FONT}font-size:18px;line-height:22px;font-weight:bold;color:#ffffff;text-decoration:none;display:inline-block"><span style="color:#ffffff;text-decoration:none">Angebot ansehen</span></a>
-                </td></tr>
-              </table>
-            </td></tr>
-          </table>
-
+        <tr><td bgcolor="${MID}" style="background:${MID};padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly">
+          <a href="${offerLink || '#'}" target="_blank" style="border:0;text-decoration:none"><img src="${personalImageUrl}" width="600" alt="Hallo ${firstName}, dein Angebot ansehen" style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;${FONT}font-size:16px;color:#ffffff"></a>
         </td></tr>
 
         ${img('recontact-2-vorteile.jpg', 'Warum NeonFrame? Individuell gefertigt, kostenloser Versand, alles inklusive, persönlicher Support')}
