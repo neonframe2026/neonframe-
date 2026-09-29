@@ -78,7 +78,8 @@ export async function GET(request) {
     if (!id) return new Response('offer fehlt', { status: 400 })
 
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    const { data: o } = await supabase.from('offers').select('*').eq('id', id).maybeSingle()
+        let { data: o } = await supabase.from('offers').select('*').eq('custom_id', id).maybeSingle()
+    if (!o && /^\d+$/.test(id)) o = (await supabase.from('offers').select('*').eq('id', id).maybeSingle()).data
     if (!o) return new Response('Angebot nicht gefunden', { status: 404 })
 
     const base = parseFloat(o.base_price) || 0
