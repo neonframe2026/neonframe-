@@ -104,9 +104,9 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     </td>` : ''
 
   const steps = [
-    ['Angebot ansehen', 'Prüfen Sie Vorschau und Details – Änderungen sind jederzeit möglich.'],
+    ['Angebot ansehen', 'Prüfe Vorschau und Details – Änderungen sind jederzeit möglich.'],
     ['Bestellen', 'Mit einem Klick auf der Angebotsseite.'],
-    ['Produktion & Versand', 'Wir fertigen Ihr Schild und halten Sie bei jedem Schritt per E-Mail auf dem Laufenden.'],
+    ['Produktion & Versand', 'Wir fertigen dein Schild und halten dich bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
     return `<tr>
@@ -149,7 +149,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
         <tr><td class="pad" bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 28px">
 
           <div style="${FONT}margin:0 0 16px;font-size:22px;line-height:28px;font-weight:bold;color:#111111">Hallo ${firstName},</div>
-          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">Ihr individuelles Angebot für Ihr personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für Sie zusammengefasst – das Angebot ist für Sie reserviert.</div>
+          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">Dein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst – das Angebot ist für dich reserviert.</div>
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8fafc" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
             <tr><td style="padding:16px">
