@@ -10,7 +10,7 @@ async function loadOffer(offerId) {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data } = await supabase
       .from('offers')
-      .select('preview_image, width, height, colors, usage, disc_type, disc_val, unsubscribed')
+      .select('preview_image, width, height, colors, usage, disc_type, disc_val, unsubscribed, status')
       .eq('id', offerId)
       .maybeSingle()
     return data || null
@@ -34,15 +34,12 @@ export async function POST(req) {
     }
 
     const offer = await loadOffer(offerId)
-    if (offer?.unsubscribed) {
+    if (offer?.unsubscribed || offer?.status === 'unsubscribed') {
       return Response.json({ error: 'Dieser Kunde hat sich von Erinnerungen abgemeldet.' }, { status: 400 })
     }
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer?.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
     const discount = offer?.disc_type === 'pct' && parseFloat(offer?.disc_val) > 0 ? offer.disc_val : null
-
-        const personalImageUrl = `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=recontact&v=${Date.now()}`
-    await fetch(personalImageUrl).catch(() => {})
 
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -56,7 +53,7 @@ export async function POST(req) {
         subject: `Dein Angebot wartet noch auf dich – NeonFrame 💡`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildRecontactEmail({
-          personalImageUrl,
+          personalImageUrl: `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=recontact&v=${Date.now()}`,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink,
           unsubscribeUrl,
