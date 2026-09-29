@@ -7,6 +7,7 @@ const STATUS_OPTIONS = [
   { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
   { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
   { value: 'confirmed',       label: 'Bestellt',             color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+  { value: 'unsubscribed',    label: 'Abgemeldet',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 ]
 
 function calcPrices(basePrice, discType, discVal, vatPct) {
@@ -408,7 +409,7 @@ function HomeBtn({ c }) {
 }
 
 function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
-  const n = offers.filter(o => daysSince(o.created_at) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed').length
+    const n = offers.filter(mIsRed).length
   const card = { background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 18, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }
   const redPill = { background: '#dc2626', color: '#fff', borderRadius: 20, fontSize: 12, fontWeight: 800, padding: '3px 9px' }
 
@@ -480,7 +481,8 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
 const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
-const mIsRed = (o) => mDays(o.created_at) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
+const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
+const mIsRed = (o) => mHours(o.created_at) >= 48 && o.status === 'offer_sent' && !o.unsubscribed
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -497,7 +499,10 @@ const M_KINDS = {
 function MCSS() {
   return <style>{`
     .nf-mb{transition:transform .15s,box-shadow .15s,filter .15s}
-    .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 16px ${M_NEON}55;filter:brightness(1.1)}
+        .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 16px ${M_NEON}55;filter:brightness(1.1)}
+    .nf-i{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:10px;font-weight:800;cursor:help;margin-left:6px}
+    .nf-tip{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:280px;background:#111;color:#fff;font-size:12px;font-weight:500;line-height:1.5;padding:8px 10px;border-radius:8px;z-index:60;text-align:left;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+    .nf-i:hover .nf-tip{display:block}
   `}</style>
 }
 function MB({ children, kind = 'outline', onClick, small, title, style }) {
@@ -506,7 +511,16 @@ function MB({ children, kind = 'outline', onClick, small, title, style }) {
 const MLbl = ({ children, style }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--text-faint)', marginBottom: 8, ...style }}>{children}</div>
 const MCard = ({ title, children }) => <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>{title && <MLbl>{title}</MLbl>}{children}</div>
 const MKv = ({ k, v, color }) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderBottom: '1px dashed var(--border)', fontSize: 13 }}><span style={{ color: 'var(--text-muted)' }}>{k}</span><span style={{ fontWeight: 600, color: color || 'var(--text)', textAlign: 'right' }}>{v}</span></div>
-const MAktiv = ({ o }) => <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...(o.published ? mTint('#22c55e') : mTint('#6b7280')) }}>{o.published ? 'Aktiv' : 'Inaktiv'}</span>
+const MAktiv = ({ o }) => (o.unsubscribed || o.status === 'unsubscribed')
+  ? <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...mTint('#ef4444') }}>
+      Abgemeldet
+      <span className="nf-i">i<span className="nf-tip">
+        <b>Grund:</b> {o.unsubscribe_reason || '–'}
+        {o.unsubscribe_comment && <><br /><b>Kommentar:</b> {o.unsubscribe_comment}</>}
+        {o.unsubscribed_at && <><br /><span style={{ opacity: .7 }}>am {mDate(o.unsubscribed_at)}</span></>}
+      </span></span>
+    </span>
+  : <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...(o.published ? mTint('#22c55e') : mTint('#6b7280')) }}>{o.published ? 'Aktiv' : 'Inaktiv'}</span>
 const MDateTxt = ({ o }) => <span style={{ fontSize: 12, color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
 
 function MGallery({ o }) {
@@ -565,6 +579,42 @@ function MLinkRow({ label, url, on, offText }) {
   )
 }
 
+function MContactMenu({ o, onContact, onReview }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+  const unsub = !!o.unsubscribed || o.status === 'unsubscribed'
+  const items = [
+    { label: '↩ Erneut kontaktieren', hint: unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt'), on: !unsub && !!o.customer_email, act: onContact },
+    { label: '🏷️ Rabatt anbieten', hint: 'Kommt bald – 10 % extra nach 4 Tagen', on: false },
+    { label: '⭐ Bewertung anfragen', hint: o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich', on: o.status === 'confirmed' && !!o.customer_email, act: onReview },
+  ]
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <MB kind={mIsRed(o) ? 'red' : 'muted'} onClick={() => setOpen(v => !v)}>✉️ Kontaktieren ▾</MB>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50, minWidth: 270, background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: 6, boxShadow: '0 12px 32px rgba(0,0,0,.25)' }}>
+          {items.map(it => (
+            <button key={it.label} type="button" disabled={!it.on}
+              onClick={() => { setOpen(false); if (it.act) it.act() }}
+              onMouseEnter={e => { if (it.on) e.currentTarget.style.background = 'var(--bg-alt)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 0, borderRadius: 8, padding: '10px 12px', cursor: it.on ? 'pointer' : 'not-allowed', opacity: it.on ? 1 : 0.4, fontFamily: 'inherit', color: 'var(--text)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{it.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>{it.hint}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus }) {
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
@@ -584,8 +634,7 @@ function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus 
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
-          <MB kind={mIsRed(o) ? 'red' : 'muted'} onClick={onContact} title={o.customer_email || 'Keine E-Mail hinterlegt'}>↩ Erneut kontaktieren</MB>
-          {o.status === 'confirmed' && <MB kind="review" onClick={onReview}>⭐ Bewertung</MB>}
+          <MContactMenu o={o} onContact={onContact} onReview={onReview} />
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
           <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
         </div>
@@ -593,7 +642,7 @@ function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus 
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ Seit {mDays(o.created_at)} Tagen keine Rückmeldung – Zeit zum Nachfassen.
+          ⚠️ Seit über 48 Stunden keine Rückmeldung – Zeit zum Nachfassen.
         </div>
       )}
 
@@ -1237,7 +1286,7 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
       create: 'Neues Angebot erstellen - NeonFrame',
       manage: 'Angebote verwalten - NeonFrame',
     }
-    const due = offers.filter(o => Math.floor((Date.now() - new Date(o.created_at).getTime()) / 86400000) >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed').length
+        const due = offers.filter(mIsRed).length
     const base = !authed ? 'Login - NeonFrame Admin' : (titles[tab] || titles.home)
     document.title = authed && due > 0 ? `(${due}) ${base}` : base
   }, [tab, authed, offers])
@@ -1337,7 +1386,7 @@ if (tab === 'create') return (
           <button style={{padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:700,border:`1px solid ${C_NEON}66`,background:`${C_NEON}1a`,color:C_NEON,cursor:'default',fontFamily:'inherit'}}>Erstellen</button>
           <button onClick={() => setTab('manage')} style={{position:'relative',padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:600,border:'none',background:'transparent',color:'#9ca3af',cursor:'pointer',fontFamily:'inherit'}}>
             Verwalten
-            {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:10,minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+            {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:10,minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
           </button>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -1558,7 +1607,7 @@ if (tab === 'create') return (
             <button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button>
             <button style={{...S.tab(true), position:'relative'}}>
               Verwalten
-              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+              {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
             </button>
           </div>
         </div>
@@ -1691,7 +1740,7 @@ return (
             <button style={S.tab(true)}>Erstellen</button>
             <button style={{...S.tab(false), position:'relative'}} onClick={() => setTab('manage')}>
               Verwalten
-              {(() => { const n = offers.filter(o => { const d = Math.floor((Date.now() - new Date(o.created_at).getTime())/(1000*60*60*24)); return d >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed' }).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
+              {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
             </button>
           </div>
         </div>
