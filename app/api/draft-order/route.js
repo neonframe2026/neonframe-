@@ -105,7 +105,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
 
   const steps = [
     ['Angebot ansehen', 'Prüfe Vorschau und alle Details – Änderungen sind jederzeit vor der Bestellung möglich.'],
-    ['Bestellen', 'Mit einem Klick auf der Angebotsseite.'],
+    ['Angebot annehmen', 'Angebot annehmen und Bestellung im Checkout abschließen.'],
     ['Produktion & Versand', 'Wir fertigen dein Schild und halten dich bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
