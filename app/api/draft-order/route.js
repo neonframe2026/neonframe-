@@ -149,7 +149,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
         <tr><td class="pad" bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 28px">
 
           <div style="${FONT}margin:0 0 16px;font-size:22px;line-height:28px;font-weight:bold;color:#111111">Hallo ${firstName},</div>
-          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">Dein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst – das Angebot ist für dich reserviert.</div>
+          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">dein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst – das Angebot ist für dich reserviert.</div>
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8fafc" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
             <tr><td style="padding:16px">
