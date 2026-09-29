@@ -10,7 +10,7 @@ async function loadOffer(offerId) {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data } = await supabase
       .from('offers')
-      .select('preview_image, width, height, colors, usage, disc_type, disc_val, unsubscribed')
+      .select('preview_image, width, height, colors, usage, disc_type, disc_val, status')
       .eq('id', offerId)
       .maybeSingle()
     return data || null
@@ -34,7 +34,7 @@ export async function POST(req) {
     }
 
     const offer = await loadOffer(offerId)
-    if (offer?.unsubscribed) {
+        if (offer?.status === 'unsubscribed') {
       return Response.json({ error: 'Dieser Kunde hat sich von Erinnerungen abgemeldet.' }, { status: 400 })
     }
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
