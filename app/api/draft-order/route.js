@@ -104,8 +104,8 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     </td>` : ''
 
   const steps = [
-    ['Angebot ansehen', 'Prüfe Vorschau und Details – Änderungen sind jederzeit möglich.'],
-    ['Angebot annehmen', 'Angebot annehmen und Bestellung im Checkout abschließen.'],
+    ['Angebot ansehen', 'Prüfe Vorschau und alle Details – Änderungen sind jederzeit vor der Bestellung möglich.'],
+    ['Bestellen', 'Mit einem Klick auf der Angebotsseite.'],
     ['Produktion & Versand', 'Wir fertigen dein Schild und halten dich bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
@@ -149,7 +149,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
         <tr><td class="pad" bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 28px">
 
           <div style="${FONT}margin:0 0 16px;font-size:22px;line-height:28px;font-weight:bold;color:#111111">Hallo ${firstName},</div>
-          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">dein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst – das Angebot ist für dich reserviert.</div>
+          <div style="${FONT}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">Dein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst – das Angebot ist für dich reserviert.</div>
 
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8fafc" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px">
             <tr><td style="padding:16px">
@@ -188,7 +188,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
             </tr>
           </table>
 
-          <div style="${FONT}margin:26px 0 0;font-size:13px;line-height:20px;color:#666666;text-align:center">Fragen oder Änderungswünsche? Einfach auf diese Mail antworten oder an <a href="mailto:info@neonframe.de" style="color:#0ea5e9;text-decoration:none">info@neonframe.de</a> schreiben.</div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px"><tr><td bgcolor="#0b1220" style="background:#0b1220;border-radius:12px;mso-line-height-rule:exactly;line-height:0;font-size:0"><a href="mailto:info@neonframe.de" style="text-decoration:none;border:0"><img src="${EMAIL_ASSETS}/kontakt.jpg" width="528" alt="Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de" style="display:block;width:100%;max-width:528px;height:auto;border:0;border-radius:12px;${FONT}font-size:14px;line-height:20px;color:#ffffff"></a></td></tr></table>
 
           <div style="${FONT}margin:26px 0 4px;font-size:15px;line-height:22px;color:#555555">Viele Grüße</div>
           <div style="${FONT}margin:0;font-size:15px;line-height:22px;font-weight:bold;color:#111111">Dein NeonFrame-Team</div>
