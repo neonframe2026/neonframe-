@@ -109,14 +109,13 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     ['Produktion & Versand', 'Wir fertigen Ihr Schild und halten Sie bei jedem Schritt per E-Mail auf dem Laufenden.'],
   ].map(([t, d], i, a) => {
     const last = i === a.length - 1
-    const h = last ? 48 : 80
     return `<tr>
-      <td width="48" height="${h}" valign="top" style="width:48px;height:${h}px;padding:0;mso-line-height-rule:exactly;line-height:0;font-size:0">
-        <img src="${EMAIL_ASSETS}/step-${i + 1}-v2.png" width="48" height="${h}" alt="${i + 1}" style="display:block;width:48px;height:${h}px;border:0">
-      </td>
-      <td valign="top" style="${FONT}padding:13px 0 0 14px">
-        <div style="${FONT}font-size:15px;line-height:22px;font-weight:bold;color:#111111;margin:0">${t}</div>
-        <div style="${FONT}font-size:14px;line-height:20px;color:#666666;margin:0">${d}</div>
+      <td valign="top" ${last ? '' : 'height="80"'} style="${last ? '' : 'height:80px;'}padding:0 0 0 14px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td height="13" style="height:13px;padding:0;mso-line-height-rule:exactly;line-height:13px;font-size:1px">&nbsp;</td></tr>
+          <tr><td style="${FONT}padding:0;mso-line-height-rule:exactly;font-size:15px;line-height:22px;font-weight:bold;color:#111111">${t}</td></tr>
+          <tr><td style="${FONT}padding:0;mso-line-height-rule:exactly;font-size:14px;line-height:20px;color:#666666">${d}</td></tr>
+        </table>
       </td>
     </tr>`
   }).join('')
@@ -178,7 +177,16 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
           </table>
 
           <div style="${FONT}margin:0 0 16px;font-size:12px;line-height:16px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#94a3b8">So geht es weiter</div>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">${steps}</table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">
+            <tr>
+              <td width="48" valign="top" style="width:48px;padding:0">
+                <img src="${EMAIL_ASSETS}/steps-v3.png" width="48" height="208" alt="" style="display:block;width:48px;height:208px;border:0">
+              </td>
+              <td valign="top" style="padding:0">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">${steps}</table>
+              </td>
+            </tr>
+          </table>
 
           <div style="${FONT}margin:26px 0 0;font-size:13px;line-height:20px;color:#666666;text-align:center">Fragen oder Änderungswünsche? Einfach auf diese Mail antworten oder an <a href="mailto:info@neonframe.de" style="color:#0ea5e9;text-decoration:none">info@neonframe.de</a> schreiben.</div>
 
