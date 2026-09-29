@@ -644,7 +644,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelet
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ Seit über 48 Stunden keine Rückmeldung – Zeit zum Nachfassen.
+          ⚠️ {o.status === 'recontacted' ? 'Seit über 4 Tagen keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 48 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
         </div>
       )}
 
