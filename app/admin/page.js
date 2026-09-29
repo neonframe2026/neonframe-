@@ -233,7 +233,7 @@ function EditModal({ offer, onClose, onSaved }) {
         net_price: prices.net, final_price: prices.total,
         delivery: form.delivery, checkout_url: form.checkout_url,
         customer_note: form.customer_note || null,
-        valid_until: form.valid_until || null, status: form.status,
+        valid_until: form.valid_until || null, status: form.status, unsubscribed: form.status === 'unsubscribed',
         customer_email: form.customer_email || null,
         size_warning_enabled: form.size_warning_enabled, size_warning_text: form.size_warning_text || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
@@ -1268,7 +1268,7 @@ if (draftData.checkoutUrl) {
   }
 
   async function updateStatus(id, newStatus) {
-    await fetch(`/api/offers?id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
+    await fetch(`/api/offers?id=${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus, unsubscribed: newStatus === 'unsubscribed' }) })
     loadOffers()
   }
 
