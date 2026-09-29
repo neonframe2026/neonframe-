@@ -25,6 +25,9 @@ export async function POST(req) {
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
 
+        const personalImageUrl = `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=discount&v=${Date.now()}`
+    await fetch(personalImageUrl).catch(() => {})
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
@@ -34,7 +37,7 @@ export async function POST(req) {
         subject: `+10 % extra auf dein Neon-Schild – NeonFrame`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildDiscountEmail({
-          personalImageUrl: `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=discount&v=${Date.now()}`,
+                    personalImageUrl,
           oldPct, newPct,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink, unsubscribeUrl, imageUrl,
