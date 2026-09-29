@@ -13,7 +13,11 @@ const W = 1200
 let fontCache = null
 async function loadFonts() {
   if (fontCache) return fontCache
-  const get = f => fetch(`${ASSETS}/${f}`).then(r => r.arrayBuffer())
+  const get = async f => {
+    const r = await fetch(`${ASSETS}/${f}`)
+    if (!r.ok) throw new Error(`Schrift fehlt: public/email/${f} (${r.status})`)
+    return r.arrayBuffer()
+  }
   const [m4, m6, m8, a4] = await Promise.all([
     get('montserrat-400.woff'), get('montserrat-600.woff'), get('montserrat-800.woff'), get('anton-400.woff'),
   ])
@@ -24,6 +28,18 @@ async function loadFonts() {
     { name: 'A', data: a4, weight: 400, style: 'normal' },
   ]
   return fontCache
+}
+
+// Vorschaubild vorab laden – nur JPG/PNG, sonst ohne Bild weitermachen
+async function loadPreview(url) {
+  try {
+    if (!url || !String(url).startsWith('http')) return null
+    const r = await fetch(url)
+    const type = (r.headers.get('content-type') || '').split(';')[0]
+    if (!r.ok || !['image/jpeg', 'image/jpg', 'image/png'].includes(type)) return null
+    const buf = Buffer.from(await r.arrayBuffer())
+    return `data:${type};base64,${buf.toString('base64')}`
+  } catch { return null }
 }
 
 export function buildImage({ type, H, firstName, imageUrl, sizeText, variant, colorText, discount, oldPct, newPct }) {
@@ -78,7 +94,7 @@ export async function GET(request) {
     if (!id) return new Response('offer fehlt', { status: 400 })
 
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-        let { data: o } = await supabase.from('offers').select('*').eq('custom_id', id).maybeSingle()
+    let { data: o } = await supabase.from('offers').select('*').eq('custom_id', id).maybeSingle()
     if (!o && /^\d+$/.test(id)) o = (await supabase.from('offers').select('*').eq('id', id).maybeSingle()).data
     if (!o) return new Response('Angebot nicht gefunden', { status: 404 })
 
@@ -90,7 +106,7 @@ export async function GET(request) {
     const img = buildImage({
       type, H,
       firstName: (o.project || '').split(' ')[0] || 'dort',
-      imageUrl: o.preview_image && String(o.preview_image).startsWith('http') ? o.preview_image : null,
+      imageUrl: await loadPreview(o.preview_image),
       sizeText: o.width && o.height ? `${o.width} × ${o.height} cm` : '',
       variant: o.usage || '',
       colorText: o.colors || '',
@@ -99,10 +115,9 @@ export async function GET(request) {
       newPct: pct,
     })
 
-    return new ImageResponse(img, {
-      width: W, height: H, fonts: await loadFonts(),
-      headers: { 'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable' },
-    })
+    const res = new ImageResponse(img, { width: W, height: H, fonts: await loadFonts() })
+    const png = await res.arrayBuffer()
+    return new Response(png, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300, s-maxage=300' } })
   } catch (err) {
     return new Response('Fehler: ' + err.message, { status: 500 })
   }
