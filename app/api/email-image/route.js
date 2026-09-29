@@ -13,7 +13,7 @@ const W = 1200
 let fontCache = null
 async function loadFonts() {
   if (fontCache) return fontCache
-  const get = f => fetch(`${ASSETS}/fonts/${f}`).then(r => r.arrayBuffer())
+  const get = f => fetch(`${ASSETS}/${f}`).then(r => r.arrayBuffer())
   const [m4, m6, m8, a4] = await Promise.all([
     get('montserrat-400.woff'), get('montserrat-600.woff'), get('montserrat-800.woff'), get('anton-400.woff'),
   ])
