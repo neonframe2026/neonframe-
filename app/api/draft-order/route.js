@@ -111,7 +111,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
     const last = i === a.length - 1
     const h = last ? 48 : 80
     return `<tr>
-      <td width="48" height="${h}" valign="top" style="width:48px;height:${h}px;padding:0;font-size:0;line-height:0;mso-line-height-rule:exactly">
+      <td width="48" height="${h}" valign="top" style="width:48px;height:${h}px;padding:0;mso-line-height-rule:exactly;line-height:0;font-size:0">
         <img src="${EMAIL_ASSETS}/step-${i + 1}-v2.png" width="48" height="${h}" alt="${i + 1}" style="display:block;width:48px;height:${h}px;border:0">
       </td>
       <td valign="top" style="${FONT}padding:13px 0 0 14px">
@@ -178,7 +178,7 @@ function buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, fi
           </table>
 
           <div style="${FONT}margin:0 0 16px;font-size:12px;line-height:16px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#94a3b8">So geht es weiter</div>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${steps}</table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">${steps}</table>
 
           <div style="${FONT}margin:26px 0 0;font-size:13px;line-height:20px;color:#666666;text-align:center">Fragen oder Änderungswünsche? Einfach auf diese Mail antworten oder an <a href="mailto:info@neonframe.de" style="color:#0ea5e9;text-decoration:none">info@neonframe.de</a> schreiben.</div>
 
