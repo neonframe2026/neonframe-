@@ -1176,6 +1176,9 @@ offerId = data.custom_id || data.id
           usage: f.usage,
           delivery: f.delivery,
           offerLink,
+          imageUrl: uploadedImgs[0] || null,
+          discount: f.discType === 'pct' && parseFloat(f.discVal) > 0 ? f.discVal : null,
+          variant: f.usage,
         }),
       })
 
