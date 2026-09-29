@@ -579,6 +579,8 @@ function MLinkRow({ label, url, on, offText }) {
   )
 }
 
+const NF_TEST_MODE = true // zum Testen: alle Mails immer klickbar. Später auf false stellen!
+
 function MContactMenu({ o, onContact, onReview }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -590,9 +592,9 @@ function MContactMenu({ o, onContact, onReview }) {
   }, [open])
     const unsub = o.status === 'unsubscribed'
   const items = [
-    { label: '↩ Erneut kontaktieren', hint: unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt'), on: !unsub && !!o.customer_email, act: onContact },
+    { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt')), on: !!o.customer_email && (NF_TEST_MODE || !unsub), act: onContact },
     { label: '🏷️ Rabatt anbieten', hint: 'Kommt bald – 10 % extra nach 4 Tagen', on: false },
-    { label: '⭐ Bewertung anfragen', hint: o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich', on: o.status === 'confirmed' && !!o.customer_email, act: onReview },
+    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed'), act: onReview },
   ]
   return (
     <div ref={ref} style={{ position: 'relative' }}>
