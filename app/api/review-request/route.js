@@ -58,7 +58,7 @@ export async function POST(request) {
             <tr><td align="center" style="${FONT}padding:22px">
               <div style="font-size:26px;line-height:30px">🎁</div>
               <div style="${FONT}padding:6px 0 4px;font-size:17px;line-height:24px;font-weight:bold;color:#111111">Unser Dankeschön: 10 % auf deine nächste Bestellung</div>
-              <div style="${FONT}padding-bottom:14px;font-size:13px;line-height:19px;color:#666666">Einfach bei deiner nächsten Bestellung angeben:</div>
+              <div style="${FONT}padding-bottom:14px;font-size:13px;line-height:19px;color:#666666">Nenn uns den Code einfach bei deiner nächsten Anfrage – wir ziehen die 10 % direkt im Angebot ab:</div>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr>
                 <td bgcolor="#f0f9ff" style="${FONT}border:2px dashed #0ea5e9;border-radius:10px;padding:10px 26px;font-size:22px;line-height:28px;letter-spacing:4px;font-weight:bold;color:#0369a1;background:#f0f9ff">${CODE}</td>
               </tr></table>
