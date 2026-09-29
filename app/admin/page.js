@@ -482,7 +482,7 @@ const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin :
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
-const mIsRed = (o) => mHours(o.created_at) >= 48 && o.status === 'offer_sent'
+const mIsRed = (o) => (mHours(o.created_at) >= 48 && o.status === 'offer_sent') || (mHours(o.created_at) >= 96 && o.status === 'recontacted' && !o.extra_discount_applied)
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -581,7 +581,7 @@ function MLinkRow({ label, url, on, offText }) {
 
 const NF_TEST_MODE = true // zum Testen: alle Mails immer klickbar. Später auf false stellen!
 
-function MContactMenu({ o, onContact, onReview }) {
+function MContactMenu({ o, onContact, onReview, onDiscount }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useEffect(() => {
@@ -593,7 +593,7 @@ function MContactMenu({ o, onContact, onReview }) {
     const unsub = o.status === 'unsubscribed'
   const items = [
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt')), on: !!o.customer_email && (NF_TEST_MODE || !unsub), act: onContact },
-    { label: '🏷️ Rabatt anbieten', hint: 'Kommt bald – 10 % extra nach 4 Tagen', on: false },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 96 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 4 Tagen nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && (NF_TEST_MODE || mHours(o.created_at) >= 96), act: onDiscount },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed'), act: onReview },
   ]
   return (
@@ -617,7 +617,7 @@ function MContactMenu({ o, onContact, onReview }) {
   )
 }
 
-function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus }) {
+function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelete, onStatus }) {
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
   return (
@@ -636,7 +636,7 @@ function MDetail({ o, onEdit, onContact, onReview, onToggle, onDelete, onStatus 
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
-          <MContactMenu o={o} onContact={onContact} onReview={onReview} />
+                    <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} />
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
           <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
         </div>
@@ -730,6 +730,18 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
       if (data.success) { alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers() } else { alert('Fehler: ' + data.error) }
     } catch (err) { alert('Fehler: ' + err.message) }
   }
+    async function discount(o) {
+    if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
+    const pct = o.disc_type === 'pct' ? o.disc_val : '–'
+    const price = o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'
+    if (!confirm(`Rabatt-Mail an ${o.customer_email} senden?\n\nDas Angebot hat aktuell ${pct} % Rabatt (Preis: ${price}).\n\nHast du den Rabatt im Angebot schon erhöht UND den Shopify-Entwurf angepasst?`)) return
+    try {
+      const res = await fetch('/api/discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink: mLink(o) }) })
+      const data = await res.json()
+      if (data.success) { alert(`✅ Rabatt-Mail gesendet (${data.newPct} % Rabatt).`); loadOffers() } else { alert('Fehler: ' + data.error) }
+    } catch (err) { alert('Fehler: ' + err.message) }
+  }
+
   async function review(o) {
     if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
     if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
@@ -808,6 +820,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
               onEdit={() => setEditing(o)}
               onContact={() => contact(o)}
               onReview={() => review(o)}
+              onDiscount={() => discount(o)}
               onToggle={() => toggleOffer(o.id, o.published)}
               onDelete={() => deleteOffer(o.id)}
               onStatus={(v) => updateStatus(o.id, v)}
