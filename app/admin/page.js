@@ -482,7 +482,7 @@ const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin :
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
-const mIsRed = (o) => mHours(o.created_at) >= 48 && o.status === 'offer_sent' && !o.unsubscribed
+const mIsRed = (o) => mHours(o.created_at) >= 48 && o.status === 'offer_sent'
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -511,7 +511,7 @@ function MB({ children, kind = 'outline', onClick, small, title, style }) {
 const MLbl = ({ children, style }) => <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--text-faint)', marginBottom: 8, ...style }}>{children}</div>
 const MCard = ({ title, children }) => <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>{title && <MLbl>{title}</MLbl>}{children}</div>
 const MKv = ({ k, v, color }) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '7px 0', borderBottom: '1px dashed var(--border)', fontSize: 13 }}><span style={{ color: 'var(--text-muted)' }}>{k}</span><span style={{ fontWeight: 600, color: color || 'var(--text)', textAlign: 'right' }}>{v}</span></div>
-const MAktiv = ({ o }) => (o.unsubscribed || o.status === 'unsubscribed')
+const MAktiv = ({ o }) => o.status === 'unsubscribed'
   ? <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...mTint('#ef4444') }}>
       Abgemeldet
       <span className="nf-i">i<span className="nf-tip">
@@ -588,7 +588,7 @@ function MContactMenu({ o, onContact, onReview }) {
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [open])
-  const unsub = !!o.unsubscribed || o.status === 'unsubscribed'
+    const unsub = o.status === 'unsubscribed'
   const items = [
     { label: '↩ Erneut kontaktieren', hint: unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt'), on: !unsub && !!o.customer_email, act: onContact },
     { label: '🏷️ Rabatt anbieten', hint: 'Kommt bald – 10 % extra nach 4 Tagen', on: false },
