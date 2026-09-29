@@ -10,7 +10,7 @@ async function loadOffer(offerId) {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data } = await supabase
       .from('offers')
-      .select('preview_image, width, height, colors, usage, disc_type, disc_val')
+      .select('preview_image, width, height, colors, usage, disc_type, disc_val, unsubscribed')
       .eq('id', offerId)
       .maybeSingle()
     return data || null
@@ -34,6 +34,10 @@ export async function POST(req) {
     }
 
     const offer = await loadOffer(offerId)
+    if (offer?.unsubscribed) {
+      return Response.json({ error: 'Dieser Kunde hat sich von Erinnerungen abgemeldet.' }, { status: 400 })
+    }
+    const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer?.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
     const discount = offer?.disc_type === 'pct' && parseFloat(offer?.disc_val) > 0 ? offer.disc_val : null
 
@@ -47,10 +51,11 @@ export async function POST(req) {
         from: 'NeonFrame <info@neonframe.de>',
         to: [customerEmail],
         subject: `Dein Angebot wartet noch auf dich – NeonFrame 💡`,
-        headers: { 'List-Unsubscribe': '<mailto:info@neonframe.de?subject=Abmelden>' },
+        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildRecontactEmail({
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink,
+          unsubscribeUrl,
           imageUrl,
           discount,
           width: offer?.width || width,
@@ -81,7 +86,7 @@ export async function POST(req) {
   }
 }
 
-function buildRecontactEmail({ firstName, offerLink, imageUrl, discount, width, height, colors, variant }) {
+function buildRecontactEmail({ firstName, offerLink, unsubscribeUrl, imageUrl, discount, width, height, colors, variant }) {
   const colorText = Array.isArray(colors) ? colors.join(', ') : (colors || '')
   const sizeText = width && height ? `${width} × ${height} cm` : ''
 
@@ -197,7 +202,7 @@ function buildRecontactEmail({ firstName, offerLink, imageUrl, discount, width, 
 
         <tr><td align="center" bgcolor="#f8fafc" style="${FONT}background:#f8fafc;border-top:1px solid #eeeeee;padding:20px 36px;font-size:12px;line-height:18px;color:#aaaaaa;border-radius:0 0 16px 16px">
           <a href="https://neonframe.de" style="color:#0ea5e9;text-decoration:none">neonframe.de</a> &nbsp;·&nbsp; <a href="mailto:info@neonframe.de" style="color:#0ea5e9;text-decoration:none">info@neonframe.de</a>
-          <div style="${FONT}padding-top:12px;font-size:11px;line-height:17px;color:#aaaaaa">Du erhältst diese E-Mail, weil du bei NeonFrame ein Angebot angefragt hast.<br>Keine Erinnerungen mehr erhalten? <a href="mailto:info@neonframe.de?subject=Abmelden&amp;body=Bitte%20keine%20weiteren%20Erinnerungen%20an%20diese%20E-Mail-Adresse%20senden." style="color:#94a3b8;text-decoration:underline">Hier abmelden</a></div>
+          <div style="${FONT}padding-top:12px;font-size:11px;line-height:17px;color:#aaaaaa">Du erhältst diese E-Mail, weil du bei NeonFrame ein Angebot angefragt hast.<br>Keine Erinnerungen mehr erhalten? <a href="${unsubscribeUrl}" target="_blank" style="color:#94a3b8;text-decoration:underline">Hier abmelden</a></div>
         </td></tr>
 
       </table>
