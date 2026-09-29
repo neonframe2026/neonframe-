@@ -149,9 +149,9 @@ function buildRecontactEmail({ personalImageUrl, firstName, offerLink, unsubscri
         ${img('recontact-2-vorteile.jpg', 'Warum NeonFrame? Individuell gefertigt, kostenloser Versand, alles inklusive, persönlicher Support')}
         ${img('kontakt.png', 'Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de', 'mailto:info@neonframe.de')}
 
-        <tr><td align="center" bgcolor="#09080a" style="${FONT}background:#09080a;padding:22px 20px;font-size:12px;line-height:18px;color:#6b7280">
+        <tr><td align="center" bgcolor="#09080a" style="${FONT}background:#09080a;padding:22px 20px;font-size:12px;line-height:18px;color:#4b5563">
           <a href="https://neonframe.de" style="color:#22d3ee;text-decoration:none">neonframe.de</a> &nbsp;·&nbsp; <a href="mailto:info@neonframe.de" style="color:#22d3ee;text-decoration:none">info@neonframe.de</a>
-          <div style="${FONT}padding-top:12px;font-size:11px;line-height:17px;color:#6b7280">Du erhältst diese E-Mail, weil du bei NeonFrame ein Angebot angefragt hast.<br>Keine Erinnerungen mehr erhalten? <a href="${unsubscribeUrl}" target="_blank" style="color:#9ca3af;text-decoration:underline">Hier abmelden</a></div>
+          <div style="${FONT}padding-top:12px;font-size:11px;line-height:17px;color:#4b5563">Du erhältst diese E-Mail, weil du bei NeonFrame ein Angebot angefragt hast.<br>Keine Erinnerungen mehr erhalten? <a href="${unsubscribeUrl}" target="_blank" style="color:#6b7280;text-decoration:underline">Hier abmelden</a></div>
         </td></tr>
 
       </table>
