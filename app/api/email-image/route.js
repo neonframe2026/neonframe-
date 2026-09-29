@@ -101,7 +101,7 @@ export async function GET(request) {
 
     return new ImageResponse(img, {
       width: W, height: H, fonts: await loadFonts(),
-      headers: { 'Cache-Control': 'public, max-age=300, s-maxage=300' },
+      headers: { 'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable' },
     })
   } catch (err) {
     return new Response('Fehler: ' + err.message, { status: 500 })
