@@ -4,13 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW ?? 'neonframe2025'
 
 const STATUS_OPTIONS = [
-  { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-  { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
-  { value: 'discount_offered', label: 'Rabatt angeboten',    color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
-  { value: 'confirmed',       label: 'Bestellt',             color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
-  { value: 'in_production',   label: 'In Produktion',        color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
-  { value: 'shipped',         label: 'Versendet',            color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' },
-  { value: 'delivered',       label: 'Zugestellt',           color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+  { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
+  { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
+  { value: 'discount_offered', label: 'Rabatt angeboten',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
+  { value: 'confirmed',       label: 'Bestellt',             color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+  { value: 'in_production',   label: 'In Produktion',        color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+  { value: 'shipped',         label: 'Versendet',            color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+  { value: 'delivered',       label: 'Zugestellt',           color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
   { value: 'unsubscribed',    label: 'Abgemeldet',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 ]
 
