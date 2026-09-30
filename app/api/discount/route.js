@@ -75,7 +75,7 @@ export async function POST(req) {
     }
 
     await supabase.from('offers').update({
-      extra_discount_applied: true, extra_discount_at: new Date().toISOString(), status: 'recontacted',
+      extra_discount_applied: true, extra_discount_at: new Date().toISOString(), status: 'discount_offered',
     }).eq('id', offerId)
 
     return Response.json({ success: true, newPct })
