@@ -436,7 +436,7 @@ function HomeCSS() {
   return <style>{`
     .nf-b{transition:transform .15s,box-shadow .15s,filter .15s,border-color .15s}
     .nf-b:hover{transform:translateY(-2px);box-shadow:0 0 12px ${NEON}40;border-color:${NEON}!important;filter:brightness(1.04)}
-    .nf-b:active{transform:scale(.97);box-shadow:0 0 0 3px ${NEON}55;filter:brightness(1.2);transition:transform .05s}
+        .nf-b:active{transform:scale(.95);box-shadow:none;filter:none;transition:transform .05s}
     @keyframes nfPulse{0%,100%{opacity:1}50%{opacity:.35}}
   `}</style>
 }
@@ -551,7 +551,7 @@ function MCSS() {
   return <style>{`
     .nf-mb{transition:transform .15s,box-shadow .15s,filter .15s}
     .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 9px ${M_NEON}30;filter:brightness(1.05)}
-    .nf-mb:active{transform:scale(.95);box-shadow:0 0 0 3px ${M_NEON}55;filter:brightness(1.25);transition:transform .05s}
+        .nf-mb:active{transform:scale(.95);box-shadow:none;filter:none;transition:transform .05s}
     .nf-i{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:10px;font-weight:800;cursor:help;margin-left:6px}
     .nf-tip{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:280px;background:#111;color:#fff;font-size:12px;font-weight:500;line-height:1.5;padding:8px 10px;border-radius:8px;z-index:60;text-align:left;box-shadow:0 8px 20px rgba(0,0,0,.35)}
     .nf-i:hover .nf-tip{display:block}
@@ -969,7 +969,7 @@ function CCSS() {
   return <style>{`
     .nf-cb{transition:transform .15s,box-shadow .15s,filter .15s}
     .nf-cb:hover{transform:translateY(-1px);box-shadow:0 0 10px ${C_NEON}30;filter:brightness(1.05)}
-    .nf-cb:active{transform:scale(.95);box-shadow:0 0 0 3px ${C_NEON}55;filter:brightness(1.25);transition:transform .05s}
+        .nf-cb:active{transform:scale(.95);box-shadow:none;filter:none;transition:transform .05s}
     .nf-cin{transition:border-color .15s,box-shadow .15s}
     .nf-cin:focus{border-color:${C_NEON}!important;box-shadow:0 0 0 3px ${C_NEON}22}
     .nf-cdrop:hover{border-color:${C_NEON}!important}
