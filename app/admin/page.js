@@ -6,7 +6,9 @@ const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW ?? 'neonframe2025'
 const STATUS_OPTIONS = [
   { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
   { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  { value: 'discount_offered', label: 'Rabatt angeboten',    color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
   { value: 'confirmed',       label: 'Bestellt',             color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+  { value: 'in_production',   label: 'In Produktion',        color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
   { value: 'unsubscribed',    label: 'Abgemeldet',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 ]
 
@@ -549,10 +551,16 @@ function MGallery({ o }) {
 }
 
 function MTimeline({ o }) {
+  const bought = o.status === 'confirmed' || o.status === 'in_production'
+  const prodAt = o.order_email_sent_at ? new Date(o.order_email_sent_at) : null
+  const prodDone = !!prodAt && prodAt.getTime() <= Date.now()
+  const time = (d) => d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'
   const ev = [
     { t: 'Angebot erstellt & gesendet', d: mDate(o.created_at), c: '#16a34a', done: true },
     { t: 'Erinnerung gesendet', d: o.status !== 'offer_sent' ? 'erledigt' : '—', c: '#d97706', done: o.status !== 'offer_sent' },
-    { t: 'Bestellt', d: o.status === 'confirmed' ? 'erledigt' : '—', c: '#2563eb', done: o.status === 'confirmed' },
+    { t: 'Rabatt angeboten', d: o.extra_discount_applied ? mDate(o.extra_discount_at) : '—', c: '#9333ea', done: !!o.extra_discount_applied },
+    { t: 'Bestellt', d: bought ? 'erledigt' : '—', c: '#2563eb', done: bought },
+    { t: 'Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#0891b2', done: prodDone },
   ]
   return (
     <div>
@@ -599,8 +607,8 @@ function MContactMenu({ o, onContact, onReview, onDiscount }) {
     const unsub = o.status === 'unsubscribed'
   const items = [
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
-    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed'), act: onReview },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && o.status !== 'in_production' && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
+    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : ((o.status === 'confirmed' || o.status === 'in_production') ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed' || o.status === 'in_production'), act: onReview },
   ]
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -1278,7 +1286,15 @@ if (draftData.checkoutUrl) {
 
   async function loadOffers() {
     setLoadingOffers(true)
-    try { const res = await fetch('/api/offers'); const data = await res.json(); setOffers(Array.isArray(data) ? data : []) }
+    try {
+      const res = await fetch('/api/offers'); const data = await res.json()
+      let list = Array.isArray(data) ? data : []
+      // Produktions-Mail ist raus (15 Min. nach der Bestellung) -> Status automatisch auf "In Produktion"
+      const due = list.filter(o => o.status === 'confirmed' && o.order_email_sent_at && new Date(o.order_email_sent_at).getTime() <= Date.now())
+      await Promise.all(due.map(o => fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'in_production' }) }).catch(() => {})))
+      if (due.length) list = list.map(o => due.some(d => d.id === o.id) ? { ...o, status: 'in_production' } : o)
+      setOffers(list)
+    }
     catch { setOffers([]) }
     setLoadingOffers(false)
   }
@@ -1680,7 +1696,7 @@ if (tab === 'create') return (
                 const id = o.custom_id || o.id.slice(0,8)
                 const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
                 const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
-                const isRed = daysDiff >= 3 && o.status !== 'recontacted' && o.status !== 'confirmed'
+                const isRed = daysDiff >= 3 && o.status === 'offer_sent'
                 return (
 <div key={o.id} style={{background:'var(--panel)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 220px 200px'}}>
 <div style={{padding:'20px 22px',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
@@ -1727,7 +1743,7 @@ if (tab === 'create') return (
                     </div>
                     <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
                       <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
-                      {o.status === 'confirmed' && (
+                      {(o.status === 'confirmed' || o.status === 'in_production') && (
                         <button onClick={async () => {
                           if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
                           if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
