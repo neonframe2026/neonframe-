@@ -429,6 +429,7 @@ function EditModal({ offer, onClose, onSaved }) {
 const NF_LOGO = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735'
 const NEON = '#60c8f0'
 const SHOPIFY_DRAFTS = 'https://admin.shopify.com/store/atcbcn-sh/draft_orders'
+const SHOPIFY_PRODUCT = 'https://admin.shopify.com/store/atcbcn-sh/products/15730680365429'
 
 const daysSince = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 
@@ -449,6 +450,11 @@ function HomeBtn({ c }) {
     background: c.primary ? NEON : 'transparent', color: c.primary ? '#0a0a0a' : (c.dark ? '#fff' : 'var(--text)'),
     border: c.primary ? `1px solid ${NEON}` : `1px solid ${c.dark ? '#2b2e36' : 'var(--border)'}`,
   }
+  if (c.links) return (
+    <div style={{ marginTop: 'auto', display: 'flex', gap: 10 }}>
+      {c.links.map(l => <a key={l.href} className="nf-b" href={l.href} target="_blank" rel="noopener" style={{ ...s, marginTop: 0, flex: 1 }}>{l.btn}</a>)}
+    </div>
+  )
   return c.href
     ? <a className="nf-b" href={c.href} target="_blank" rel="noopener" style={s}>{c.btn}</a>
     : <button className="nf-b" onClick={c.onClick} style={s}>{c.btn}</button>
@@ -464,9 +470,9 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
     { icon: '📋', title: 'Meine Angebote', text: 'Alle Angebote im Überblick – Status ändern, bearbeiten, Links kopieren.', btn: '⚡ Zu meinen Angeboten', onClick: () => setTab('manage') },
   ]
   const small = [
-    { icon: '↩️', title: 'Nachfassen', badge: n, text: n ? `${n} Angebote sind älter als 3 Tage und warten auf eine Erinnerung.` : 'Alles erledigt – aktuell keine Erinnerungen fällig.', btn: '↩ Erinnerungen senden', onClick: () => setTab('manage') },
-    { icon: '🌐', title: 'Shop', text: 'neonframe.de aus Kundensicht prüfen.', btn: '🌐 neonframe.de öffnen', href: 'https://neonframe.de' },
-    { icon: '🛒', title: 'Bestellentwürfe', text: 'Direkt zu den Shopify Draft Orders.', btn: '🛒 Shopify öffnen', href: SHOPIFY_DRAFTS },
+    { icon: '↩️', title: 'Nachfassen', badge: n, text: n ? `${n} ${n === 1 ? 'Angebot wartet' : 'Angebote warten'} auf eine Erinnerung, einen Rabatt oder eine Bewertungsanfrage.` : 'Alles erledigt – aktuell keine Erinnerungen fällig.', btn: '↩ Erinnerungen senden', onClick: () => setTab('manage') },
+    { icon: '🧪', title: 'Testmodus', badge: NF_TEST_MODE ? 'AN' : null, text: NF_TEST_MODE ? 'Alle Mails sind jederzeit manuell sendbar, Zeitsperren sind aus.' : 'Aus – alle Zeitsperren und Regeln gelten normal.', btn: NF_TEST_MODE ? '⏹ Testmodus ausschalten' : '▶ Testmodus einschalten', onClick: () => { try { localStorage.setItem('nf_test_mode', NF_TEST_MODE ? '0' : '1') } catch {} ; window.location.reload() } },
+    { icon: '🛒', title: 'Bestellentwürfe / Produkt', text: 'Shopify Draft Orders und das Produkt zum Preis-Anpassen.', links: [{ btn: '🛒 Entwürfe', href: SHOPIFY_DRAFTS }, { btn: '🏷️ Produkt', href: SHOPIFY_PRODUCT }] },
   ]
 
   return (
@@ -486,7 +492,7 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
       >
         <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#fff', animation: n ? 'nfPulse 1.4s infinite' : 'none' }} />
         {n
-          ? <>{n} {n === 1 ? 'Angebot wartet' : 'Angebote warten'} seit über 3 Tagen auf eine Erinnerung <span style={{ textDecoration: 'underline' }}>Jetzt nachfassen →</span></>
+          ? <>{n} {n === 1 ? 'Angebot wartet' : 'Angebote warten'} auf dich <span style={{ textDecoration: 'underline' }}>Jetzt nachfassen →</span></>
           : 'Alles erledigt – keine offenen Erinnerungen ✓'}
       </div>
 
@@ -510,7 +516,7 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 26 }}>{c.icon}</span>
                 <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{c.title}</h3>
-                {c.badge > 0 && <span style={redPill}>{c.badge}</span>}
+                {(c.badge > 0 || typeof c.badge === 'string') && <span style={redPill}>{c.badge}</span>}
               </div>
               <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)' }}>{c.text}</p>
               <HomeBtn c={c} />
@@ -645,7 +651,8 @@ function MLinkRow({ label, url, on, offText }) {
   )
 }
 
-const NF_TEST_MODE = false // zum Testen: alle Mails immer klickbar. Später auf false stellen!
+// Testmodus: wird auf der Startseite ein-/ausgeschaltet und nur in diesem Browser gespeichert
+const NF_TEST_MODE = typeof window !== 'undefined' && (() => { try { return localStorage.getItem('nf_test_mode') === '1' } catch { return false } })()
 
 function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
   const [open, setOpen] = useState(false)
