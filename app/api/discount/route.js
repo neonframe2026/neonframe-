@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 const FONT = "font-family:Arial,Helvetica,sans-serif;"
 const EXTRA_PCT = 10
 
