@@ -28,7 +28,7 @@ export async function POST(request) {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data: offers, error } = await supabase
       .from('offers')
-      .update({ status: 'confirmed' })
+      .update({ status: 'confirmed', ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}) })
       .ilike('checkout_url', `%${token}%`)
       .select('id, project, customer_email, order_email_sent_at')
 
