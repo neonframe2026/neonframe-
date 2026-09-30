@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { buildShippedEmail, buildTodayEmail, sendMail, SUBJECT_SHIPPED, SUBJECT_TODAY } from '../../../lib/shipping-emails'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 export const maxDuration = 60
 
 // Wird stündlich von cron-job.org aufgerufen:
