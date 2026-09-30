@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { buildShippedEmail, sendMail, SUBJECT_SHIPPED } from '../../../lib/shipping-emails'
+import { buildShippedEmail, sendMail, SUBJECT_SHIPPED, trackingLink } from '../../../lib/shipping-emails'
+import { fulfillShopifyOrder } from '../../../lib/shopify-admin'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -32,7 +33,16 @@ export async function POST(req) {
     const { error } = await supabase.from('offers').update(update).eq('id', o.id)
     if (error) return Response.json({ error: error.message }, { status: 500 })
 
-    return Response.json({ success: true })
+    // Bestellung in Shopify automatisch auf "Ausgeführt" setzen (ohne Shopify-Mail)
+    let shopify = 'Keine Shopify-Bestellnummer gespeichert – bitte in Shopify von Hand ausführen'
+    if (o.shopify_order_id) {
+      try {
+        const r = await fulfillShopifyOrder({ orderId: o.shopify_order_id, trackingNumber: tn, trackingCompany: update.tracking_company, trackingUrl: trackingLink({ ...o, ...update }) })
+        shopify = r.skipped || 'In Shopify als ausgeführt markiert'
+      } catch (e) { shopify = 'Shopify-Fehler: ' + e.message }
+    }
+
+    return Response.json({ success: true, shopify })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
   }
