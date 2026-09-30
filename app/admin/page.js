@@ -9,6 +9,8 @@ const STATUS_OPTIONS = [
   { value: 'discount_offered', label: 'Rabatt angeboten',    color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
   { value: 'confirmed',       label: 'Bestellt',             color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
   { value: 'in_production',   label: 'In Produktion',        color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc' },
+  { value: 'shipped',         label: 'Versendet',            color: '#0d9488', bg: '#f0fdfa', border: '#99f6e4' },
+  { value: 'delivered',       label: 'Zugestellt',           color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
   { value: 'unsubscribed',    label: 'Abgemeldet',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 ]
 
@@ -562,7 +564,8 @@ function MGallery({ o }) {
 }
 
 function MTimeline({ o }) {
-  const bought = o.status === 'confirmed' || o.status === 'in_production'
+  const bought = ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
+  const shipped = o.status === 'shipped' || o.status === 'delivered'
   const prodAt = o.order_email_sent_at ? new Date(o.order_email_sent_at) : null
   const prodDone = !!prodAt && prodAt.getTime() <= Date.now()
   const time = (d) => d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'
@@ -572,6 +575,9 @@ function MTimeline({ o }) {
     { t: 'Rabatt angeboten', d: o.extra_discount_applied ? mDate(o.extra_discount_at) : '—', c: '#9333ea', done: !!o.extra_discount_applied },
     { t: 'Bestellt', d: bought ? 'erledigt' : '—', c: '#2563eb', done: bought },
     { t: 'Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#0891b2', done: prodDone },
+    { t: 'Versendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: o.shipped_at ? time(new Date(o.shipped_at)) : '—', c: '#0d9488', done: shipped },
+    { t: 'Mail „Heute kommt dein Schild“', d: o.today_email_sent_at ? time(new Date(o.today_email_sent_at)) : '—', c: '#0ea5e9', done: !!o.today_email_sent_at },
+    { t: 'Zugestellt', d: o.delivered_at ? time(new Date(o.delivered_at)) : '—', c: '#059669', done: o.status === 'delivered' },
   ]
   return (
     <div>
@@ -618,8 +624,8 @@ function MContactMenu({ o, onContact, onReview, onDiscount }) {
     const unsub = o.status === 'unsubscribed'
   const items = [
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && o.status !== 'in_production' && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
-    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : ((o.status === 'confirmed' || o.status === 'in_production') ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed' || o.status === 'in_production'), act: onReview },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
+    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)), act: onReview },
   ]
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -1763,7 +1769,7 @@ if (tab === 'create') return (
                     </div>
                     <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
                       <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
-                      {(o.status === 'confirmed' || o.status === 'in_production') && (
+                      {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (
                         <button onClick={async () => {
                           if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
                           if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
