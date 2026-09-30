@@ -644,7 +644,7 @@ function MLinkRow({ label, url, on, offText }) {
   )
 }
 
-const NF_TEST_MODE = true // zum Testen: alle Mails immer klickbar. Später auf false stellen!
+const NF_TEST_MODE = false // zum Testen: alle Mails immer klickbar. Später auf false stellen!
 
 function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
   const [open, setOpen] = useState(false)
