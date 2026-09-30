@@ -24,6 +24,17 @@ function calcPrices(basePrice, discType, discVal, vatPct) {
   return { net, vatAmt, total, rrp, discAmt }
 }
 
+// Endpreis (brutto) -> Listenpreis (netto) zurückrechnen
+function baseFromEnd(endPrice, discType, discVal, vatPct) {
+  const end = parseFloat(String(endPrice).replace(',', '.')) || 0
+  const dv = parseFloat(discVal) || 0
+  const vat = parseFloat(vatPct) || 19
+  if (end <= 0) return ''
+  const net = end / (1 + vat / 100)
+  if (discType === 'pct') return dv >= 100 ? '' : String(net / (1 - dv / 100))
+  return String(net + dv)
+}
+
 function colorDot(s = '') {
   const c = s.toLowerCase()
   if (c.includes('lake blue')) return '#06b6d4'
@@ -911,6 +922,7 @@ export default function AdminPage() {
 
   const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
   const [priceInputs, setPriceInputs] = useState({ basePrice: '', discVal: '20', vat: '19' })
+  const [endPrice, setEndPrice] = useState('')
   const [imgSrcs, setImgSrcs] = useState([])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
@@ -931,6 +943,13 @@ export default function AdminPage() {
   const updSelect = (k, v) => { fRef.current[k] = v; setSelects(p => ({ ...p, [k]: v })) }
   const updPrice = (k, v) => { fRef.current[k] = v; setPriceInputs(p => ({ ...p, [k]: v })) }
   const updPriceField = (k, v) => { fRef.current[k] = v }
+  // Endpreis eingeben -> Listenpreis wird automatisch berechnet (auch wenn Rabatt/MwSt. geändert wird)
+  useEffect(() => {
+    if (!endPrice) return
+    const base = baseFromEnd(endPrice, selects.discType, priceInputs.discVal, priceInputs.vat)
+    fRef.current.basePrice = base
+    setPriceInputs(p => p.basePrice === base ? p : { ...p, basePrice: base })
+  }, [endPrice, selects.discType, priceInputs.discVal, priceInputs.vat])
   const toggleColor = (c) => {
     const current = fRef.current.color.split(',').map(s => s.trim()).filter(Boolean)
     const idx = current.findIndex(x => x.toLowerCase() === c.toLowerCase())
@@ -951,6 +970,7 @@ export default function AdminPage() {
     }
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
     setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
+    setEndPrice('')
     setImgSrcs([])
     setPublishedLink(null)
     setParseStatus(null)
@@ -1541,7 +1561,7 @@ if (tab === 'create') return (
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
           <CCard t="Preiskalkulation">
             <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div><label style={cLbl}>Listenpreis (netto)</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={priceInputs.basePrice} onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" /></div>
+              <div><label style={cLbl}>Endpreis (brutto)</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" />{parseFloat(priceInputs.basePrice) > 0 && <div style={{fontSize:11,color:'var(--text-faint)',marginTop:5}}>Listenpreis (netto) automatisch: € {parseFloat(priceInputs.basePrice).toFixed(2)}</div>}</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                 <CSeg label="Rabatt-Typ" value={selects.discType} opts={[{value:'pct',label:'Prozent %'},{value:'eur',label:'Euro €'}]} onChange={v => updSelect('discType', v)} />
                 <div><label style={cLbl}>{`Rabatt (${selects.discType==='pct'?'%':'€'})`}</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={priceInputs.discVal} onChange={e => updPrice('discVal', e.target.value)} /></div>
@@ -1927,8 +1947,9 @@ return (
           <div style={S.section}>
             <div style={S.sTitle}>Preiskalkulation</div>
             <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
-<Field label="Listenpreis (netto)">
-                <input style={S.input} type="number" step="0.01" defaultValue={priceInputs.basePrice} onChange={e => updPriceField('basePrice', e.target.value)} onBlur={e => updPrice('basePrice', e.target.value)} placeholder="0.00" />
+<Field label="Endpreis (brutto)">
+                <input style={S.input} type="number" step="0.01" value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" />
+                {parseFloat(priceInputs.basePrice) > 0 && <div style={{fontSize:11,color:'#888',marginTop:5}}>Listenpreis (netto) automatisch: € {parseFloat(priceInputs.basePrice).toFixed(2)}</div>}
               </Field>
               <div style={S.row2}>
                 <Field label="Rabatt-Typ">
