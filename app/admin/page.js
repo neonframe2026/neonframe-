@@ -573,7 +573,7 @@ const MAktiv = ({ o }) => o.status === 'unsubscribed'
       </span></span>
     </span>
   : <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...(o.published ? mTint('#22c55e') : mTint('#6b7280')) }}>{o.published ? 'Aktiv' : 'Inaktiv'}</span>
-const MDateTxt = ({ o }) => <span style={{ fontSize: 12, color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
+const MDateTxt = ({ o }) => <span style={{ fontSize: 12, color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}, {new Date(o.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
 
 function MGallery({ o }) {
   const list = mImgs(o)
@@ -603,15 +603,15 @@ function MTimeline({ o }) {
   const at = (v) => v ? time(new Date(v)) : '—'
   const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered'].includes(o.status)
   const ev = [
-    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#16a34a', done: true },
-    { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#d97706', done: recontacted },
-    { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) : '—', c: '#9333ea', done: !!o.extra_discount_applied },
-    { t: 'Bestellt', d: mOrderedAt(o) ? at(mOrderedAt(o)) : (bought ? 'erledigt' : '—'), c: '#2563eb', done: bought },
-    { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#0891b2', done: prodDone },
-    { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#0d9488', done: shipped },
-    { t: '✉️ „Heute kommt“-Mail gesendet', d: at(o.today_email_sent_at), c: '#0ea5e9', done: !!o.today_email_sent_at },
-    { t: 'Zugestellt', d: at(o.delivered_at), c: '#059669', done: o.status === 'delivered' },
-    { t: '✉️ Bewertungs-Mail gesendet', d: at(o.review_email_sent_at), c: '#eab308', done: !!o.review_email_sent_at },
+    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true },
+    { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#22d3ee', done: recontacted },
+    { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) : '—', c: '#22d3ee', done: !!o.extra_discount_applied },
+    { t: 'Bestellt', d: mOrderedAt(o) ? at(mOrderedAt(o)) : (bought ? 'erledigt' : '—'), c: '#10b981', done: bought },
+    { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#10b981', done: prodDone },
+    { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#10b981', done: shipped },
+    { t: '✉️ „Heute kommt“-Mail gesendet', d: at(o.today_email_sent_at), c: '#10b981', done: !!o.today_email_sent_at },
+    { t: 'Zugestellt', d: at(o.delivered_at), c: '#10b981', done: o.status === 'delivered' },
+    { t: '✉️ Bewertungs-Mail gesendet', d: at(o.review_email_sent_at), c: '#facc15', done: !!o.review_email_sent_at },
   ]
   return (
     <div>
