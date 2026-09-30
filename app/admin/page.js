@@ -411,7 +411,8 @@ const daysSince = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400
 function HomeCSS() {
   return <style>{`
     .nf-b{transition:transform .15s,box-shadow .15s,filter .15s,border-color .15s}
-    .nf-b:hover{transform:translateY(-2px);box-shadow:0 0 22px ${NEON}66;border-color:${NEON}!important;filter:brightness(1.06)}
+    .nf-b:hover{transform:translateY(-2px);box-shadow:0 0 12px ${NEON}40;border-color:${NEON}!important;filter:brightness(1.04)}
+    .nf-b:active{transform:scale(.97);box-shadow:0 0 0 3px ${NEON}55;filter:brightness(1.2);transition:transform .05s}
     @keyframes nfPulse{0%,100%{opacity:1}50%{opacity:.35}}
   `}</style>
 }
@@ -503,7 +504,12 @@ const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin :
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
-const mIsRed = (o) => (mHours(o.created_at) >= 24 && o.status === 'offer_sent') || (mHours(o.created_at) >= 48 && o.status === 'recontacted' && !o.extra_discount_applied)
+const mBought = (o) => ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
+// Zeitpunkt der Bestellung (Produktions-Mail geht 15 Min. danach raus)
+const mOrderedAt = (o) => o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at).getTime() - 15 * 60000).toISOString() : null
+const mReviewDue = (o) => mBought(o) && !o.review_email_sent_at && !!mOrderedAt(o) && mHours(mOrderedAt(o)) >= 168
+const mReviewOk = (o) => o.status === 'delivered' || mReviewDue(o)
+const mIsRed = (o) => (mHours(o.created_at) >= 24 && o.status === 'offer_sent') || (mHours(o.created_at) >= 48 && o.status === 'recontacted' && !o.extra_discount_applied) || mReviewDue(o)
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -520,7 +526,8 @@ const M_KINDS = {
 function MCSS() {
   return <style>{`
     .nf-mb{transition:transform .15s,box-shadow .15s,filter .15s}
-        .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 16px ${M_NEON}55;filter:brightness(1.1)}
+    .nf-mb:hover{transform:translateY(-1px);box-shadow:0 0 9px ${M_NEON}30;filter:brightness(1.05)}
+    .nf-mb:active{transform:scale(.95);box-shadow:0 0 0 3px ${M_NEON}55;filter:brightness(1.25);transition:transform .05s}
     .nf-i{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:10px;font-weight:800;cursor:help;margin-left:6px}
     .nf-tip{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);width:max-content;max-width:280px;background:#111;color:#fff;font-size:12px;font-weight:500;line-height:1.5;padding:8px 10px;border-radius:8px;z-index:60;text-align:left;box-shadow:0 8px 20px rgba(0,0,0,.35)}
     .nf-i:hover .nf-tip{display:block}
@@ -569,15 +576,18 @@ function MTimeline({ o }) {
   const prodAt = o.order_email_sent_at ? new Date(o.order_email_sent_at) : null
   const prodDone = !!prodAt && prodAt.getTime() <= Date.now()
   const time = (d) => d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'
+  const at = (v) => v ? time(new Date(v)) : '—'
+  const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered'].includes(o.status)
   const ev = [
-    { t: 'Angebot erstellt & gesendet', d: mDate(o.created_at), c: '#16a34a', done: true },
-    { t: 'Erinnerung gesendet', d: o.status !== 'offer_sent' ? 'erledigt' : '—', c: '#d97706', done: o.status !== 'offer_sent' },
-    { t: 'Rabatt angeboten', d: o.extra_discount_applied ? mDate(o.extra_discount_at) : '—', c: '#9333ea', done: !!o.extra_discount_applied },
-    { t: 'Bestellt', d: bought ? 'erledigt' : '—', c: '#2563eb', done: bought },
-    { t: 'Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#0891b2', done: prodDone },
-    { t: 'Versendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: o.shipped_at ? time(new Date(o.shipped_at)) : '—', c: '#0d9488', done: shipped },
-    { t: 'Mail „Heute kommt dein Schild“', d: o.today_email_sent_at ? time(new Date(o.today_email_sent_at)) : '—', c: '#0ea5e9', done: !!o.today_email_sent_at },
-    { t: 'Zugestellt', d: o.delivered_at ? time(new Date(o.delivered_at)) : '—', c: '#059669', done: o.status === 'delivered' },
+    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#16a34a', done: true },
+    { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#d97706', done: recontacted },
+    { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) : '—', c: '#9333ea', done: !!o.extra_discount_applied },
+    { t: 'Bestellt', d: mOrderedAt(o) ? at(mOrderedAt(o)) : (bought ? 'erledigt' : '—'), c: '#2563eb', done: bought },
+    { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#0891b2', done: prodDone },
+    { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#0d9488', done: shipped },
+    { t: '✉️ „Heute kommt“-Mail gesendet', d: at(o.today_email_sent_at), c: '#0ea5e9', done: !!o.today_email_sent_at },
+    { t: 'Zugestellt', d: at(o.delivered_at), c: '#059669', done: o.status === 'delivered' },
+    { t: '✉️ Bewertungs-Mail gesendet', d: at(o.review_email_sent_at), c: '#eab308', done: !!o.review_email_sent_at },
   ]
   return (
     <div>
@@ -612,7 +622,7 @@ function MLinkRow({ label, url, on, offText }) {
 
 const NF_TEST_MODE = true // zum Testen: alle Mails immer klickbar. Später auf false stellen!
 
-function MContactMenu({ o, onContact, onReview, onDiscount }) {
+function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useEffect(() => {
@@ -625,7 +635,13 @@ function MContactMenu({ o, onContact, onReview, onDiscount }) {
   const items = [
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
         { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
-    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)), act: onReview },
+    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist beim Kunden' : 'Ab Zustellung (spätestens 7 Tage nach Bestellung)')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
+    ...(NF_TEST_MODE ? [
+      { label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') },
+      { label: '🧪 Produktions-Mail', hint: 'Testmodus – sofort senden', on: !!o.customer_email, act: () => onMail('produktion') },
+      { label: '🧪 Versand-Mail', hint: 'Testmodus – ohne Status-Änderung', on: !!o.customer_email, act: () => onMail('versand') },
+      { label: '🧪 „Heute kommt“-Mail', hint: 'Testmodus – ohne Status-Änderung', on: !!o.customer_email, act: () => onMail('heute') },
+    ] : []),
   ]
   return (
     <div ref={ref} style={{ position: 'relative' }}>
@@ -648,7 +664,7 @@ function MContactMenu({ o, onContact, onReview, onDiscount }) {
   )
 }
 
-function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelete, onStatus }) {
+function MDetail({ o, onEdit, onContact, onReview, onDiscount, onMail, onToggle, onDelete, onStatus }) {
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
   return (
@@ -667,7 +683,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelet
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
-                    <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} />
+                    <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} onMail={onMail} />
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
           <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
         </div>
@@ -675,7 +691,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelet
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
+          ⚠️ {mReviewDue(o) ? 'Seit 7 Tagen bestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
         </div>
       )}
 
@@ -758,7 +774,10 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
     try {
       const res = await fetch('/api/recontact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink: mLink(o), price: o.final_price, width: o.width, height: o.height, colors: o.colors }) })
       const data = await res.json()
-      if (data.success) { alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers() } else { alert('Fehler: ' + data.error) }
+      if (data.success) {
+        await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recontacted_at: new Date().toISOString() }) }).catch(() => {})
+        alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers()
+      } else { alert('Fehler: ' + data.error) }
     } catch (err) { alert('Fehler: ' + err.message) }
   }
     async function discount(o) {
@@ -779,7 +798,32 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
     try {
       const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project }) })
       const data = await res.json()
-      if (data.success) { alert('✅ Bewertungsanfrage gesendet!') } else { alert('Fehler: ' + data.error) }
+      if (data.success) {
+        await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ review_email_sent_at: new Date().toISOString() }) }).catch(() => {})
+        alert('✅ Bewertungsanfrage gesendet!'); loadOffers()
+      } else { alert('Fehler: ' + data.error) }
+    } catch (err) { alert('Fehler: ' + err.message) }
+  }
+
+  // Testmodus: jede Mail manuell an die Kunden-E-Mail des Angebots schicken
+  async function testMail(o, type) {
+    const names = { angebot: 'Angebots-Mail', produktion: 'Produktions-Mail', versand: 'Versand-Mail', heute: '„Heute kommt“-Mail' }
+    if (!confirm(`TEST: ${names[type]} an ${o.customer_email} senden?`)) return
+    try {
+      let res
+      if (type === 'angebot') {
+        res = await fetch('/api/draft-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+          customerEmail: o.customer_email, customerName: o.project, offerNum: o.offer_num, finalPrice: o.final_price,
+          width: o.width, height: o.height, colors: o.colors, delivery: o.delivery, offerLink: mLink(o), checkoutUrl: o.checkout_url,
+          imageUrl: o.preview_image || null, discount: o.disc_type === 'pct' && parseFloat(o.disc_val) > 0 ? o.disc_val : null, variant: o.usage,
+        }) })
+      } else if (type === 'produktion') {
+        res = await fetch('/api/order-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, delayMinutes: 0, force: true }) })
+      } else {
+        res = await fetch('/api/shipping-mail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, type }) })
+      }
+      const data = await res.json()
+      if (data.success) alert(`✅ ${names[type]} gesendet!`); else alert('Fehler: ' + data.error)
     } catch (err) { alert('Fehler: ' + err.message) }
   }
 
@@ -852,6 +896,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
               onContact={() => contact(o)}
               onReview={() => review(o)}
               onDiscount={() => discount(o)}
+              onMail={(t) => testMail(o, t)}
               onToggle={() => toggleOffer(o.id, o.published)}
               onDelete={() => deleteOffer(o.id)}
               onStatus={(v) => updateStatus(o.id, v)}
@@ -873,7 +918,8 @@ const cDrop = { border: '1px dashed var(--border)', borderRadius: 12, cursor: 'p
 function CCSS() {
   return <style>{`
     .nf-cb{transition:transform .15s,box-shadow .15s,filter .15s}
-    .nf-cb:hover{transform:translateY(-1px);box-shadow:0 0 18px ${C_NEON}55;filter:brightness(1.08)}
+    .nf-cb:hover{transform:translateY(-1px);box-shadow:0 0 10px ${C_NEON}30;filter:brightness(1.05)}
+    .nf-cb:active{transform:scale(.95);box-shadow:0 0 0 3px ${C_NEON}55;filter:brightness(1.25);transition:transform .05s}
     .nf-cin{transition:border-color .15s,box-shadow .15s}
     .nf-cin:focus{border-color:${C_NEON}!important;box-shadow:0 0 0 3px ${C_NEON}22}
     .nf-cdrop:hover{border-color:${C_NEON}!important}
@@ -1769,7 +1815,7 @@ if (tab === 'create') return (
                     </div>
                     <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
                       <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
-                      {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (
+                      {(NF_TEST_MODE || mReviewOk(o)) && (
                         <button onClick={async () => {
                           if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
                           if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
