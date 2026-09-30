@@ -531,8 +531,9 @@ const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
 const mBought = (o) => ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
 // Zeitpunkt der Bestellung (Produktions-Mail geht 15 Min. danach raus)
 const mOrderedAt = (o) => o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at).getTime() - 15 * 60000).toISOString() : null
-const mReviewDue = (o) => mBought(o) && !o.review_email_sent_at && !!mOrderedAt(o) && mHours(mOrderedAt(o)) >= 168
-const mReviewOk = (o) => o.status === 'delivered' || mReviewDue(o)
+// Bewertung: 3 Tage nach Zustellung – ohne Zustelldatum (z. B. anderer Paketdienst) 10 Tage nach Bestellung
+const mReviewOk = (o) => mBought(o) && (o.delivered_at ? mHours(o.delivered_at) >= 72 : (!!mOrderedAt(o) && mHours(mOrderedAt(o)) >= 240))
+const mReviewDue = (o) => !o.review_email_sent_at && mReviewOk(o)
 const mIsRed = (o) => (mHours(o.created_at) >= 24 && o.status === 'offer_sent') || (mHours(o.created_at) >= 48 && o.status === 'recontacted' && !o.extra_discount_applied) || mReviewDue(o)
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
@@ -573,7 +574,7 @@ const MAktiv = ({ o }) => o.status === 'unsubscribed'
       </span></span>
     </span>
   : <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, ...(o.published ? mTint('#22c55e') : mTint('#6b7280')) }}>{o.published ? 'Aktiv' : 'Inaktiv'}</span>
-const MDateTxt = ({ o }) => <span style={{ fontSize: 12, color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}, {new Date(o.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
+const MDateTxt = ({ o, short }) => <span style={{ fontSize: 12, whiteSpace: 'nowrap', color: mIsRed(o) ? '#ef4444' : 'var(--text-faint)', fontWeight: mIsRed(o) ? 700 : 400 }}>📅 {mDate(o.created_at)}, {new Date(o.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}{short ? '' : ' Uhr'}{mIsRed(o) && ` · ${mDays(o.created_at)} Tage`}</span>
 
 function MGallery({ o }) {
   const list = mImgs(o)
@@ -660,7 +661,7 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
     ...(NF_TEST_MODE ? [{ label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') }] : []),
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
         { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
-    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist beim Kunden' : 'Ab Zustellung (spätestens 7 Tage nach Bestellung)')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
+    { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist seit 3 Tagen beim Kunden' : 'Ab 3 Tagen nach der Zustellung')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
     ...(NF_TEST_MODE ? [
       { label: '🧪 Produktions-Mail', hint: 'Testmodus – sofort senden', on: !!o.customer_email, act: () => onMail('produktion') },
       { label: '🧪 Versand-Mail', hint: 'Testmodus – ohne Status-Änderung', on: !!o.customer_email, act: () => onMail('versand') },
@@ -740,7 +741,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onMail, onToggle,
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {mReviewDue(o) ? 'Seit 7 Tagen bestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
+          ⚠️ {mReviewDue(o) ? 'Seit 3 Tagen zugestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
         </div>
       )}
 
@@ -927,9 +928,9 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
                       <span style={{ color: 'var(--text-muted)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.project}</span>
                       <span style={{ marginLeft: 'auto', fontWeight: 800, whiteSpace: 'nowrap' }}>{x.final_price > 0 ? mEur(x.final_price) : '–'}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <MDateTxt o={x} />
-                      <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{mStatus(x.status).label}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                      <MDateTxt o={x} short />
+                      <span style={{ fontSize: 11, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{mStatus(x.status).label}</span>
                     </div>
                   </div>
                 </div>
