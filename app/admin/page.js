@@ -266,7 +266,7 @@ function EditModal({ offer, onClose, onSaved }) {
         if (confirm(`Versand-Mail mit Sendungsnummer ${tn} an ${form.customer_email || offer.customer_email} senden?\n\nDer Status wird auf „Versendet“ gesetzt.`)) {
           const r = await fetch('/api/ship', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, trackingNumber: tn, trackingCompany: form.tracking_company }) })
           const d = await r.json()
-          alert(d.error ? 'Versand-Mail Fehler: ' + d.error : '✅ Versand-Mail gesendet – Status: Versendet')
+          alert(d.error ? 'Versand-Mail Fehler: ' + d.error : `✅ Versand-Mail gesendet – Status: Versendet${d.shopify ? '\n\nShopify: ' + d.shopify : ''}`)
         } else {
           await fetch(`/api/offers?id=${offer.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: tn, tracking_company: form.tracking_company }) })
         }
