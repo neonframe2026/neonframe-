@@ -197,6 +197,8 @@ function EditModal({ offer, onClose, onSaved }) {
     vat_pct: offer.vat_pct || '19',
     delivery: offer.delivery || '',
     checkout_url: offer.checkout_url || '',
+    tracking_number: offer.tracking_number || '',
+    tracking_company: offer.tracking_company || 'DHL',
     customer_note: offer.customer_note || '',
     valid_until: offer.valid_until ? offer.valid_until.slice(0, 10) : '',
     status: offer.status || 'offer_sent',
@@ -258,6 +260,19 @@ function EditModal({ offer, onClose, onSaved }) {
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
+      // Neue Sendungsnummer -> Versand-Mail + Status "Versendet"
+      const tn = form.tracking_number.trim()
+      if (tn && tn !== (offer.tracking_number || '')) {
+        if (confirm(`Versand-Mail mit Sendungsnummer ${tn} an ${form.customer_email || offer.customer_email} senden?\n\nDer Status wird auf „Versendet“ gesetzt.`)) {
+          const r = await fetch('/api/ship', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, trackingNumber: tn, trackingCompany: form.tracking_company }) })
+          const d = await r.json()
+          alert(d.error ? 'Versand-Mail Fehler: ' + d.error : '✅ Versand-Mail gesendet – Status: Versendet')
+        } else {
+          await fetch(`/api/offers?id=${offer.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_number: tn, tracking_company: form.tracking_company }) })
+        }
+      } else if (tn && form.tracking_company !== (offer.tracking_company || 'DHL')) {
+        await fetch(`/api/offers?id=${offer.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tracking_company: form.tracking_company }) })
+      }
       if (form.status === 'confirmed' && (offer.status !== 'confirmed' || NF_TEST_MODE)) {
         const r = await fetch('/api/order-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, delayMinutes: NF_TEST_MODE ? 0 : 15, force: NF_TEST_MODE }) })
         const d = await r.json()
@@ -383,6 +398,15 @@ function EditModal({ offer, onClose, onSaved }) {
                 </select>
               </div>
               <div><label style={lbl}>Checkout-URL</label><input style={inp} value={form.checkout_url} onChange={e => set('checkout_url', e.target.value)} placeholder="https..." /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px', gap: 12 }}>
+                <div><label style={lbl}>Sendungsnummer</label><input style={inp} value={form.tracking_number} onChange={e => set('tracking_number', e.target.value)} placeholder="z. B. JVGL06275671001431507884" /></div>
+                <div><label style={lbl}>Paketdienst</label>
+                  <select style={sel} value={form.tracking_company} onChange={e => set('tracking_company', e.target.value)}>
+                    {['DHL', 'DPD', 'GLS', 'UPS', 'Hermes', 'Sonstige'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: -6 }}>Neue Sendungsnummer speichern → Versand-Mail geht raus, Status „Versendet“.</div>
               <div><label style={lbl}>Notizen für den Kunden</label>
                 <textarea style={{ ...inp, minHeight: 72, resize: 'vertical', lineHeight: 1.5 }} value={form.customer_note} onChange={e => set('customer_note', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
               </div>
