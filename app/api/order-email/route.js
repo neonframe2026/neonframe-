@@ -59,7 +59,7 @@ function buildOrderEmail(firstName) {
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">
         ${img('bestellung-1-danke.jpg', 'Danke für deine Bestellung – dein Schild geht in Produktion')}
         ${img('bestellung-2-ki-bild.jpg', 'Dein Neon-Schild wird von Hand gefertigt')}
-        ${img('bestellung-3-ablauf.jpg', 'So geht es weiter: Produktion (4–6 Werktage), Versand mit Tracking-Link, Auspacken & Leuchten')}
+        ${img('bestellung-3-ablauf.jpg', 'So geht es weiter: Produktion (2–4 Werktage), Versand mit Tracking-Link, Auspacken & Leuchten')}
         ${img('bestellung-4-vorteile.jpg', 'Handgefertigt, Premium-LEDs, Plug & Play, kostenloser Versand')}
         ${img('kontakt.png', 'Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de', 'mailto:info@neonframe.de')}
         <tr><td align="center" bgcolor="#09080a" style="background:#09080a;padding:22px 20px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#6b7280">
