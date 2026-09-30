@@ -447,7 +447,7 @@ function HomeBtn({ c }) {
     marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
     padding: '14px 16px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
     textDecoration: 'none', boxSizing: 'border-box',
-    background: c.primary ? NEON : 'transparent', color: c.primary ? '#0a0a0a' : (c.dark ? '#fff' : 'var(--text)'),
+    background: c.primary ? NEON : 'transparent', color: c.primary ? '#fff' : (c.dark ? '#fff' : 'var(--text)'),
     border: c.primary ? `1px solid ${NEON}` : `1px solid ${c.dark ? '#2b2e36' : 'var(--border)'}`,
   }
   if (c.links) return (
