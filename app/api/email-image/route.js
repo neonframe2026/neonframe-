@@ -116,8 +116,15 @@ export async function GET(request) {
     })
 
     const res = new ImageResponse(img, { width: W, height: H, fonts: await loadFonts() })
-    const png = await res.arrayBuffer()
-    return new Response(png, { headers: { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=300, s-maxage=300' } })
+    let out = Buffer.from(await res.arrayBuffer())
+    let contentType = 'image/png'
+    // Als JPG verkleinern (ca. 1 MB -> 200 KB), falls "sharp" auf Vercel verfügbar ist – sonst PNG
+    try {
+      const sharp = (await import('sharp')).default
+      out = await sharp(out).flatten({ background: MID }).jpeg({ quality: 85, mozjpeg: true }).toBuffer()
+      contentType = 'image/jpeg'
+    } catch {}
+    return new Response(out, { headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=300, s-maxage=300' } })
   } catch (err) {
     return new Response('Fehler: ' + err.message, { status: 500 })
   }
