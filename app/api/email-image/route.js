@@ -5,6 +5,8 @@ import { createClient } from '@supabase/supabase-js'
 // Erzeugt für jedes Angebot ein persönliches Bild für die Mails
 // Aufruf: /api/email-image?offer=<id>&type=recontact | discount
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 
 const ASSETS = 'https://angebote.neonframe.de/email'
 const MID = '#0b1321'
