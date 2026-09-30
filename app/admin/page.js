@@ -488,7 +488,7 @@ const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin :
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
-const mIsRed = (o) => (mHours(o.created_at) >= 48 && o.status === 'offer_sent') || (mHours(o.created_at) >= 96 && o.status === 'recontacted' && !o.extra_discount_applied)
+const mIsRed = (o) => (mHours(o.created_at) >= 24 && o.status === 'offer_sent') || (mHours(o.created_at) >= 48 && o.status === 'recontacted' && !o.extra_discount_applied)
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -598,8 +598,8 @@ function MContactMenu({ o, onContact, onReview, onDiscount }) {
   }, [open])
     const unsub = o.status === 'unsubscribed'
   const items = [
-    { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (o.customer_email ? 'Erinnerung ohne Rabatt' : 'Keine E-Mail hinterlegt')), on: !!o.customer_email && (NF_TEST_MODE || !unsub), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 96 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 4 Tagen nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && (NF_TEST_MODE || mHours(o.created_at) >= 96), act: onDiscount },
+    { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && o.status !== 'confirmed' && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.status === 'confirmed' ? 'Kunde hat bestellt' : 'Erst nach Bestellung möglich'), on: !!o.customer_email && (NF_TEST_MODE || o.status === 'confirmed'), act: onReview },
   ]
   return (
@@ -650,7 +650,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onToggle, onDelet
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {o.status === 'recontacted' ? 'Seit über 4 Tagen keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 48 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
+          ⚠️ {o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
         </div>
       )}
 
