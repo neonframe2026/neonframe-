@@ -633,11 +633,11 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
   }, [open])
     const unsub = o.status === 'unsubscribed'
   const items = [
+    ...(NF_TEST_MODE ? [{ label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') }] : []),
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
         { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist beim Kunden' : 'Ab Zustellung (spätestens 7 Tage nach Bestellung)')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
     ...(NF_TEST_MODE ? [
-      { label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') },
       { label: '🧪 Produktions-Mail', hint: 'Testmodus – sofort senden', on: !!o.customer_email, act: () => onMail('produktion') },
       { label: '🧪 Versand-Mail', hint: 'Testmodus – ohne Status-Änderung', on: !!o.customer_email, act: () => onMail('versand') },
       { label: '🧪 „Heute kommt“-Mail', hint: 'Testmodus – ohne Status-Änderung', on: !!o.customer_email, act: () => onMail('heute') },
@@ -660,6 +660,31 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// Interne Notiz – nur im Admin sichtbar, wird beim Verlassen des Feldes gespeichert
+function MInternalNote({ o }) {
+  const [v, setV] = useState(o.internal_note || '')
+  const [st, setSt] = useState('')
+  useEffect(() => { setV(o.internal_note || ''); setSt('') }, [o.id])
+  async function save() {
+    if (v === (o.internal_note || '')) return
+    setSt('Speichert …')
+    try {
+      const r = await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ internal_note: v }) })
+      const d = await r.json()
+      if (d.error) throw new Error(d.error)
+      o.internal_note = v
+      setSt('✓ Gespeichert')
+    } catch (e) { setSt('Fehler: ' + e.message) }
+  }
+  return (
+    <div style={{ marginTop: 14 }}>
+      <MLbl style={{ display: 'flex', justifyContent: 'space-between' }}>Interne Notiz <span style={{ textTransform: 'none', letterSpacing: 0, color: st.startsWith('Fehler') ? '#ef4444' : '#22c55e' }}>{st}</span></MLbl>
+      <textarea value={v} onChange={e => { setV(e.target.value); setSt('') }} onBlur={save} placeholder="Nur für dich sichtbar – z. B. Absprachen, Rückfragen, Besonderheiten …" rows={4}
+        style={{ width: '100%', boxSizing: 'border-box', fontSize: 13, lineHeight: 1.5, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
     </div>
   )
 }
@@ -729,6 +754,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onMail, onToggle,
               {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
+          <MInternalNote o={o} />
         </MCard>
       </div>
 
