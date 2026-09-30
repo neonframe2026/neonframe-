@@ -4,6 +4,30 @@ const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 const FONT = "font-family:Arial,Helvetica,sans-serif;"
 const EXTRA_PCT = 10
 
+// Bild beim Versand EINMAL bauen und fertig in Supabase Storage speichern
+// -> lädt beim Kunden so schnell wie die anderen Bilder.
+// Klappt etwas nicht, wird wie bisher das Live-Bild verlinkt (Mail geht trotzdem raus).
+async function storeEmailImage(offerId, type) {
+  const liveUrl = `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=${type}&v=${Date.now()}`
+  try {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!key) return liveUrl
+    const r = await fetch(liveUrl)
+    if (!r.ok) return liveUrl
+    const contentType = (r.headers.get('content-type') || 'image/png').split(';')[0]
+    const ext = contentType === 'image/jpeg' ? 'jpg' : 'png'
+    const file = Buffer.from(await r.arrayBuffer())
+    const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, key)
+    const path = `${offerId}-${type}-${Date.now()}.${ext}`
+    const { error } = await admin.storage.from('email-images').upload(path, file, { contentType, cacheControl: '31536000', upsert: true })
+    if (error) { console.error('Storage upload:', error.message); return liveUrl }
+    return admin.storage.from('email-images').getPublicUrl(path).data.publicUrl
+  } catch (e) {
+    console.error('Email image:', e)
+    return liveUrl
+  }
+}
+
 export async function POST(req) {
   try {
     const { offerId, customerEmail, customerName, offerLink } = await req.json()
@@ -25,6 +49,8 @@ export async function POST(req) {
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
 
+    const personalImageUrl = await storeEmailImage(offerId, 'discount')
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
@@ -34,7 +60,7 @@ export async function POST(req) {
         subject: `+10 % extra auf dein Neon-Schild – NeonFrame`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
         html: buildDiscountEmail({
-          personalImageUrl: `https://angebote.neonframe.de/api/email-image?offer=${offerId}&type=discount&v=${Date.now()}`,
+          personalImageUrl,
           oldPct, newPct,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink, unsubscribeUrl, imageUrl,
