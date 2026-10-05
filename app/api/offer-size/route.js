@@ -13,6 +13,10 @@ export async function POST(req) {
     const { data: o } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
 
+    // NEU: feste Größen aus dem Admin
+    const rows = Array.isArray(o.size_options) ? o.size_options.filter(r => +r.w > 0 && +r.h > 0 && +r.vk > 0) : []
+    if (rows.length) return await handleRows(o, rows, Number(width), supabase)
+
     const W0 = parseFloat(o.width) || 0
     const H0 = parseFloat(o.height) || 0
     const minW = parseFloat(o.size_min_width) || 0
@@ -74,4 +78,43 @@ export async function POST(req) {
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
   }
+}
+
+async function handleRows(o, rows, w, supabase) {
+  const W0 = parseFloat(o.width) || 0
+  if (w === W0 && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
+  const row = rows.find(r => +r.w === w)
+  if (!row) return Response.json({ error: 'Ungültige Größe' }, { status: 400 })
+  const dType = o.disc_type || 'pct'
+  const dVal = parseFloat(o.disc_val) || 0
+  const vatPct = parseFloat(o.vat_pct) || 19
+  const vat = 1 + vatPct / 100
+  const final = Math.round(+row.vk * 1.10 * 100) / 100
+  const base = Math.round((dType === 'pct' ? final / vat / (1 - dVal / 100) : final / vat + dVal) * 10000) / 10000
+  const net = dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)
+  const h = +row.h
+  const draft = await createDraftOrder({
+    email: o.customer_email || null,
+    title: `Individuelles LED-Neon-Schild – ${o.project || ''}`.trim(),
+    listNet: base, discType: dType, discVal: dVal, vatPct,
+    note: `Angebot ${o.offer_num || o.id} – Größe vom Kunden geändert: ${W0} → ${w} cm`,
+    attributes: [
+      { key: 'Angebot', value: String(o.offer_num || o.id) },
+      { key: 'Größe', value: `${w} × ${h} cm` },
+      { key: 'Farbe(n)', value: o.colors || '' },
+      { key: 'Rückwand', value: [o.backplate, o.backplate_color].filter(Boolean).join(' / ') },
+      { key: 'Verwendung', value: o.usage || '' },
+    ],
+  })
+  if (!draft?.invoiceUrl) throw new Error('Kein Checkout-Link von Shopify')
+  // Originalgröße als Zeile behalten, damit der Kunde zurückwechseln kann
+  const vkOrig = Math.round(((parseFloat(o.final_price) || 0) / 1.10) * 100) / 100
+  const newRows = rows.filter(r => +r.w !== w)
+  if (W0 && !newRows.some(r => +r.w === W0) && vkOrig > 0) newRows.push({ w: W0, h: parseFloat(o.height) || 0, vk: vkOrig })
+  await supabase.from('offers').update({
+    width: w, height: h, base_price: base,
+    net_price: Math.round(net * 100) / 100, final_price: final,
+    checkout_url: draft.invoiceUrl, size_options: newRows,
+  }).eq('id', o.id)
+  return Response.json({ checkoutUrl: draft.invoiceUrl })
 }
