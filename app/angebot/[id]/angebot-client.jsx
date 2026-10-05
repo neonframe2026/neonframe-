@@ -510,7 +510,7 @@ export default function AngebotPage({ offer }) {
   const [selW, setSelW] = useState(sm.W0)
   const [accepting, setAccepting] = useState(false)
   const sizeInfo = sm.enabled
-    ? `Für dieses Design benötigen wir leider eine Mindestgröße von ${sm.minW} x ${sm.heightFor(sm.minW)} CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    ? `Für dieses Design benötigen wir eine Mindestgröße von ${sm.minW} x ${sm.heightFor(sm.minW)} CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
