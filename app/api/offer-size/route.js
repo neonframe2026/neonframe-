@@ -27,9 +27,16 @@ export async function POST(req) {
     if (!valid || w < minW) return Response.json({ error: 'Ungültige Größe' }, { status: 400 })
     if (w === W0 && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
 
-    // gleiche Formel wie auf der Angebotsseite
-    const partner = (x) => pMin + (pMax - pMin) * (x - minW) / (300 - minW)
-    const base = Math.round((parseFloat(o.base_price) || 0) * partner(w) / partner(W0) * 100) / 100
+    // gleiche Formel wie auf der Angebotsseite (Netto-Listenpreis)
+    const base0 = parseFloat(o.base_price) || 0
+    const pts = [[minW, pMin * 1.10], [300, pMax * 1.10]]
+    if (W0 > minW && W0 < 300) pts.splice(1, 0, [W0, base0])
+    let list = base0
+    for (let k = 0; k < pts.length - 1; k++) {
+      const [x1, y1] = pts[k], [x2, y2] = pts[k + 1]
+      if (w <= x2 || k === pts.length - 2) { list = y1 + (y2 - y1) * (w - x1) / (x2 - x1); break }
+    }
+    const base = Math.round(list * 100) / 100
     const h = Math.round(w * H0 / W0)
     const discType = o.disc_type || 'pct'
     const discVal = parseFloat(o.disc_val) || 0
