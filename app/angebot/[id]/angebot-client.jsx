@@ -361,7 +361,7 @@ function ContactCard({ displayId, projectName }) {
   }
 
   return (
-    <div style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
+    <div className="contact-card" style={{ marginTop: 20, background: '#fff', border: '1px solid #eee', borderRadius: 16, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_19_21_39_800x800.png?v=1778783280" alt="Support" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0 }} />
         <div>
@@ -369,7 +369,7 @@ function ContactCard({ displayId, projectName }) {
           <div style={{ fontSize: 14, color: '#999', lineHeight: 1.4 }}>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</div>
         </div>
       </div>
-      <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }} />
+      <textarea className="contact-ta" value={msg} onChange={e => setMsg(e.target.value)} placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button onClick={send} disabled={loading} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,12 2,6" /></svg>
@@ -509,8 +509,17 @@ export default function AngebotPage({ offer }) {
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
   const [accepting, setAccepting] = useState(false)
+  const ctaRef = useRef(null)
+  const [showBar, setShowBar] = useState(false)
+  useEffect(() => {
+    const el = ctaRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting), { threshold: 0 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const sizeInfo = sm.enabled
-    ? `Für dieses Design benötigen wir eine Mindestgröße von ${sm.minW} x ${sm.heightFor(sm.minW)} CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    ? `Für dieses Design benötigen wir leider eine Mindestgröße von ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
@@ -571,8 +580,8 @@ const final = net + vatAmt
         .ii.ii-warn { background:#dc2626; font-style:normal; font-family:inherit; animation: warnPulse 1.8s ease-in-out infinite; }
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
-        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:760px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:920px; max-width:calc(100vw - 40px); }
-        .ii-txt { display:block; width:410px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
+        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:860px; max-width:calc(100vw - 40px); }
+        .ii-txt { display:block; width:470px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
@@ -598,14 +607,59 @@ const final = net + vatAmt
         .oc-total b { font-size:28px; font-weight:900; letter-spacing:-.02em; white-space:nowrap; }
         .oc-vat { text-align:right; font-size:11.5px; color:#888; }
         .offer-card .cta-btn { margin-bottom:0; }
-        .sticky-buy { display:none; }
+        .oc-legal { text-align:center; font-size:11px; color:#9ca3af; margin-top:8px; }
+        .sticky-buy { position:fixed; left:0; right:0; bottom:0; z-index:500; background:rgba(255,255,255,.97); backdrop-filter:blur(8px); border-top:1px solid #e5e7eb; box-shadow:0 -6px 20px rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center; gap:28px; padding:12px 52px; transform:translateY(110%); transition:transform .25s ease; }
+        .sticky-buy.show { transform:translateY(0); }
+        .sticky-buy .sb-info { display:flex; flex-direction:column; }
+        .sticky-buy .sb-name { font-size:13px; color:#666; max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .sticky-buy .sb-price { display:flex; align-items:baseline; gap:10px; }
+        .sticky-buy s { font-size:13px; color:#999; }
+        .sticky-buy b { font-size:22px; font-weight:900; white-space:nowrap; }
+        .sticky-buy .cta-btn { width:auto; min-width:280px; margin:0; padding:14px 28px; font-size:16px; }
+                .sb-space { height:78px; background:#0a0a0a; }
+        /* Design E */
+        .ve-wrap { margin-top:16px; display:flex; flex-direction:column; }
+        .ve-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .ve-ship { background:#f0fbff; border:1px solid #b8e8f8; border-radius:14px; padding:16px; display:flex; flex-direction:column; }
+        .ve-ic { width:26px; height:26px; color:#0891b2; margin-bottom:8px; }
+        .ve-ship strong, .ve-incl strong { font-size:15px; font-weight:800; color:#111; }
+        .ve-ship > span { font-size:13px; color:#666; margin-top:3px; }
+        .ve-express { display:flex; align-items:center; gap:6px; margin-top:auto; padding-top:10px; font-size:13px; font-weight:700; color:#0891b2; }
+        .ve-express svg { width:15px; height:15px; color:#f59e0b; }
+        .ve-express .tt-t { border-bottom-color:#7dd3e8; }
+        .ve-incl { border:1px solid #eee; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px; }
+        .ve-ck { display:flex; align-items:center; gap:8px; font-size:13.5px; color:#444; }
+        .ve-ck svg { width:15px; height:15px; color:#16a34a; flex-shrink:0; }
+        .ve-strip { display:flex; justify-content:space-between; gap:10px; margin-top:14px; padding-top:13px; border-top:1px solid #eee; }
+        .ve-strip span { display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; color:#444; }
+        .ve-strip svg { width:17px; height:17px; color:#0891b2; flex-shrink:0; }
+        @media(min-width:961px){
+          .col-right { display:flex !important; flex-direction:column; }
+          .ve-wrap { flex:1; }
+          .ve-grid { flex:1; }
+        }
+        @media(max-width:960px){
+          .ve-strip { display:grid; grid-template-columns:1fr 1fr; gap:12px 10px; }
+          .ve-ship, .ve-incl { padding:13px; }
+          .ve-ck { font-size:12.5px; }
+        }
+        /* Desktop: links und rechts gleich lang – Fragen-Box wächst bis zur Unterkante */
+        @media(min-width:961px){
+          .page-wrap { align-items:stretch !important; }
+          .col-left { display:flex !important; flex-direction:column; }
+          .col-left .contact-card { flex:1; display:flex; flex-direction:column; }
+          .col-left .contact-ta { flex:1; resize:none !important; }
+        }
+        @media(max-width:960px){ .sb-space { display:none; } }
         @media(max-width:960px){
           .cfg-grid { gap:14px 14px; }
           .oc-total b { font-size:24px; }
-          .sticky-buy { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:500; background:#fff; border-top:1px solid #e5e7eb; box-shadow:0 -6px 20px rgba(0,0,0,.08); padding:10px 14px calc(10px + env(safe-area-inset-bottom)); align-items:center; gap:12px; }
-          .sticky-buy s { display:block; font-size:11px; color:#999; }
-          .sticky-buy b { display:block; font-size:19px; font-weight:900; white-space:nowrap; }
-          .sticky-buy .cta-btn { flex:1; margin:0; padding:14px; font-size:15px; }
+          .sticky-buy { justify-content:space-between; gap:12px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); }
+          .sticky-buy .sb-name { display:none; }
+          .sticky-buy .sb-price { flex-direction:column; gap:0; }
+          .sticky-buy s { font-size:11px; }
+          .sticky-buy b { font-size:19px; }
+          .sticky-buy .cta-btn { flex:1; width:auto; min-width:0; padding:14px; font-size:15px; }
           .site-footer { padding-bottom:84px; }
         }
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100; }
@@ -926,61 +980,43 @@ const final = net + vatAmt
                 <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
               </div>
 
-              <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">
+              <a ref={ctaRef} href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
                 {accepting ? 'Einen Moment …' : 'Angebot annehmen'}
               </a>
+              <div className="oc-legal">Individuelle Anfertigung – kein Widerrufsrecht (§ 312g BGB)</div>
             </div>
           </div>
 
-          {/* Widerrufsrecht */}
-          <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
-          </div>
-
-          {/* 6 — Checks */}
-          <div className="checks mob-checks">
-            {[
-              <>Einfach zu installieren mit dem mitgelieferten <span className="tt"><span className="tt-t">Montagematerial</span><span className="tt-box">Inklusive Schrauben, Dübel und Abstandhalter.</span></span></>,
-              <>Inklusive Fernbedienung, 3 Meter Stromkabel, Adapter und Dimmer</>,
-              <>Entwickelt für eine langlebige und hochwertige Nutzung</>,
-            ].map((text, i) => (
-              <div key={i} className="check-row">
-                <svg className="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5" /></svg>
-                <span>{text}</span>
+          {/* Versand | Inklusive + Vorteile (Design E) */}
+          <div className="ve-wrap">
+            <div className="ve-grid">
+              <div className="ve-ship">
+                <svg className="ve-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1z" /><path d="M16 8h4l3 3v5h-7z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                <strong>Kostenloser Versand</strong>
+                <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
+                <div className="ve-express">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                  <span className="tt"><span className="tt-t">Express anfragen</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
+                </div>
               </div>
-            ))}
-          </div>
-
-          {/* 9 — Versand */}
-          <div className="ship-box mob-ship">
-            <svg className="ship-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>
-            <div className="ship-text">
-              <strong>Kostenloser Versand</strong>
-              <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
+              <div className="ve-incl">
+                <strong>Inklusive</strong>
+                {['Montagematerial', 'Fernbedienung & Dimmer', '3 m Kabel + Adapter'].map(t => (
+                  <div key={t} className="ve-ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5" /></svg>{t}</div>
+                ))}
+              </div>
             </div>
-          </div>
-
-          {/* 10 — Express */}
-          <div className="express-row mob-express">
-            <svg className="express-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-            <span className="tt"><span className="tt-t">Expressversand anfordern</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
-          </div>
-
-          {/* 11 — Features */}
-          <div className="features mob-features">
-            {[
-              [<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></>, 'Qualitätsgarantie', 'Hochwertige LED-Neonfertigung'],
-              [<><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>, 'Komplettpaket', 'Netzteil, Dimmer, Fernbedienung'],
-              [<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></>, 'Einfache Installation', 'In wenigen Minuten montiert'],
-              [<><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></>, 'Extrem langlebig', 'Bis zu 100.000 Std. Lebensdauer'],
-            ].map(([pathEl, title, sub], i) => (
-              <div key={i} className="feat">
-                <div className="feat-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">{pathEl}</svg></div>
-                <div><span className="feat-title">{title}</span><span className="feat-sub">{sub}</span></div>
-              </div>
-            ))}
+            <div className="ve-strip">
+              {[
+                [<path key="a" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />, 'Qualitätsgarantie'],
+                [<><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z" /><path d="M3.3 7 12 12l8.7-5M12 22V12" /></>, 'Komplettpaket'],
+                [<polygon key="c" points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />, 'Schnelle Montage'],
+                [<><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>, '100.000 Std. Lebensdauer'],
+              ].map(([icon, label], k) => (
+                <span key={k}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>{label}</span>
+              ))}
+            </div>
           </div>
 
           {/* 12 — Mobile-only contact */}
@@ -1141,9 +1177,9 @@ const final = net + vatAmt
       {/* FAQ */}
       <FaqSection />
 
-      {/* Handy: Preis + Button immer sichtbar */}
-      <div className="sticky-buy">
-        <div>{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></div>
+      {/* Preis + Button unten, sobald der Button in der Karte nicht sichtbar ist */}
+      <div className={`sticky-buy${showBar ? ' show' : ''}`}>
+        <div className="sb-info"><span className="sb-name">Dein Neon-Schild{offer.project ? ` für ${offer.project}` : ''}</span><span className="sb-price">{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></span></div>
         <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">{accepting ? 'Einen Moment …' : 'Angebot annehmen'}</a>
       </div>
 
@@ -1178,6 +1214,7 @@ const final = net + vatAmt
           <div className="footer-copy">© {new Date().getFullYear()} NeonFrame. Alle Rechte vorbehalten.</div>
         </div>
       </footer>
+      <div className="sb-space" />
     </>
   )
 }
