@@ -23,7 +23,13 @@ function colorDot(s = '') {
 }
 
 // ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
-function InfoTip({ img, text, wide }) {
+function tipText(text = '') {
+  const i = text.indexOf('Kleiner gewünscht?')
+  if (i <= 0) return text
+  return <>{text.slice(0, i).trim()}<span style={{ display: 'block', marginTop: 8 }}>{text.slice(i)}</span></>
+}
+
+function InfoTip({ img, text, wide, warn }) {
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState(false)
   const [pos, setPos] = useState(null)
@@ -54,27 +60,27 @@ function InfoTip({ img, text, wide }) {
     return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place) }
   }, [hover, place])
 
-  const content = img ? <img src={img} alt="" onLoad={place} /> : <span className="ii-txt">{text}</span>
+  const content = img ? <img src={img} alt="" onLoad={place} /> : <span className="ii-txt">{tipText(text)}</span>
   return (
     <span className="ii-wrap">
       <span
         ref={iconRef}
-        className="ii"
+        className={warn ? 'ii ii-warn' : 'ii'}
         role="button"
         tabIndex={0}
         onMouseEnter={() => { if (window.matchMedia('(hover:hover) and (min-width:961px)').matches) setHover(true) }}
         onMouseLeave={() => setHover(false)}
         onClick={(e) => { e.stopPropagation(); setHover(false); setOpen(true) }}
-      >i</span>
+      >{warn ? '!' : 'i'}</span>
       {hover && (
-        <span ref={popRef} className={`ii-pop${wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
+        <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
           {content}
         </span>
       )}
       {open && (
         <span className="ii-modal" onClick={() => setOpen(false)}>
           <span className="ii-modal-box" onClick={(e) => e.stopPropagation()}>
-            {img ? <img src={img} alt="" /> : <span className="ii-txt">{text}</span>}
+            {img ? <img src={img} alt="" /> : <span className="ii-txt">{tipText(text)}</span>}
             <button type="button" onClick={() => setOpen(false)}>Schließen</button>
           </span>
         </span>
@@ -105,8 +111,8 @@ function parseColors(s = '') {
   return s.split(',').map(c => c.trim()).filter(Boolean)
 }
 
-const backplateFormImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandart.png?v=1789583341'
-const backplateColorImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandfarbe.png?v=1789583341'
+const backplateFormImageUrl = '/email/rueckwand-form.jpg'
+const backplateColorImageUrl = '/email/rueckwand-farbe.jpg'
 const usageImages = {
   'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Logo-Neonschild.png?v=1789479108',
   'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27.png?v=1778724405',
@@ -535,7 +541,7 @@ const final = net + vatAmt
   const listBrutto = base * (1 + vatPct / 100)
   const discBrutto = discAmt * (1 + vatPct / 100)
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
-  const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) >= 110
+  const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
   const sizeChanged = sm.enabled && selW !== sm.W0
 
   async function accept(e) {
@@ -562,9 +568,10 @@ const final = net + vatAmt
         .ii-wrap { position:relative; display:inline-flex; vertical-align:middle; }
         .ii { width:16px; height:16px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:10px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-transform:none; letter-spacing:0; }
         .ii:hover { background:#71717a; }
+        .ii.ii-warn { background:#dc2626; font-style:normal; font-family:inherit; animation: warnPulse 1.8s ease-in-out infinite; }
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
-        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); }
+        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:780px; max-width:calc(100vw - 40px); }
         .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
@@ -873,9 +880,8 @@ const final = net + vatAmt
                       ) : (
                         <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
                       )}
-                      {multiPart && <span className="size-warn-badge">!</span>}
+                      {multiPart && <InfoTip warn text="Schilder ab 110 cm Breite können aus mehreren Teilen bestehen." />}
                     </div>
-                    {multiPart && <div className="multi-tip">Schilder ab 110 cm Breite können aus mehreren Teilen bestehen.</div>}
                   </div>
                 )}
                 {colors.length > 0 && (
@@ -895,13 +901,13 @@ const final = net + vatAmt
                 )}
                 {offer.backplate && (
                   <div>
-                    <span className="cfg-label">Rückwandform {backplateImg && <InfoTip img={backplateImg} wide />}</span>
+                    <span className="cfg-label">Rückwandform {backplateImg && <InfoTip img={backplateImg} wide="x" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate}</div>
                   </div>
                 )}
                 {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
                   <div>
-                    <span className="cfg-label">Rückwandfarbe {backplateColorImg && <InfoTip img={backplateColorImg} wide />}</span>
+                    <span className="cfg-label">Rückwandfarbe {backplateColorImg && <InfoTip img={backplateColorImg} wide="x" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate_color}</div>
                   </div>
                 )}
