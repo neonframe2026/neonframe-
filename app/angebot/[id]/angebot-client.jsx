@@ -4,16 +4,59 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 function colorDot(s = '') {
   const c = s.toLowerCase()
-  if (c.includes('ice blue') || c.includes('blue') || c.includes('blau')) return '#60c8f0'
-  if (c.includes('warm white') || c.includes('warm')) return '#fef3c7'
-  if (c.includes('white') || c.includes('weiß')) return '#e5e5e5'
-  if (c.includes('red') || c.includes('rot')) return '#ef4444'
-  if (c.includes('green') || c.includes('grün')) return '#22c55e'
+  if (c.includes('ice blue')) return '#38bdf8'
+  if (c.includes('lake blue')) return '#2ee6d6'
+  if (c.includes('blue') || c.includes('blau')) return '#2f3dff'
+  if (c.includes('warm white') || c.includes('warm')) return '#fde7a8'
+  if (c.includes('white') || c.includes('weiß')) return '#e5e7eb'
+  if (c.includes('peachy')) return '#fb7185'
+  if (c.includes('soft pink')) return '#f9a8d4'
   if (c.includes('pink')) return '#ec4899'
-  if (c.includes('purple') || c.includes('lila')) return '#a855f7'
-  if (c.includes('yellow') || c.includes('gelb')) return '#f59e0b'
-  if (c.includes('soft orange') || c.includes('orange')) return '#fb923c'
+  if (c.includes('red') || c.includes('rot')) return '#ef4444'
+  if (c.includes('light green')) return '#a3e635'
+  if (c.includes('green') || c.includes('grün')) return '#22c55e'
+  if (c.includes('purple') || c.includes('lila')) return '#8b2cf5'
+  if (c.includes('yellow') || c.includes('gelb')) return '#facc15'
+  if (c.includes('soft orange')) return '#fdba74'
+  if (c.includes('orange')) return '#f97316'
   return '#9ca3af'
+}
+
+// ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
+function InfoTip({ img, text, wide }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span className="ii-wrap">
+      <span className="ii" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setOpen(true) }}>i</span>
+      <span className={`ii-pop${wide ? ' wide' : ''}`}>{img ? <img src={img} alt="" /> : <span className="ii-txt">{text}</span>}</span>
+      {open && (
+        <span className="ii-modal" onClick={() => setOpen(false)}>
+          <span className="ii-modal-box" onClick={(e) => e.stopPropagation()}>
+            {img ? <img src={img} alt="" /> : <span className="ii-txt">{text}</span>}
+            <button type="button" onClick={() => setOpen(false)}>Schließen</button>
+          </span>
+        </span>
+      )}
+    </span>
+  )
+}
+
+// Größen: Partnerpreis linear zwischen Mindestbreite und 300 cm
+function sizeModel(offer) {
+  const W0 = parseFloat(offer.width) || 0
+  const H0 = parseFloat(offer.height) || 0
+  const minW = parseFloat(offer.size_min_width) || 0
+  const pMin = parseFloat(offer.tnc_price_min) || 0
+  const pMax = parseFloat(offer.tnc_price_max) || 0
+  const enabled = W0 > 0 && H0 > 0 && minW > 0 && minW < 300 && pMin > 0 && pMax > 0
+  const partner = (w) => pMin + (pMax - pMin) * (w - minW) / (300 - minW)
+  const factor = (w) => (enabled && partner(W0) > 0 ? partner(w) / partner(W0) : 1)
+  const heightFor = (w) => (W0 ? Math.round(w * H0 / W0) : H0)
+  const widths = []
+  for (let w = 30; w <= 300; w += 10) widths.push(w)
+  if (W0 && !widths.includes(W0)) widths.push(W0)
+  widths.sort((x, y) => x - y)
+  return { enabled, W0, H0, minW, widths, factor, heightFor }
 }
 
 function parseColors(s = '') {
@@ -415,8 +458,12 @@ function FaqSection() {
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
 export default function AngebotPage({ offer }) {
   const [descOpen, setDescOpen] = useState(false)
+  const sm = sizeModel(offer)
+  const [selW, setSelW] = useState(sm.W0)
+  const [accepting, setAccepting] = useState(false)
+  const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
-const base = parseFloat(offer.base_price) || 0
+const base = (parseFloat(offer.base_price) || 0) * (sm.enabled ? sm.factor(selW) : 1)
 const discType = offer.disc_type || 'pct'
 const discVal = parseFloat(offer.disc_val) || 0
 const vatPct = parseFloat(offer.vat_pct) || 19
@@ -440,12 +487,76 @@ const final = net + vatAmt
   const backplateImg = offer.backplate ? backplateFormImageUrl : null
   const backplateColorImg = offer.backplate_color ? backplateColorImageUrl : null
   const usageImg = getTooltipImg(offer.usage, usageImages)
+  const listBrutto = base * (1 + vatPct / 100)
+  const discBrutto = discAmt * (1 + vatPct / 100)
+  const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+  const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) >= 110
+  const sizeChanged = sm.enabled && selW !== sm.W0
+
+  async function accept(e) {
+    if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
+    e.preventDefault()
+    if (accepting) return
+    setAccepting(true)
+    try {
+      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: selW }) })
+      const d = await r.json()
+      if (d.checkoutUrl) { window.location.href = d.checkoutUrl; return }
+      alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal oder schreib uns an info@neonframe.de.')
+    } catch { alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal.') }
+    setAccepting(false)
+  }
 
   return (
     <>
       <style>{`
         *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html, body { overflow-x:hidden; max-width:100%; }
         body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#111; background:#fff; -webkit-font-smoothing:antialiased; }
+        /* Info-i */
+        .ii-wrap { position:relative; display:inline-flex; vertical-align:middle; }
+        .ii { width:16px; height:16px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:10px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-transform:none; letter-spacing:0; }
+        .ii:hover { background:#71717a; }
+        .ii-pop { display:none; position:absolute; top:calc(100% + 10px); left:-10px; z-index:300; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
+        .ii-pop img { display:block; width:360px; max-width:80vw; height:auto; border-radius:8px; }
+        .ii-pop.wide img { width:620px; }
+        .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:500; white-space:normal; }
+        @media (hover:hover) and (min-width:961px) { .ii-wrap:hover .ii-pop { display:block; } }
+        .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
+        .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
+        .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
+        .ii-modal-box button { border:0; background:#111; color:#fff; border-radius:10px; padding:11px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; }
+        @media (hover:hover) and (min-width:961px) { .ii-modal { display:none; } }
+        /* Angebots-Karte */
+        .offer-card { border:1px solid #e8e8e8; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.05); margin-bottom:14px; }
+        .oc-head { background:linear-gradient(90deg,#0a0a0a,#13303a); color:#fff; padding:15px 20px; display:flex; align-items:center; gap:14px; }
+        .oc-head small { display:block; font-size:10px; letter-spacing:.18em; color:#60c8f0; font-weight:800; }
+        .oc-head b { display:block; font-size:21px; font-weight:800; line-height:1.2; word-break:break-word; }
+        .oc-star { font-size:24px; color:#60c8f0; text-shadow:0 0 12px rgba(96,200,240,.7); }
+        .oc-body { padding:18px 20px 20px; }
+        .cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; margin-bottom:16px; }
+        .cfg-label { display:flex !important; align-items:center; gap:6px; }
+        .size-sel { appearance:none; -webkit-appearance:none; height:40px; padding:0 38px 0 14px; border:1.5px solid #d4d4d8; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; color:#111; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 13px center; cursor:pointer; max-width:100%; }
+        .size-sel:focus { outline:none; border-color:#60c8f0; }
+        .multi-tip { margin-top:8px; font-size:12px; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:6px 10px; line-height:1.45; }
+        .oc-price { border-top:1px solid #f0f0f0; padding-top:12px; margin-bottom:14px; }
+        .oc-row { display:flex; justify-content:space-between; gap:12px; font-size:14px; color:#555; padding:3px 0; }
+        .oc-row.disc { color:#16a34a; font-weight:600; }
+        .oc-total { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-top:8px; }
+        .oc-total span { font-size:15px; font-weight:700; }
+        .oc-total b { font-size:28px; font-weight:900; letter-spacing:-.02em; white-space:nowrap; }
+        .oc-vat { text-align:right; font-size:11.5px; color:#888; }
+        .offer-card .cta-btn { margin-bottom:0; }
+        .sticky-buy { display:none; }
+        @media(max-width:960px){
+          .cfg-grid { gap:14px 14px; }
+          .oc-total b { font-size:24px; }
+          .sticky-buy { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:500; background:#fff; border-top:1px solid #e5e7eb; box-shadow:0 -6px 20px rgba(0,0,0,.08); padding:10px 14px calc(10px + env(safe-area-inset-bottom)); align-items:center; gap:12px; }
+          .sticky-buy s { display:block; font-size:11px; color:#999; }
+          .sticky-buy b { display:block; font-size:19px; font-weight:900; white-space:nowrap; }
+          .sticky-buy .cta-btn { flex:1; margin:0; padding:14px; font-size:15px; }
+          .site-footer { padding-bottom:84px; }
+        }
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100; }
         @media(max-width:900px){ .hdr { padding:0 16px; height:64px; } }
         .hdr-badge { background:rgba(96,200,240,.12); border:1px solid rgba(96,200,240,.3); color:#60c8f0; font-size:14px; font-weight:600; padding:9px 18px; border-radius:20px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
@@ -461,19 +572,7 @@ const final = net + vatAmt
           .col-left { display:none; }
           .col-right { display:flex; flex-direction:column; }
           .mob-gallery { display:block !important; }
-          .mob-title   { order:1; }
-          .mob-stars   { order:2; }
-          .mob-badge   { order:3; }
-          .mob-gallery { order:4; margin-bottom:16px; }
-          .mob-cfg     { order:5; }
-          .mob-checks  { order:6; }
-          .mob-price   { order:7; }
-          .mob-cta     { order:8; }
-          .mob-warn    { order:9; }
-          .mob-ship    { order:10; }
-          .mob-express { order:11; }
-          .mob-features{ order:12; }
-          .mob-contact { order:13; display:block !important; margin-top:24px; }
+          .mob-contact { display:block !important; margin-top:24px; }
         @media(max-width:960px){
           .desc-section { margin-top:24px; }
           .desc-header { flex-wrap:wrap; gap:8px; align-items:center; }
@@ -498,7 +597,7 @@ const final = net + vatAmt
           100% { background:#ff0055; color:#ff0055; }
         }
         .img-tt { position:relative; display:inline-flex; }
-        .img-tt-box { display:block; opacity:0; visibility:hidden; position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%) translateY(-6px); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; transition: opacity .18s ease, transform .18s ease, visibility .38s; }
+        .img-tt-box { display:none; opacity:0; visibility:hidden; position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%) translateY(-6px); background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 8px 30px rgba(0,0,0,.12); z-index:200; pointer-events:none; transition: opacity .18s ease, transform .18s ease, visibility .38s; }
         .img-tt-box::after { content:''; position:absolute; bottom:100%; left:50%; transform:translateX(-50%); border:8px solid transparent; border-bottom-color:#fff; }
         .img-tt-box img { display:block; border-radius:8px; }
         .img-tt-box.square { background:#000; }
@@ -700,86 +799,97 @@ const final = net + vatAmt
             <span style={{ fontSize: 14, color: '#666', fontWeight: 500 }}>4,5/5 Sternen</span>
           </div>
 
-          {/* 3 — Badge */}
-          {offer.project && (
-            <div className="mob-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f5f5f5', border: '1px solid #e8e8e8', borderRadius: 10, padding: '7px 12px', marginBottom: 18, whiteSpace: 'nowrap' }}>
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#fff', border: '1.5px solid #c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-              </div>
-              <span style={{ fontSize: 13, color: '#555' }}>Individuell angefertigt für <strong style={{ color: '#111' }}>{offer.project}</strong></span>
-            </div>
-          )}
-
-          {/* 4 — MOBILE ONLY gallery */}
-          <div className="mob-gallery">
+          {/* MOBILE ONLY gallery */}
+          <div className="mob-gallery" style={{ marginBottom: 16 }}>
             <Gallery images={images} />
           </div>
 
-          {/* 5 — Maße + Farben + Rückwand */}
-          <div className="mob-cfg">
-            <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12, alignItems: 'flex-start' }}>
-              {(offer.width || offer.height) && (
-                <div>
-                  <span className="cfg-label">Maße (Breite × Höhe)</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
-                    {offer.size_warning_enabled && offer.size_warning_text && (
-                      <span className="tt">
-                        <span className="size-warn-badge">!</span>
-                        <span className="tt-box warn-box">{offer.size_warning_text}</span>
-                      </span>
-                    )}
+          {/* ANGEBOTS-KARTE: Name + Konfiguration + Preis + Button */}
+          <div className="offer-card">
+            {offer.project && (
+              <div className="oc-head">
+                <span className="oc-star">✦</span>
+                <div><small>INDIVIDUELL ANGEFERTIGT FÜR</small><b>{offer.project}</b></div>
+              </div>
+            )}
+            <div className="oc-body">
+              <div className="cfg-grid">
+                {(offer.width || offer.height) && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span className="cfg-label">Maße (Breite × Höhe)
+                      {sm.enabled && <InfoTip text={`Die Mindestgröße für dieses Design ist ${sm.minW} × ${sm.heightFor(sm.minW)} cm. Kleiner gewünscht? Kontaktiere uns – wir können dein Design eventuell vereinfachen.`} />}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                      {sm.enabled ? (
+                        <select className="size-sel" value={selW} onChange={e => setSelW(Number(e.target.value))}>
+                          {sm.widths.map(w => (
+                            <option key={w} value={w} disabled={w < sm.minW && w !== sm.W0}>{w} × {sm.heightFor(w)} cm</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
+                      )}
+                      {offer.size_warning_enabled && offer.size_warning_text && (
+                        <span className="tt"><span className="size-warn-badge">!</span><span className="tt-box warn-box">{offer.size_warning_text}</span></span>
+                      )}
+                      {multiPart && <span className="size-warn-badge">!</span>}
+                    </div>
+                    {multiPart && <div className="multi-tip">Schilder ab 110 cm Breite können aus mehreren Teilen bestehen.</div>}
                   </div>
-                </div>
-              )}
-              {colors.length > 0 && (
-                <div>
-                  <span className="cfg-label">Farbe{colors.length > 1 ? '(n)' : ''}</span>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                    {colors.map((c, i) => (
-                      <div key={i} className="img-tt">
-                        <div className="cfg-pill">
+                )}
+                {colors.length > 0 && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <span className="cfg-label">Farbe{colors.length > 1 ? '(n)' : ''} <InfoTip img={colorHoverImage} wide /></span>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                      {colors.map((c, i) => (
+                        <div key={i} className="cfg-pill">
                           {c.toLowerCase().includes('full color')
                             ? <span className="color-dot rgb" />
                             : <span className="color-dot" style={{ background: colorDot(c), color: colorDot(c) }} />}
                           {c}
                         </div>
-                        <div className="img-tt-box wide"><img src={colorHoverImage} alt="Farbbeispiel" /></div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                {offer.backplate && (
+                  <div>
+                    <span className="cfg-label">Rückwandform {backplateImg && <InfoTip img={backplateImg} wide />}</span>
+                    <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate}</div>
+                  </div>
+                )}
+                {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
+                  <div>
+                    <span className="cfg-label">Rückwandfarbe {backplateColorImg && <InfoTip img={backplateColorImg} wide />}</span>
+                    <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate_color}</div>
+                  </div>
+                )}
+                {offer.usage && (
+                  <div>
+                    <span className="cfg-label">Verwendung {usageImg && <InfoTip img={usageImg} />}</span>
+                    <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.usage}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="oc-price">
+                {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
+                {discAmt > 0 && <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>}
+                <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
+                <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
+              </div>
+
+              <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+                {accepting ? 'Einen Moment …' : 'Angebot annehmen'}
+              </a>
             </div>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 20, alignItems: 'flex-end' }}>
-              {offer.backplate && (
-                <div>
-                  <span className="cfg-label">Rückwandform</span>
-                  <div className="img-tt" style={{ marginTop: 4 }}>
-                    <div className="cfg-pill">{offer.backplate}</div>
-                    {backplateImg && <div className="img-tt-box square"><img src={backplateImg} alt={offer.backplate} /></div>}
-                  </div>
-                </div>
-              )}
-              {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
-                <div>
-                  <span className="cfg-label">Rückwandfarbe</span>
-                  <div className="img-tt" style={{ marginTop: 4 }}>
-                    <div className="cfg-pill">{offer.backplate_color}</div>
-                    {backplateColorImg && <div className="img-tt-box square"><img src={backplateColorImg} alt={offer.backplate_color} /></div>}
-                  </div>
-                </div>
-              )}
-              {offer.usage && (
-                <div>
-                  <span className="cfg-label">Verwendungszweck</span>
-                  <div className="img-tt" style={{ marginTop: 4 }}>
-                    <div className="cfg-pill">{offer.usage}</div>
-                    {usageImg && <div className="img-tt-box plain"><img src={usageImg} alt={offer.usage} /></div>}
-                  </div>
-                </div>
-              )}
-            </div>
+          </div>
+
+          {/* Widerrufsrecht */}
+          <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
           </div>
 
           {/* 6 — Checks */}
@@ -794,35 +904,6 @@ const final = net + vatAmt
                 <span>{text}</span>
               </div>
             ))}
-          </div>
-
-          {/* 7 — Preis */}
-          <div className="price-section mob-price">
-            <table className="price-table">
-              <tbody>
-                {base > 0 && <tr><td>Listenpreis (netto)</td><td>€ {base.toFixed(2)}</td></tr>}
-                {discAmt > 0 && <tr className="pr-disc"><td style={{ paddingTop: 6 }}>− Rabatt ({discDisplay})</td><td style={{ paddingTop: 6 }}>− € {discAmt.toFixed(2)}</td></tr>}
-                {net > 0 && <tr><td style={{ paddingTop: 4 }}>Netto-Preis nach Rabatt</td><td style={{ paddingTop: 4 }}>€ {net.toFixed(2)}</td></tr>}
-                {vatAmt > 0 && <tr><td>+ MwSt. ({vatPct}%)</td><td>+ € {vatAmt.toFixed(2)}</td></tr>}
-                <tr className="pr-divider"><td colSpan={2}></td></tr>
-                <tr className="pr-total">
-                  <td>Gesamtbetrag</td>
-                  <td>{final > 0 ? `€ ${final.toFixed(2)}` : '–'}{final > 0 && <span style={{ fontSize: 11, fontWeight: 400, color: '#888', marginLeft: 6 }}>(inkl. MwSt.)</span>}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* 8 — CTA */}
-          <a href={offer.checkout_url || '#'} className="cta-btn mob-cta" target={offer.checkout_url ? '_blank' : undefined} rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
-            Angebot annehmen
-          </a>
-
-          {/* Widerrufsrecht */}
-          <div className="mob-warn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, marginBottom: 14, marginTop: 14 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" style={{ flexShrink: 0, alignSelf: 'center' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>Da es sich um ein individuell angefertigtes Produkt handelt, besteht gemäß § 312g BGB <strong>kein Widerrufsrecht</strong>.</span>
           </div>
 
           {/* 9 — Versand */}
@@ -1012,6 +1093,12 @@ const final = net + vatAmt
 
       {/* FAQ */}
       <FaqSection />
+
+      {/* Handy: Preis + Button immer sichtbar */}
+      <div className="sticky-buy">
+        <div>{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></div>
+        <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">{accepting ? 'Einen Moment …' : 'Angebot annehmen'}</a>
+      </div>
 
       {/* FOOTER */}
       <footer className="site-footer">
