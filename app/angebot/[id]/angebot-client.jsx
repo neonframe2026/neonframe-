@@ -105,13 +105,13 @@ function parseColors(s = '') {
   return s.split(',').map(c => c.trim()).filter(Boolean)
 }
 
-const backplateFormImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandart_800x800.png?v=1789583341'
-const backplateColorImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandfarbe_800x800.png?v=1789583341'
+const backplateFormImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandart.png?v=1789583341'
+const backplateColorImageUrl = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/rueckwandfarbe.png?v=1789583341'
 const usageImages = {
-  'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Logo-Neonschild_800x800.png?v=1789479108',
-  'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27_800x800.png?v=1778724405',
+  'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Logo-Neonschild.png?v=1789479108',
+  'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27.png?v=1778724405',
 }
-const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_c82bb103-80c9-4be2-9f32-109215a4b5fe_800x800.png?v=1787156882'
+const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_c82bb103-80c9-4be2-9f32-109215a4b5fe.png?v=1787156882'
 
 const customerGalleryImages = [
   'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as1_800x800.jpg?v=1789570862',
@@ -565,7 +565,7 @@ const final = net + vatAmt
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
         .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); }
-        .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:500; white-space:normal; }
+        .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
