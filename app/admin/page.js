@@ -39,9 +39,9 @@ function baseFromEnd(endPrice, discType, discVal, vatPct) {
 
 function colorDot(s = '') {
   const c = s.toLowerCase()
-  if (c.includes('lake blue')) return '#06b6d4'
+  if (c.includes('lake blue')) return '#2ee6d6'
   if (c.includes('ice blue')) return '#38bdf8'
-  if (c.includes('blue') || c.includes('blau')) return '#2563eb'
+  if (c.includes('blue') || c.includes('blau')) return '#2f3dff'
   if (c.includes('warm white') || c.includes('warm')) return '#fef3c7'
   if (c.includes('white') || c.includes('weiß')) return '#e5e5e5'
   if (c.includes('peachy pink')) return '#fb7185'
@@ -204,6 +204,9 @@ function EditModal({ offer, onClose, onSaved }) {
     status: offer.status || 'offer_sent',
     customer_email: offer.customer_email || '',
     size_warning_enabled: offer.size_warning_enabled || false,
+    size_min_width: offer.size_min_width || '',
+    tnc_price_min: offer.tnc_price_min || '',
+    tnc_price_max: offer.tnc_price_max || '',
     size_warning_text: offer.size_warning_text || 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
   const [saving, setSaving] = useState(false)
@@ -253,6 +256,7 @@ function EditModal({ offer, onClose, onSaved }) {
         valid_until: form.valid_until || null, status: form.status, unsubscribed: form.status === 'unsubscribed',
         customer_email: form.customer_email || null,
         size_warning_enabled: form.size_warning_enabled, size_warning_text: form.size_warning_text || null,
+        size_min_width: parseFloat(form.size_min_width) || null, tnc_price_min: parseFloat(form.tnc_price_min) || null, tnc_price_max: parseFloat(form.tnc_price_max) || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       }
       const res = await fetch(`/api/offers?id=${offer.id}`, {
@@ -335,6 +339,11 @@ function EditModal({ offer, onClose, onSaved }) {
                 {form.size_warning_enabled && (
                   <textarea style={{ ...inp, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }} value={form.size_warning_text} onChange={e => set('size_warning_text', e.target.value)} placeholder="Warntext für den Kunden..." />
                 )}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <div><label style={lbl}>Mindestbreite Auswahl (cm)</label><input style={inp} type="number" value={form.size_min_width} onChange={e => set('size_min_width', e.target.value)} placeholder="leer = fest" /></div>
+                <div><label style={lbl}>TNC-Preis Mindestbreite</label><input style={inp} type="number" step="0.01" value={form.tnc_price_min} onChange={e => set('tnc_price_min', e.target.value)} placeholder="€" /></div>
+                <div><label style={lbl}>TNC-Preis 300 cm</label><input style={inp} type="number" step="0.01" value={form.tnc_price_max} onChange={e => set('tnc_price_max', e.target.value)} placeholder="€" /></div>
               </div>
               <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
             </div>
@@ -1026,7 +1035,7 @@ export default function AdminPage() {
     num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
     backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
     color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
-    delivery: '', url: '', validUntil: '', status: 'offer_sent',
+    delivery: '', url: '', validUntil: '', status: 'offer_sent', sizeMinW: '', tncMin: '', tncMax: '',
     sizeWarningText: 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
 
@@ -1075,7 +1084,7 @@ export default function AdminPage() {
       num: '', project: '', customerEmail: '', customerNote: '', w: '', h: '',
       backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen',
       color: '', basePrice: '', discType: 'pct', discVal: '20', vat: '19',
-      delivery: '', url: '', validUntil: '', status: 'offer_sent',
+      delivery: '', url: '', validUntil: '', status: 'offer_sent', sizeMinW: '', tncMin: '', tncMax: '',
       sizeWarningText: 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
     }
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
@@ -1346,6 +1355,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         status: f.status || 'offer_sent',
         size_warning_enabled: f.sizeWarningEnabled || false,
         size_warning_text: f.sizeWarningText || null,
+        size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -1641,6 +1651,15 @@ if (tab === 'create') return (
                 <textarea className="nf-cin" style={{...cIn,minHeight:84,marginTop:8,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
               )}
             </div>
+            <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
+              <span style={{...cLbl,marginBottom:6,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+                <div><label style={cLbl}>Mindestbreite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="z.B. 60" /></div>
+                <div><label style={cLbl}>TNC-Preis Mindestbreite</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€" /></div>
+                <div><label style={cLbl}>TNC-Preis 300 cm</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€" /></div>
+              </div>
+              <div style={{fontSize:11,opacity:.6,marginTop:6}}>Leer lassen = feste Größe (keine Auswahl). Preis passt sich automatisch an (gleiche Marge).</div>
+            </div>
           </div>
         </CCard>
 
@@ -1731,6 +1750,7 @@ if (tab === 'create') return (
                       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
                       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
                       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
+      size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
                       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
                       published: false,
                     }
@@ -2001,6 +2021,15 @@ return (
                   <textarea style={{...S.input, minHeight: 90, resize: 'vertical', lineHeight: 1.5, paddingTop: 9}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
                 )}
               </div>
+              <div style={S.row2}>
+                <Field label="Mindestbreite Größen-Auswahl (cm)"><input style={S.input} type="number" defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="leer = feste Größe" /></Field>
+                <Field label="TNC-Preis Mindestbreite / 300 cm">
+                  <div style={{display:'flex',gap:6}}>
+                    <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€ min" />
+                    <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€ 300" />
+                  </div>
+                </Field>
+              </div>
               <Field label="Farbe(n) – kommagetrennt">
                 <div
                   style={{position:'relative'}}
@@ -2138,6 +2167,7 @@ onClick={async () => {
       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
+      size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       published: false,
     }
