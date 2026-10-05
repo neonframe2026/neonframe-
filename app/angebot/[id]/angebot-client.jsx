@@ -26,7 +26,7 @@ function colorDot(s = '') {
 function tipText(text = '') {
   const i = text.indexOf('Kleiner gewünscht?')
   if (i <= 0) return text
-  return <>{text.slice(0, i).trim()}<span style={{ display: 'block', marginTop: 8 }}>{text.slice(i)}</span></>
+  return <>{text.slice(0, i).trim()}<span style={{ display: 'block' }}>{text.slice(i)}</span></>
 }
 
 function InfoTip({ img, text, wide, warn }) {
@@ -73,7 +73,7 @@ function InfoTip({ img, text, wide, warn }) {
         onClick={(e) => { e.stopPropagation(); setHover(false); setOpen(true) }}
       >{warn ? '!' : 'i'}</span>
       {hover && (
-        <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
+        <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide === 'c' ? ' cwide' : wide === 'u' ? ' uwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
           {content}
         </span>
       )}
@@ -117,7 +117,7 @@ const usageImages = {
   'innen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Logo-Neonschild.png?v=1789479108',
   'außen': 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/ChatGPT_Image_14._Mai_2026_04_03_27.png?v=1778724405',
 }
-const colorHoverImage = 'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/Farben1_c82bb103-80c9-4be2-9f32-109215a4b5fe.png?v=1787156882'
+const colorHoverImage = '/email/neon-farben.jpg'
 
 const customerGalleryImages = [
   'https://cdn.shopify.com/s/files/1/0922/0911/9605/files/as1_800x800.jpg?v=1789570862',
@@ -537,7 +537,7 @@ const final = net + vatAmt
 
   const backplateImg = offer.backplate ? backplateFormImageUrl : null
   const backplateColorImg = offer.backplate_color ? backplateColorImageUrl : null
-  const usageImg = getTooltipImg(offer.usage, usageImages)
+  const usageImg = offer.usage ? '/email/verwendung.jpg' : null
   const listBrutto = base * (1 + vatPct / 100)
   const discBrutto = discAmt * (1 + vatPct / 100)
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
@@ -571,8 +571,8 @@ const final = net + vatAmt
         .ii.ii-warn { background:#dc2626; font-style:normal; font-family:inherit; animation: warnPulse 1.8s ease-in-out infinite; }
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
-        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:780px; max-width:calc(100vw - 40px); }
-        .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
+        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:760px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:920px; max-width:calc(100vw - 40px); }
+        .ii-txt { display:block; width:410px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
@@ -886,7 +886,7 @@ const final = net + vatAmt
                 )}
                 {colors.length > 0 && (
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <span className="cfg-label">Farbe{colors.length > 1 ? '(n)' : ''} <InfoTip img={colorHoverImage} wide /></span>
+                    <span className="cfg-label">Farbe{colors.length > 1 ? '(n)' : ''} <InfoTip img={colorHoverImage} wide="c" /></span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                       {colors.map((c, i) => (
                         <div key={i} className="cfg-pill">
@@ -913,7 +913,7 @@ const final = net + vatAmt
                 )}
                 {offer.usage && (
                   <div>
-                    <span className="cfg-label">Verwendung {usageImg && <InfoTip img={usageImg} />}</span>
+                    <span className="cfg-label">Verwendung {usageImg && <InfoTip img={usageImg} wide="u" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.usage}</div>
                   </div>
                 )}
