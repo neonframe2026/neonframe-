@@ -94,6 +94,21 @@ function InfoTip({ img, text, wide, warn }) {
 // Dazwischen linear. Daraus wird der Listenpreis (netto, vor Rabatt) zurückgerechnet.
 const VK_AUFSCHLAG = 1.10
 function sizeModel(offer) {
+  // NEU: feste Größen aus dem Admin (Breite, Höhe, Empf. VK) – exakte Preise
+  const rows = Array.isArray(offer.size_options) ? offer.size_options.filter(r => +r.w > 0 && +r.h > 0 && +r.vk > 0) : []
+  if (rows.length) {
+    const W0 = parseFloat(offer.width) || 0, H0 = parseFloat(offer.height) || 0, base0 = parseFloat(offer.base_price) || 0
+    const dType = offer.disc_type || 'pct', dVal = parseFloat(offer.disc_val) || 0
+    const vat = 1 + (parseFloat(offer.vat_pct) || 19) / 100
+    const toBase = (f) => (dType === 'pct' ? f / vat / (1 - dVal / 100) : f / vat + dVal)
+    const map = new Map()
+    rows.forEach(r => map.set(+r.w, { h: +r.h, base: toBase(+r.vk * VK_AUFSCHLAG) }))
+    if (W0) map.set(W0, { h: H0, base: base0 })
+    const widths = [...map.keys()].sort((a, b) => a - b)
+    const minW = Math.min(...rows.map(r => +r.w), W0 || Infinity)
+    return { enabled: widths.length > 1, W0, H0, minW, widths, listAt: (w) => (map.get(w) || { base: base0 }).base, heightFor: (w) => (map.get(w) || { h: H0 }).h }
+  }
+
   const W0 = parseFloat(offer.width) || 0
   const H0 = parseFloat(offer.height) || 0
   const minW = parseFloat(offer.size_min_width) || 0
