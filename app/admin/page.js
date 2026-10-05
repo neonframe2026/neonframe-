@@ -342,8 +342,8 @@ function EditModal({ offer, onClose, onSaved }) {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>Mindestbreite Auswahl (cm)</label><input style={inp} type="number" value={form.size_min_width} onChange={e => set('size_min_width', e.target.value)} placeholder="leer = fest" /></div>
-                <div><label style={lbl}>TNC-Preis Mindestbreite</label><input style={inp} type="number" step="0.01" value={form.tnc_price_min} onChange={e => set('tnc_price_min', e.target.value)} placeholder="€" /></div>
-                <div><label style={lbl}>TNC-Preis 300 cm</label><input style={inp} type="number" step="0.01" value={form.tnc_price_max} onChange={e => set('tnc_price_max', e.target.value)} placeholder="€" /></div>
+                <div><label style={lbl}>Empf. VK bei Mindestbreite</label><input style={inp} type="number" step="0.01" value={form.tnc_price_min} onChange={e => set('tnc_price_min', e.target.value)} placeholder="€" /></div>
+                <div><label style={lbl}>Empf. VK bei 300 cm</label><input style={inp} type="number" step="0.01" value={form.tnc_price_max} onChange={e => set('tnc_price_max', e.target.value)} placeholder="€" /></div>
               </div>
               <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
             </div>
@@ -1646,8 +1646,8 @@ if (tab === 'create') return (
               <span style={{...cLbl,marginBottom:6,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
                 <div><label style={cLbl}>Mindestbreite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="z.B. 60" /></div>
-                <div><label style={cLbl}>TNC-Preis Mindestbreite</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€" /></div>
-                <div><label style={cLbl}>TNC-Preis 300 cm</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€" /></div>
+                <div><label style={cLbl}>Empf. VK bei Mindestbreite</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€" /></div>
+                <div><label style={cLbl}>Empf. VK bei 300 cm</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€" /></div>
               </div>
               <div style={{fontSize:11,opacity:.6,marginTop:6}}>Mit Mindestbreite: Kunde sieht ⓘ mit Mindestgröße + kann Größe wählen. Leer lassen = feste Größe.</div>
             </div>
@@ -2005,7 +2005,7 @@ return (
               </div>
               <div style={S.row2}>
                 <Field label="Mindestbreite Größen-Auswahl (cm)"><input style={S.input} type="number" defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="leer = feste Größe" /></Field>
-                <Field label="TNC-Preis Mindestbreite / 300 cm">
+                <Field label="Empf. VK bei Mindestbreite / 300 cm">
                   <div style={{display:'flex',gap:6}}>
                     <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€ min" />
                     <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€ 300" />
