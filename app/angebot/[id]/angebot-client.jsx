@@ -228,19 +228,42 @@ function Gallery({ images }) {
     return () => window.removeEventListener('keydown', handler)
   }, [lightbox, current, total, goPrev, goNext])
 
-  const touchStart = useRef(0)
+  // Handy: Bild folgt dem Finger beim Wischen
+  const mainRef = useRef(null)
+  const tRef = useRef({ x: 0, y: 0, dir: null, swiped: false })
+  const [drag, setDrag] = useState(0)
+  const [snap, setSnap] = useState(null) // Ziel-Offset in % während der Einrast-Animation
   useEffect(() => {
-    const el = document.getElementById('gallery-main')
-    if (!el) return
-    const onStart = (e) => { touchStart.current = e.touches[0].clientX }
-    const onEnd = (e) => {
-      const dx = e.changedTouches[0].clientX - touchStart.current
-      if (Math.abs(dx) > 40) dx < 0 ? goNext() : goPrev()
+    const el = mainRef.current
+    if (!el || total < 2) return
+    const onStart = (e) => { if (animating) return; tRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, dir: null, swiped: false }; setSnap(null) }
+    const onMove = (e) => {
+      const t = tRef.current
+      const dx = e.touches[0].clientX - t.x, dy = e.touches[0].clientY - t.y
+      if (!t.dir) { if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; t.dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v' }
+      if (t.dir !== 'h') return
+      e.preventDefault()
+      let d = dx
+      if ((current === 0 && d > 0) || (current === total - 1 && d < 0)) d = d / 3 // Rand: leicht gebremst
+      setDrag(d)
+    }
+    const onEnd = () => {
+      const t = tRef.current
+      if (t.dir !== 'h') return
+      t.swiped = true
+      const w = el.offsetWidth || 1
+      const d = drag
+      if (d < -w * 0.18 && current < total - 1) { setSnap(-100); setTimeout(() => { setCurrent(c => c + 1); setSnap(null); setDrag(0) }, 260) }
+      else if (d > w * 0.18 && current > 0) { setSnap(100); setTimeout(() => { setCurrent(c => c - 1); setSnap(null); setDrag(0) }, 260) }
+      else { setSnap(0); setTimeout(() => { setSnap(null); setDrag(0) }, 260) }
     }
     el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
     el.addEventListener('touchend', onEnd, { passive: true })
-    return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchend', onEnd) }
-  }, [goPrev, goNext])
+    return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchmove', onMove); el.removeEventListener('touchend', onEnd) }
+  }, [current, total, animating, drag])
+  const swiping = drag !== 0 || snap !== null
+  const stripX = snap !== null ? `${snap}%` : `${drag}px`
 
   if (total === 0) return (
     <div style={{ borderRadius: 18, background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -319,7 +342,14 @@ function Gallery({ images }) {
       )}
 
       {/* MAIN */}
-      <div id="gallery-main" onClick={() => setLightbox(true)} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', cursor: 'zoom-in' }}>
+      <div ref={mainRef} onClick={() => { if (tRef.current.swiped) { tRef.current.swiped = false; return } setLightbox(true) }} style={{ borderRadius: 18, overflow: 'hidden', background: '#f5f5f5', border: '1px solid #eee', aspectRatio: '4/3', position: 'relative', cursor: 'zoom-in', touchAction: 'pan-y' }}>
+        {swiping && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 5, transform: `translateX(${stripX})`, transition: snap !== null ? 'transform 260ms ease' : 'none' }}>
+            {current > 0 && <img src={images[current - 1]} alt="" style={{ position: 'absolute', top: 0, left: '-100%', width: '100%', height: '100%', objectFit: 'cover' }} />}
+            <img src={images[current]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            {current < total - 1 && <img src={images[current + 1]} alt="" style={{ position: 'absolute', top: 0, left: '100%', width: '100%', height: '100%', objectFit: 'cover' }} />}
+          </div>
+        )}
         <img src={images[current]} alt={`Neon Sign ${current + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: animating ? (slideDir === 'left' ? 'translateX(-100%)' : 'translateX(100%)') : 'translateX(0)', transition: animating ? `transform ${DURATION}ms ease` : 'none', zIndex: 1 }} />
         {animating && next !== null && (
           <img src={images[next]} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', animation: `slideIn${slideDir === 'left' ? 'Right' : 'Left'} ${DURATION}ms ease forwards`, zIndex: 2 }} />
@@ -328,6 +358,10 @@ function Gallery({ images }) {
         {total > 1 && current > 0 && <button onClick={goPrev} style={{ position: 'absolute', top: '50%', left: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg></button>}
         {total > 1 && current < total - 1 && <button onClick={goNext} style={{ position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.92)', border: '1px solid #eee', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg></button>}
       </div>
+
+      {total > 1 && (
+        <div className="g-dots">{images.map((_, i) => <span key={i} className={i === current ? 'on' : ''} />)}</div>
+      )}
 
       {/* THUMBNAILS */}
       {total > 1 && (
@@ -519,7 +553,7 @@ export default function AngebotPage({ offer }) {
     return () => io.disconnect()
   }, [])
   const sizeInfo = sm.enabled
-    ? `Für dieses Design benötigen wir eine Mindestgröße von ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    ? `Für dieses Design benötigen wir leider eine Mindestgröße von ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
@@ -608,15 +642,21 @@ const final = net + vatAmt
         .oc-vat { text-align:right; font-size:11.5px; color:#888; }
         .offer-card .cta-btn { margin-bottom:0; }
         .oc-legal { text-align:center; font-size:11px; color:#9ca3af; margin-top:8px; }
-        .sticky-buy { position:fixed; left:0; right:0; bottom:0; z-index:500; background:rgba(255,255,255,.97); backdrop-filter:blur(8px); border-top:1px solid #e5e7eb; box-shadow:0 -6px 20px rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center; gap:28px; padding:12px 52px; transform:translateY(110%); transition:transform .25s ease; }
-        .sticky-buy.show { transform:translateY(0); }
-        .sticky-buy .sb-info { display:flex; flex-direction:column; }
-        .sticky-buy .sb-name { font-size:13px; color:#666; max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .sticky-buy .sb-price { display:flex; align-items:baseline; gap:10px; }
-        .sticky-buy s { font-size:13px; color:#999; }
-        .sticky-buy b { font-size:22px; font-weight:900; white-space:nowrap; }
-        .sticky-buy .cta-btn { width:auto; min-width:280px; margin:0; padding:14px 28px; font-size:16px; }
-                .sb-space { height:78px; background:#0a0a0a; }
+        /* Sticky-Karte (Option 3): schwingt von unten rein und wieder raus */
+        .sticky-buy { position:fixed; left:50%; bottom:18px; z-index:500; width:min(1180px, calc(100% - 32px)); background:rgba(255,255,255,.97); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid #e5e7eb; border-radius:22px; box-shadow:0 16px 44px rgba(0,0,0,.16); display:flex; align-items:center; gap:18px; padding:12px 12px 12px 14px; transform:translate(-50%, calc(100% + 40px)); opacity:0; pointer-events:none; transition:transform .45s cubic-bezier(.36,0,.66,-.56), opacity .3s ease .12s; }
+        .sticky-buy.show { transform:translate(-50%, 0); opacity:1; pointer-events:auto; transition:transform .65s cubic-bezier(.34,1.56,.64,1), opacity .2s ease; }
+        .sb-thumb { width:54px; height:54px; border-radius:12px; object-fit:cover; flex-shrink:0; background:#0b1730; }
+        .sb-info { flex:1; min-width:0; }
+        .sb-title { font-size:15px; font-weight:800; line-height:1.3; color:#111; }
+        .sb-title span { color:#0891b2; }
+        .sb-note { font-size:12px; color:#888; margin-top:3px; }
+        .sb-badge { background:#dcfce7; color:#166534; font-size:12px; font-weight:800; border-radius:20px; padding:4px 10px; white-space:nowrap; }
+        .sb-price { display:flex; flex-direction:column; align-items:flex-end; }
+        .sb-price s { font-size:12px; color:#9ca3af; }
+        .sb-price b { font-size:23px; font-weight:900; white-space:nowrap; line-height:1.1; }
+        .sticky-buy .cta-btn { width:auto; margin:0; padding:15px 28px; font-size:16px; border-radius:16px; }
+        .sb-row { display:contents; }
+                .sb-space { height:100px; background:#0a0a0a; }
         /* Design E */
         .ve-wrap { margin-top:16px; display:flex; flex-direction:column; }
         .ve-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -627,6 +667,8 @@ const final = net + vatAmt
         .ve-express { display:flex; align-items:center; gap:6px; margin-top:auto; padding-top:10px; font-size:13px; font-weight:700; color:#0891b2; }
         .ve-express svg { width:15px; height:15px; color:#f59e0b; }
         .ve-express .tt-t { border-bottom-color:#7dd3e8; }
+        .tt-box.tt-light { background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; box-shadow:0 8px 24px rgba(0,0,0,.12); }
+        .tt-box.tt-light::after, .tt-box.tt-light::before { border-top-color:#fff !important; }
         .ve-incl { border:1px solid #eee; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px; }
         .ve-ck { display:flex; align-items:center; gap:8px; font-size:13.5px; color:#444; }
         .ve-ck svg { width:15px; height:15px; color:#16a34a; flex-shrink:0; }
@@ -654,13 +696,16 @@ const final = net + vatAmt
         @media(max-width:960px){
           .cfg-grid { gap:14px 14px; }
           .oc-total b { font-size:24px; }
-          .sticky-buy { justify-content:space-between; gap:12px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); }
-          .sticky-buy .sb-name { display:none; }
-          .sticky-buy .sb-price { flex-direction:column; gap:0; }
-          .sticky-buy s { font-size:11px; }
-          .sticky-buy b { font-size:19px; }
-          .sticky-buy .cta-btn { flex:1; width:auto; min-width:0; padding:14px; font-size:15px; }
-          .site-footer { padding-bottom:84px; }
+          .sticky-buy { left:10px; right:10px; width:auto; bottom:calc(12px + env(safe-area-inset-bottom)); flex-direction:column; align-items:stretch; gap:9px; padding:12px; border-radius:20px; transform:translateY(calc(100% + 40px)); }
+          .sticky-buy.show { transform:translateY(0); }
+          .sb-thumb, .sb-note, .sb-badge { display:none; }
+          .sb-title { font-size:12.5px; }
+          .sb-row { display:flex; align-items:center; gap:12px; }
+          .sb-price { align-items:flex-start; }
+          .sb-price s { font-size:11px; }
+          .sb-price b { font-size:19px; }
+          .sticky-buy .cta-btn { flex:1; padding:13px; font-size:15px; border-radius:13px; }
+          .site-footer { padding-bottom:150px; }
         }
         .hdr { background:#0a0a0a; padding:0 52px; height:96px; display:flex; align-items:center; justify-content:space-between; position:relative; z-index:100; }
         @media(max-width:900px){ .hdr { padding:0 16px; height:64px; } }
@@ -677,7 +722,7 @@ const final = net + vatAmt
           .col-left { display:none; }
           .col-right { display:flex; flex-direction:column; }
           .mob-gallery { display:block !important; }
-          .mob-contact { display:block !important; margin-top:24px; }
+          .mob-contact { display:block !important; margin-top:24px; margin-bottom:28px; }
         @media(max-width:960px){
           .desc-section { margin-top:24px; }
           .desc-header { flex-wrap:wrap; gap:8px; align-items:center; }
@@ -685,6 +730,8 @@ const final = net + vatAmt
         }
         }
         .mob-gallery { display:none; }
+        .g-dots { display:none; }
+        @media(max-width:960px){ .g-dots { display:flex; justify-content:center; gap:6px; margin-top:10px; } .g-dots span { width:7px; height:7px; border-radius:50%; background:#d4d4d8; transition:all .2s; } .g-dots span.on { width:20px; border-radius:4px; background:#60c8f0; } }
         .mob-contact { display:none; }
         /* Config */
         .cfg-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#111; display:block; margin-bottom:5px; }
@@ -997,7 +1044,7 @@ const final = net + vatAmt
                 <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
                 <div className="ve-express">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                  <span className="tt"><span className="tt-t">Express anfragen</span><span className="tt-box">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
+                  <span className="tt"><span className="tt-t">Express anfragen</span><span className="tt-box tt-light">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
                 </div>
               </div>
               <div className="ve-incl">
@@ -1178,9 +1225,20 @@ const final = net + vatAmt
       <FaqSection />
 
       {/* Preis + Button unten, sobald der Button in der Karte nicht sichtbar ist */}
-      <div className={`sticky-buy${showBar ? ' show' : ''}`}>
-        <div className="sb-info"><span className="sb-name">Dein Neon-Schild{offer.project ? ` für ${offer.project}` : ''}</span><span className="sb-price">{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></span></div>
-        <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">{accepting ? 'Einen Moment …' : 'Angebot annehmen'}</a>
+      <div className={`sticky-buy${showBar ? ' show' : ''}`} aria-hidden={!showBar}>
+        {images[0] && <img className="sb-thumb" src={images[0]} alt="" />}
+        <div className="sb-info">
+          <div className="sb-title">Individuelles LED-Neon-Schild – personalisiert nach Wunsch{offer.project ? <> <span>für {offer.project}</span></> : null}</div>
+          <div className="sb-note">Kostenloser Versand · {offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</div>
+        </div>
+        <div className="sb-row">
+          {discAmt > 0 && <span className="sb-badge">−{discDisplay}</span>}
+          <div className="sb-price">{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></div>
+          <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" tabIndex={showBar ? 0 : -1} target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
+            {accepting ? 'Einen Moment …' : 'Angebot annehmen'}
+          </a>
+        </div>
       </div>
 
       {/* FOOTER */}
