@@ -1642,15 +1642,6 @@ if (tab === 'create') return (
               <div><label style={cLbl}>Breite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></div>
               <div><label style={cLbl}>Höhe (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></div>
             </div>
-            <div>
-              <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
-                <input type="checkbox" checked={selects.sizeWarningEnabled} onChange={e => updSelect('sizeWarningEnabled', e.target.checked)} style={{accentColor:C_NEON,width:16,height:16}} />
-                <span style={{...cLbl,marginBottom:0}}>Mindestgröße-Hinweis anzeigen</span>
-              </label>
-              {selects.sizeWarningEnabled && (
-                <textarea className="nf-cin" style={{...cIn,minHeight:84,marginTop:8,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
-              )}
-            </div>
             <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
               <span style={{...cLbl,marginBottom:6,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
@@ -1658,7 +1649,7 @@ if (tab === 'create') return (
                 <div><label style={cLbl}>TNC-Preis Mindestbreite</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€" /></div>
                 <div><label style={cLbl}>TNC-Preis 300 cm</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€" /></div>
               </div>
-              <div style={{fontSize:11,opacity:.6,marginTop:6}}>Leer lassen = feste Größe (keine Auswahl). Preis passt sich automatisch an (gleiche Marge).</div>
+              <div style={{fontSize:11,opacity:.6,marginTop:6}}>Mit Mindestbreite: Kunde sieht ⓘ mit Mindestgröße + kann Größe wählen. Leer lassen = feste Größe.</div>
             </div>
           </div>
         </CCard>
@@ -2011,15 +2002,6 @@ return (
               <div style={S.row2}>
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
-              </div>
-              <div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: selects.sizeWarningEnabled ? 8 : 0 }}>
-                  <input type="checkbox" checked={selects.sizeWarningEnabled} onChange={e => updSelect('sizeWarningEnabled', e.target.checked)} />
-                  <span style={S.label}>Mindestgröße-Hinweis anzeigen</span>
-                </label>
-                {selects.sizeWarningEnabled && (
-                  <textarea style={{...S.input, minHeight: 90, resize: 'vertical', lineHeight: 1.5, paddingTop: 9}} defaultValue={fRef.current.sizeWarningText} onChange={e => updText('sizeWarningText', e.target.value)} placeholder="Warntext für den Kunden..." />
-                )}
               </div>
               <div style={S.row2}>
                 <Field label="Mindestbreite Größen-Auswahl (cm)"><input style={S.input} type="number" defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="leer = feste Größe" /></Field>
