@@ -27,16 +27,21 @@ export async function POST(req) {
     if (!valid || w < minW) return Response.json({ error: 'Ungültige Größe' }, { status: 400 })
     if (w === W0 && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
 
-    // gleiche Formel wie auf der Angebotsseite (Netto-Listenpreis)
+    // gleiche Formel wie auf der Angebotsseite: Endpreis (brutto) linear, Listenpreis zurückgerechnet
     const base0 = parseFloat(o.base_price) || 0
+    const dType = o.disc_type || 'pct'
+    const dVal = parseFloat(o.disc_val) || 0
+    const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
+    const toFinal = (b) => (dType === 'pct' ? b * (1 - dVal / 100) : Math.max(0, b - dVal)) * vat
+    const toBase = (f) => (dType === 'pct' ? f / vat / (1 - dVal / 100) : f / vat + dVal)
     const pts = [[minW, pMin * 1.10], [300, pMax * 1.10]]
-    if (W0 > minW && W0 < 300) pts.splice(1, 0, [W0, base0])
-    let list = base0
+    if (W0 > minW && W0 < 300) pts.splice(1, 0, [W0, toFinal(base0)])
+    let fin = toFinal(base0)
     for (let k = 0; k < pts.length - 1; k++) {
       const [x1, y1] = pts[k], [x2, y2] = pts[k + 1]
-      if (w <= x2 || k === pts.length - 2) { list = y1 + (y2 - y1) * (w - x1) / (x2 - x1); break }
+      if (w <= x2 || k === pts.length - 2) { fin = y1 + (y2 - y1) * (w - x1) / (x2 - x1); break }
     }
-    const base = Math.round(list * 100) / 100
+    const base = Math.round(toBase(fin) * 10000) / 10000
     const h = Math.round(w * H0 / W0)
     const discType = o.disc_type || 'pct'
     const discVal = parseFloat(o.disc_val) || 0
