@@ -25,10 +25,52 @@ function colorDot(s = '') {
 // ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
 function InfoTip({ img, text, wide }) {
   const [open, setOpen] = useState(false)
+  const [hover, setHover] = useState(false)
+  const [pos, setPos] = useState(null)
+  const iconRef = useRef(null)
+  const popRef = useRef(null)
+
+  // Popup immer komplett im sichtbaren Bereich platzieren
+  const place = useCallback(() => {
+    const ic = iconRef.current, pop = popRef.current
+    if (!ic || !pop) return
+    const r = ic.getBoundingClientRect()
+    const pw = pop.offsetWidth, ph = pop.offsetHeight
+    const vw = window.innerWidth, vh = window.innerHeight, m = 12
+    let left = r.left - 10
+    if (left + pw > vw - m) left = vw - m - pw
+    if (left < m) left = m
+    let top = r.bottom + 10
+    if (top + ph > vh - m) top = r.top - 10 - ph
+    if (top < m) top = Math.max(m, vh - m - ph)
+    setPos({ left, top })
+  }, [])
+
+  useEffect(() => {
+    if (!hover) { setPos(null); return }
+    place()
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => { window.removeEventListener('scroll', place, true); window.removeEventListener('resize', place) }
+  }, [hover, place])
+
+  const content = img ? <img src={img} alt="" onLoad={place} /> : <span className="ii-txt">{text}</span>
   return (
     <span className="ii-wrap">
-      <span className="ii" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setOpen(true) }}>i</span>
-      <span className={`ii-pop${wide ? ' wide' : ''}`}>{img ? <img src={img} alt="" /> : <span className="ii-txt">{text}</span>}</span>
+      <span
+        ref={iconRef}
+        className="ii"
+        role="button"
+        tabIndex={0}
+        onMouseEnter={() => { if (window.matchMedia('(hover:hover) and (min-width:961px)').matches) setHover(true) }}
+        onMouseLeave={() => setHover(false)}
+        onClick={(e) => { e.stopPropagation(); setHover(false); setOpen(true) }}
+      >i</span>
+      {hover && (
+        <span ref={popRef} className={`ii-pop${wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
+          {content}
+        </span>
+      )}
       {open && (
         <span className="ii-modal" onClick={() => setOpen(false)}>
           <span className="ii-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -461,6 +503,9 @@ export default function AngebotPage({ offer }) {
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
   const [accepting, setAccepting] = useState(false)
+  const sizeInfo = sm.enabled
+    ? `Für dieses Design benötigen wir leider eine Mindestgröße von ${sm.minW} x ${sm.heightFor(sm.minW)} CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
 const base = (parseFloat(offer.base_price) || 0) * (sm.enabled ? sm.factor(selW) : 1)
@@ -517,19 +562,18 @@ const final = net + vatAmt
         .ii-wrap { position:relative; display:inline-flex; vertical-align:middle; }
         .ii { width:16px; height:16px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:10px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-transform:none; letter-spacing:0; }
         .ii:hover { background:#71717a; }
-        .ii-pop { display:none; position:absolute; top:calc(100% + 10px); left:-10px; z-index:300; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
-        .ii-pop img { display:block; width:360px; max-width:80vw; height:auto; border-radius:8px; }
-        .ii-pop.wide img { width:620px; }
+        .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
+        .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
+        .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); }
         .ii-txt { display:block; width:280px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:500; white-space:normal; }
-        @media (hover:hover) and (min-width:961px) { .ii-wrap:hover .ii-pop { display:block; } }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
         .ii-modal-box button { border:0; background:#111; color:#fff; border-radius:10px; padding:11px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; }
         @media (hover:hover) and (min-width:961px) { .ii-modal { display:none; } }
         /* Angebots-Karte */
-        .offer-card { border:1px solid #e8e8e8; border-radius:18px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.05); margin-bottom:14px; }
-        .oc-head { background:linear-gradient(90deg,#0a0a0a,#13303a); color:#fff; padding:15px 20px; display:flex; align-items:center; gap:14px; }
+        .offer-card { border:1px solid #e8e8e8; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.05); margin-bottom:14px; }
+        .oc-head { border-radius:17px 17px 0 0; background:linear-gradient(90deg,#0a0a0a,#13303a); color:#fff; padding:15px 20px; display:flex; align-items:center; gap:14px; }
         .oc-head small { display:block; font-size:10px; letter-spacing:.18em; color:#60c8f0; font-weight:800; }
         .oc-head b { display:block; font-size:21px; font-weight:800; line-height:1.2; word-break:break-word; }
         .oc-star { font-size:24px; color:#60c8f0; text-shadow:0 0 12px rgba(96,200,240,.7); }
@@ -817,7 +861,7 @@ const final = net + vatAmt
                 {(offer.width || offer.height) && (
                   <div style={{ gridColumn: '1 / -1' }}>
                     <span className="cfg-label">Maße (Breite × Höhe)
-                      {sm.enabled && <InfoTip text={`Die Mindestgröße für dieses Design ist ${sm.minW} × ${sm.heightFor(sm.minW)} cm. Kleiner gewünscht? Kontaktiere uns – wir können dein Design eventuell vereinfachen.`} />}
+                      {sizeInfo && <InfoTip text={sizeInfo} />}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                       {sm.enabled ? (
@@ -828,9 +872,6 @@ const final = net + vatAmt
                         </select>
                       ) : (
                         <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
-                      )}
-                      {offer.size_warning_enabled && offer.size_warning_text && (
-                        <span className="tt"><span className="size-warn-badge">!</span><span className="tt-box warn-box">{offer.size_warning_text}</span></span>
                       )}
                       {multiPart && <span className="size-warn-badge">!</span>}
                     </div>
