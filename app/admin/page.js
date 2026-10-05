@@ -181,6 +181,46 @@ const PAYMENT_ICONS_HTML = `
   </div>
 </div>`
 
+
+// Größen-Tabelle (Breite, Höhe, Empf. VK) – Kunde zahlt Empf. VK + 10 %
+function SizeTable({ rows, onChange, lblStyle, inStyle }) {
+  const upd = (i, k, v) => onChange(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)))
+  const num = (v) => { const t = String(v ?? '').trim(); return (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0 }
+  const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.3fr 1fr 24px', gap: 8, alignItems: 'center' }}>
+        <span style={{ ...lblStyle, marginBottom: 0 }}>Breite (cm)</span>
+        <span style={{ ...lblStyle, marginBottom: 0 }}>Höhe (cm)</span>
+        <span style={{ ...lblStyle, marginBottom: 0 }}>Empf. VK (TNC)</span>
+        <span style={{ ...lblStyle, marginBottom: 0 }}>Kunde zahlt</span>
+        <span />
+        {rows.map((r, i) => (
+          <SizeRow key={i} r={r} i={i} upd={upd} inStyle={inStyle} pay={num(r.vk) > 0 ? eur(num(r.vk) * 1.10) : '–'} onDel={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ w: '', h: '', vk: '' }])} />
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...rows, { w: '', h: '', vk: '' }])} style={{ marginTop: 10, background: 'transparent', border: '1px dashed #22d3ee', color: '#22d3ee', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Größe hinzufügen</button>
+      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>Kleinste Größe = Mindestgröße (ⓘ auf der Angebotsseite). Kunde zahlt = Empf. VK + 10 % (inkl. MwSt.). Leer lassen = feste Größe.</div>
+    </div>
+  )
+}
+function SizeRow({ r, i, upd, inStyle, pay, onDel }) {
+  return (
+    <>
+      <input style={inStyle} type="number" value={r.w} onChange={e => upd(i, 'w', e.target.value)} placeholder="70" />
+      <input style={inStyle} type="number" value={r.h} onChange={e => upd(i, 'h', e.target.value)} placeholder="70" />
+      <input style={inStyle} type="text" inputMode="decimal" value={r.vk} onChange={e => upd(i, 'vk', e.target.value)} placeholder="430,65" />
+      <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' }}>{pay}</span>
+      <span onClick={onDel} style={{ cursor: 'pointer', opacity: 0.5, textAlign: 'center' }}>✕</span>
+    </>
+  )
+}
+function cleanSizeRows(rows) {
+  const n = (v) => { const s = String(v ?? '').trim(); if (!s) return 0; return s.includes(',') ? parseFloat(s.replace(/\./g, '').replace(',', '.')) : parseFloat(s) }
+  const out = (rows || []).map(r => ({ w: n(r.w), h: n(r.h), vk: n(r.vk) })).filter(r => r.w > 0 && r.h > 0 && r.vk > 0)
+  return out.length ? out : null
+}
+
 function EditModal({ offer, onClose, onSaved }) {
   const [form, setForm] = useState({
     offer_num: offer.offer_num || offer.custom_id || '',
@@ -204,9 +244,7 @@ function EditModal({ offer, onClose, onSaved }) {
     status: offer.status || 'offer_sent',
     customer_email: offer.customer_email || '',
     size_warning_enabled: offer.size_warning_enabled || false,
-    size_min_width: offer.size_min_width || '',
-    tnc_price_min: offer.tnc_price_min || '',
-    tnc_price_max: offer.tnc_price_max || '',
+    size_options: Array.isArray(offer.size_options) && offer.size_options.length ? offer.size_options.map(r => ({ w: r.w, h: r.h, vk: String(r.vk).replace('.', ',') })) : [{ w: '', h: '', vk: '' }],
     size_warning_text: offer.size_warning_text || 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
   const [saving, setSaving] = useState(false)
@@ -256,7 +294,7 @@ function EditModal({ offer, onClose, onSaved }) {
         valid_until: form.valid_until || null, status: form.status, unsubscribed: form.status === 'unsubscribed',
         customer_email: form.customer_email || null,
         size_warning_enabled: form.size_warning_enabled, size_warning_text: form.size_warning_text || null,
-        size_min_width: parseFloat(form.size_min_width) || null, tnc_price_min: parseFloat(form.tnc_price_min) || null, tnc_price_max: parseFloat(form.tnc_price_max) || null,
+        size_options: cleanSizeRows(form.size_options),
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       }
       const res = await fetch(`/api/offers?id=${offer.id}`, {
@@ -340,10 +378,9 @@ function EditModal({ offer, onClose, onSaved }) {
                   <textarea style={{ ...inp, minHeight: 90, resize: 'vertical', lineHeight: 1.5 }} value={form.size_warning_text} onChange={e => set('size_warning_text', e.target.value)} placeholder="Warntext für den Kunden..." />
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <div><label style={lbl}>Mindestbreite Auswahl (cm)</label><input style={inp} type="number" value={form.size_min_width} onChange={e => set('size_min_width', e.target.value)} placeholder="leer = fest" /></div>
-                <div><label style={lbl}>Empf. VK bei Mindestbreite</label><input style={inp} type="number" step="0.01" value={form.tnc_price_min} onChange={e => set('tnc_price_min', e.target.value)} placeholder="€" /></div>
-                <div><label style={lbl}>Empf. VK bei 300 cm</label><input style={inp} type="number" step="0.01" value={form.tnc_price_max} onChange={e => set('tnc_price_max', e.target.value)} placeholder="€" /></div>
+              <div>
+                <label style={lbl}>Größen-Auswahl für den Kunden (optional)</label>
+                <SizeTable rows={form.size_options} onChange={v => set('size_options', v)} lblStyle={lbl} inStyle={inp} />
               </div>
               <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
             </div>
@@ -1042,6 +1079,8 @@ export default function AdminPage() {
   const [selects, setSelects] = useState({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
   const [priceInputs, setPriceInputs] = useState({ basePrice: '', discVal: '20', vat: '19' })
   const [endPrice, setEndPrice] = useState('')
+  const [sizeRows, setSizeRows] = useState([{ w: '', h: '', vk: '' }])
+  const [origVk, setOrigVk] = useState('')
   const [imgSrcs, setImgSrcs] = useState([])
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
@@ -1090,6 +1129,8 @@ export default function AdminPage() {
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
     setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
     setEndPrice('')
+    setSizeRows([{ w: '', h: '', vk: '' }])
+    setOrigVk('')
     setImgSrcs([])
     setPublishedLink(null)
     setParseStatus(null)
@@ -1355,7 +1396,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         status: f.status || 'offer_sent',
         size_warning_enabled: f.sizeWarningEnabled || false,
         size_warning_text: f.sizeWarningText || null,
-        size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
+        size_options: cleanSizeRows(sizeRows),
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -1642,14 +1683,18 @@ if (tab === 'create') return (
               <div><label style={cLbl}>Breite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></div>
               <div><label style={cLbl}>Höhe (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></div>
             </div>
+            <div>
+              <label style={cLbl}>Empf. VK (TNC) für diese Maße</label>
+              <input className="nf-cin" type="text" inputMode="decimal" style={cIn} value={origVk} placeholder="z.B. 673,65" onChange={e => {
+                const v = e.target.value; setOrigVk(v)
+                const t = v.trim(); const n = (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0
+                if (n > 0) setEndPrice((Math.round(n * 1.10 * 100) / 100).toFixed(2))
+              }} />
+              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ 10 % → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
+            </div>
             <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
-              <span style={{...cLbl,marginBottom:6,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-                <div><label style={cLbl}>Mindestbreite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="z.B. 60" /></div>
-                <div><label style={cLbl}>Empf. VK bei Mindestbreite</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€" /></div>
-                <div><label style={cLbl}>Empf. VK bei 300 cm</label><input className="nf-cin" type="number" step="0.01" style={cIn} defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€" /></div>
-              </div>
-              <div style={{fontSize:11,opacity:.6,marginTop:6}}>Mit Mindestbreite: Kunde sieht ⓘ mit Mindestgröße + kann Größe wählen. Leer lassen = feste Größe.</div>
+              <span style={{...cLbl,marginBottom:8,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
+              <SizeTable rows={sizeRows} onChange={setSizeRows} lblStyle={cLbl} inStyle={cIn} />
             </div>
           </div>
         </CCard>
@@ -1741,7 +1786,7 @@ if (tab === 'create') return (
                       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
                       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
                       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
+      size_options: cleanSizeRows(sizeRows),
                       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
                       published: false,
                     }
@@ -2003,15 +2048,6 @@ return (
                 <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
                 <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
               </div>
-              <div style={S.row2}>
-                <Field label="Mindestbreite Größen-Auswahl (cm)"><input style={S.input} type="number" defaultValue={fRef.current.sizeMinW} onChange={e => updText('sizeMinW', e.target.value)} placeholder="leer = feste Größe" /></Field>
-                <Field label="Empf. VK bei Mindestbreite / 300 cm">
-                  <div style={{display:'flex',gap:6}}>
-                    <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMin} onChange={e => updText('tncMin', e.target.value)} placeholder="€ min" />
-                    <input style={S.input} type="number" step="0.01" defaultValue={fRef.current.tncMax} onChange={e => updText('tncMax', e.target.value)} placeholder="€ 300" />
-                  </div>
-                </Field>
-              </div>
               <Field label="Farbe(n) – kommagetrennt">
                 <div
                   style={{position:'relative'}}
@@ -2149,7 +2185,7 @@ onClick={async () => {
       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_min_width: parseFloat(f.sizeMinW) || null, tnc_price_min: parseFloat(f.tncMin) || null, tnc_price_max: parseFloat(f.tncMax) || null,
+      size_options: cleanSizeRows(sizeRows),
       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       published: false,
     }
