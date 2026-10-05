@@ -566,7 +566,7 @@ export default function AngebotPage({ offer }) {
     return () => io.disconnect()
   }, [])
   const sizeInfo = sm.enabled
-    ? `Für dieses Design benötigen wir eine Mindestgröße von ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    ? `Für dieses Design beträgt die Mindestgröße ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
