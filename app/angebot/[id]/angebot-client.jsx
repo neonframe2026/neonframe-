@@ -89,22 +89,35 @@ function InfoTip({ img, text, wide, warn }) {
   )
 }
 
-// Größen: Partnerpreis linear zwischen Mindestbreite und 300 cm
+// Größen: Netto-Listenpreis je Breite.
+// Feste Punkte: Mindestbreite = Empf. VK × 1,10 · Originalgröße = Angebotspreis · 300 cm = Empf. VK × 1,10
+// Dazwischen wird linear gerechnet.
+const VK_AUFSCHLAG = 1.10
 function sizeModel(offer) {
   const W0 = parseFloat(offer.width) || 0
   const H0 = parseFloat(offer.height) || 0
   const minW = parseFloat(offer.size_min_width) || 0
   const pMin = parseFloat(offer.tnc_price_min) || 0
   const pMax = parseFloat(offer.tnc_price_max) || 0
-  const enabled = W0 > 0 && H0 > 0 && minW > 0 && minW < 300 && pMin > 0 && pMax > 0
-  const partner = (w) => pMin + (pMax - pMin) * (w - minW) / (300 - minW)
-  const factor = (w) => (enabled && partner(W0) > 0 ? partner(w) / partner(W0) : 1)
+  const base0 = parseFloat(offer.base_price) || 0
+  const enabled = W0 > 0 && H0 > 0 && minW > 0 && minW < 300 && pMin > 0 && pMax > 0 && base0 > 0
+  const pts = [[minW, pMin * VK_AUFSCHLAG], [300, pMax * VK_AUFSCHLAG]]
+  if (W0 > minW && W0 < 300) pts.splice(1, 0, [W0, base0])
+  const listAt = (w) => {
+    if (!enabled) return base0
+    if (w === W0) return base0
+    for (let k = 0; k < pts.length - 1; k++) {
+      const [x1, y1] = pts[k], [x2, y2] = pts[k + 1]
+      if (w <= x2 || k === pts.length - 2) return y1 + (y2 - y1) * (w - x1) / (x2 - x1)
+    }
+    return base0
+  }
   const heightFor = (w) => (W0 ? Math.round(w * H0 / W0) : H0)
   const widths = []
   for (let w = 30; w <= 300; w += 10) widths.push(w)
   if (W0 && !widths.includes(W0)) widths.push(W0)
   widths.sort((x, y) => x - y)
-  return { enabled, W0, H0, minW, widths, factor, heightFor }
+  return { enabled, W0, H0, minW, widths, listAt, heightFor }
 }
 
 function parseColors(s = '') {
@@ -557,7 +570,7 @@ export default function AngebotPage({ offer }) {
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
-const base = (parseFloat(offer.base_price) || 0) * (sm.enabled ? sm.factor(selW) : 1)
+const base = sm.enabled ? sm.listAt(selW) : (parseFloat(offer.base_price) || 0)
 const discType = offer.disc_type || 'pct'
 const discVal = parseFloat(offer.disc_val) || 0
 const vatPct = parseFloat(offer.vat_pct) || 19
