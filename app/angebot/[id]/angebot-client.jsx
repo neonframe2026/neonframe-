@@ -575,6 +575,7 @@ export default function AngebotPage({ offer }) {
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
   const [accepting, setAccepting] = useState(false)
+  const [step, setStep] = useState(0)
   const ctaRef = useRef(null)
   const [showBar, setShowBar] = useState(false)
   useEffect(() => {
@@ -624,13 +625,24 @@ const final = net + vatAmt
     e.preventDefault()
     if (accepting) return
     setAccepting(true)
+    setStep(0)
+    const wait = (ms) => new Promise(r => setTimeout(r, ms))
+    const t1 = setTimeout(() => setStep(s => Math.max(s, 1)), 450)
+    const t2 = setTimeout(() => setStep(s => Math.max(s, 2)), 900)
     try {
       const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: selW }) })
       const d = await r.json()
-      if (d.checkoutUrl) { window.location.href = d.checkoutUrl; return }
+      if (d.checkoutUrl) {
+        clearTimeout(t1); clearTimeout(t2)
+        setStep(3); await wait(500)
+        setStep(4); await wait(350)
+        window.location.href = d.checkoutUrl
+        return
+      }
       alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal oder schreib uns an info@neonframe.de.')
     } catch { alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal.') }
-    setAccepting(false)
+    clearTimeout(t1); clearTimeout(t2)
+    setAccepting(false); setStep(0)
   }
 
   return (
@@ -717,6 +729,22 @@ const final = net + vatAmt
           .ve-ship, .ve-incl { padding:13px; }
           .ve-ck { font-size:12.5px; }
         }
+        /* Lade-Fenster */
+        .ld-ov { position:fixed; inset:0; z-index:100000; background:rgba(10,10,12,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:16px; animation:ldFade .2s ease; }
+        .ld-card { background:#fff; border-radius:22px; box-shadow:0 30px 80px rgba(0,0,0,.35); width:100%; max-width:420px; padding:30px 30px 26px; text-align:center; animation:ldPop .35s cubic-bezier(.34,1.56,.64,1); }
+        .ld-h { font-size:21px; font-weight:900; color:#111; }
+        .ld-p { font-size:13.5px; color:#666; margin-top:4px; }
+        .ld-steps { text-align:left; margin-top:20px; display:flex; flex-direction:column; gap:12px; }
+        .ld-st { display:flex; align-items:center; gap:11px; font-size:14px; font-weight:600; color:#111; transition:color .25s; }
+        .ld-st b { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; transition:all .25s; }
+        .ld-st.ok b { background:#16a34a; color:#fff; animation:ldPop .3s ease; }
+        .ld-st.now b { border:3px solid #22d3ee; border-top-color:transparent; animation:ldSpin .8s linear infinite; }
+        .ld-st.wait { color:#aaa; }
+        .ld-st.wait b { border:2px solid #ddd; }
+        @keyframes ldSpin { to { transform:rotate(360deg); } }
+        @keyframes ldFade { from { opacity:0; } to { opacity:1; } }
+        @keyframes ldPop { from { transform:scale(.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+        @media(max-width:960px){ .ld-card { max-width:330px; padding:24px 20px 22px; } .ld-h { font-size:18px; } .ld-st { font-size:13px; } }
         /* Desktop: links und rechts gleich lang – Fragen-Box wächst bis zur Unterkante */
         @media(min-width:961px){
           .page-wrap { align-items:stretch !important; }
@@ -1255,6 +1283,32 @@ const final = net + vatAmt
 
       {/* FAQ */}
       <FaqSection />
+
+      {/* Lade-Fenster beim Ändern der Größe */}
+      {accepting && sizeChanged && (
+        <div className="ld-ov">
+          <div className="ld-card">
+            <div className="ld-h">Einen Moment bitte</div>
+            <div className="ld-p">Wir bereiten deinen Checkout vor</div>
+            <div className="ld-steps">
+              {[
+                `Größe übernommen (${selW} × ${selH} cm)`,
+                `Preis berechnet (${eur(final)})`,
+                step >= 3 ? 'Checkout erstellt' : 'Checkout wird erstellt …',
+                'Weiterleitung zum Checkout',
+              ].map((t, i) => {
+                const st = i + 1 <= step ? 'ok' : (i === step ? 'now' : 'wait')
+                return (
+                  <div key={i} className={`ld-st ${st}`}>
+                    <b>{st === 'ok' ? '✓' : ''}</b>{t}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Preis + Button unten, sobald der Button in der Karte nicht sichtbar ist */}
       <div className={`sticky-buy${showBar ? ' show' : ''}`} aria-hidden={!showBar}>
