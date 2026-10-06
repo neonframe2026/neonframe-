@@ -54,6 +54,8 @@ export async function POST(req) {
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
 
+    // Extra-Rabatt gilt 4 Tage ab Versand
+    const validUntilDate = new Date(Date.now() + 4 * 86400000)
     // Neuer Endpreis für die Mail
     const vat = 1 + (parseFloat(offer.vat_pct) || 19) / 100
     const afterDisc = offer.disc_type === 'pct' ? baseNet * (1 - (parseFloat(offer.disc_val) || 0) / 100) : Math.max(0, baseNet - (parseFloat(offer.disc_val) || 0))
@@ -72,7 +74,7 @@ export async function POST(req) {
           firstName: customerName?.split(' ')[0] || '',
           extra: ex > 0 ? ex : EXTRA_PCT, basePct: ex > 0 ? basePct : oldPct, offerLink, unsubscribeUrl,
           newPrice: finalNew > 0 ? eur(finalNew) : null,
-          validUntil: new Date(Date.now() + 4 * 86400000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }),
+          validUntil: validUntilDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }),
         }),
       }),
     })
@@ -83,6 +85,7 @@ export async function POST(req) {
 
     await supabase.from('offers').update({
       extra_discount_applied: true, extra_discount_at: new Date().toISOString(), status: 'discount_offered',
+      discount_valid_until: validUntilDate.toISOString(), discount_reminder_sent_at: null,
     }).eq('id', offerId)
 
     return Response.json({ success: true, newPct })
