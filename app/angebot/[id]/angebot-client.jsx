@@ -690,7 +690,7 @@ const final = net + vatAmt
         .cfg-label { display:flex !important; align-items:center; gap:6px; }
         .size-sel { appearance:none; -webkit-appearance:none; height:40px; padding:0 38px 0 14px; border:1.5px solid #d4d4d8; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; color:#111; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 13px center; cursor:pointer; max-width:100%; }
         .size-sel:focus { outline:none; border-color:#60c8f0; }
-        .multi-tip { margin-top:8px; font-size:12px; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:6px 10px; line-height:1.45; }
+        .multi-tip { flex-basis:100%; display:flex; align-items:center; gap:6px; margin-top:2px; font-size:12px; color:#888; line-height:1.4; } .mt-i { width:13px; height:13px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:9px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
         .oc-price { border-top:1px solid #f0f0f0; padding-top:12px; margin-bottom:14px; }
         .oc-row { display:flex; justify-content:space-between; gap:12px; font-size:14px; color:#555; padding:3px 0; }
         .oc-row.disc { color:#16a34a; font-weight:600; }
@@ -1055,7 +1055,7 @@ const final = net + vatAmt
                       ) : (
                         <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
                       )}
-                      {multiPart && <InfoTip warn text="Neonschilder über 100 cm können aus mehreren Teilen bestehen." />}
+                      {multiPart && <div className="multi-tip"><span className="mt-i">i</span>Neonschilder über 100 cm können aus mehreren Teilen bestehen.</div>}
                     </div>
                   </div>
                 )}
