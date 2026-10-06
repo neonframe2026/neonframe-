@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { removeOfferShopify } from '../../../lib/shopify-admin'
 
 function getSupabase() {
   return createClient(
@@ -46,6 +47,12 @@ export async function DELETE(request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const supabase = getSupabase()
+  // Shopify aufräumen (verstecktes Produkt + offener Entwurf)
+  const { data: o } = await supabase.from('offers').select('status, shopify_product_id, shopify_draft_id').eq('id', id).maybeSingle()
+  if (o && (o.shopify_product_id || o.shopify_draft_id)) {
+    const ordered = ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
+    await removeOfferShopify(o, { archiveOnly: ordered }).catch(() => {})
+  }
   const { error } = await supabase.from('offers').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
