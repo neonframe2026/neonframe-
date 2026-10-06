@@ -56,7 +56,7 @@ export function buildImage({ type, H, firstName, imageUrl, sizeText, variant, co
   const paragraph = type === 'discount'
     ? [
         rich([['unsere Produktion hat in den kommenden Tagen noch etwas Luft. Statt sie leer stehen zu lassen, geben wir dir lieber einen besseren Preis.']]),
-        rich([[`Auf deine bisherigen ${oldPct} % bekommst du`], [`noch einmal 10 % obendrauf – insgesamt also ${newPct} %.`, white], ['Den Rabatt haben wir schon direkt in deinem Angebot eingetragen.']], { marginTop: 30 }),
+        rich([[`Auf deine bisherigen ${oldPct} % bekommst du`], [typeof newPct === 'string' ? 'noch einmal 10 % obendrauf.' : `noch einmal 10 % obendrauf – insgesamt also ${newPct} %.`, white], ['Den Rabatt haben wir schon direkt in deinem Angebot eingetragen.']], { marginTop: 30 }),
       ]
     : [
         rich([['vor Kurzem haben wir dir dein persönliches Angebot für dein Neon-Schild geschickt. Falls du noch nicht dazu gekommen bist:'], ['Dein Angebot ist weiterhin für dich reserviert.', white]]),
@@ -105,6 +105,7 @@ export async function GET(request) {
     const base = parseFloat(o.base_price) || 0
     const amt = o.disc_type === 'pct' ? base * (parseFloat(o.disc_val) || 0) / 100 : (parseFloat(o.disc_val) || 0)
     const pct = base > 0 ? Math.round(amt / base * 100) : 0
+    const ex = parseFloat(o.extra_disc_pct) || 0
 
     const H = type === 'discount' ? 1500 : 1330
     const img = buildImage({
@@ -114,9 +115,9 @@ export async function GET(request) {
       sizeText: o.width && o.height ? `${o.width} × ${o.height} cm` : '',
       variant: o.usage || '',
       colorText: o.colors || '',
-      discount: pct > 0 ? pct : null,
-      oldPct: Math.max(0, pct - 10),
-      newPct: pct,
+      discount: ex > 0 ? `${pct} % + ${ex}` : (pct > 0 ? pct : null),
+      oldPct: ex > 0 ? pct : Math.max(0, pct - 10),
+      newPct: ex > 0 ? 'extra' : pct,
     })
 
     const res = new ImageResponse(img, { width: W, height: H, fonts: await loadFonts() })
