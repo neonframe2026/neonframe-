@@ -302,6 +302,14 @@ function EditModal({ offer, onClose, onSaved }) {
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
+      // Shopify-Produkt + Entwurf an neue Maße/Preise anpassen (nur solange noch nicht bestellt)
+      if (!['confirmed', 'in_production', 'shipped', 'delivered', 'unsubscribed'].includes(form.status)) {
+        try {
+          const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id }) })
+          const sd = await sr.json()
+          if (sd.error) alert('Shopify: ' + sd.error)
+        } catch {}
+      }
       // Neue Sendungsnummer -> Versand-Mail + Status "Versendet"
       const tn = form.tracking_number.trim()
       if (tn && tn !== (offer.tracking_number || '')) {
@@ -1402,6 +1410,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       }
 
 let offerId = previewOfferId
+      let dbId = previewOfferDbId
       if (offerId) {
         const res = await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         const data = await res.json()
@@ -1411,9 +1420,20 @@ let offerId = previewOfferId
         const data = await res.json()
         if (data.error) throw new Error(data.error)
 offerId = data.custom_id || data.id
+        dbId = data.id
         setPreviewOfferDbId(data.id)
       }
       const offerLink = `${window.location.origin}/angebot/${offerId}`
+
+      // Shopify: verstecktes Produkt mit Kundenbild + Bestellentwurf automatisch anlegen
+      let checkoutUrl = f.url || null
+      let shopifyMsg = ''
+      try {
+        const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: dbId }) })
+        const sd = await sr.json()
+        if (sd.checkoutUrl) { checkoutUrl = sd.checkoutUrl; shopifyMsg = '\n\n✅ Shopify-Bestellentwurf erstellt' }
+        else shopifyMsg = `\n\n⚠️ Shopify: ${sd.error || 'Fehler'}`
+      } catch (e) { shopifyMsg = `\n\n⚠️ Shopify: ${e.message}` }
 
       const draftRes = await fetch('/api/draft-order', {
         method: 'POST',
@@ -1435,6 +1455,7 @@ offerId = data.custom_id || data.id
           usage: f.usage,
           delivery: f.delivery,
           offerLink,
+          checkoutUrl,
           imageUrl: uploadedImgs[0] || null,
           discount: f.discType === 'pct' && parseFloat(f.discVal) > 0 ? f.discVal : null,
           variant: f.usage,
@@ -1442,7 +1463,7 @@ offerId = data.custom_id || data.id
       })
 
       const draftData = await draftRes.json()
-      let statusMsg = `Veröffentlicht!\n\nAngebotslink\n${offerLink}`
+      let statusMsg = `Veröffentlicht!\n\nAngebotslink\n${offerLink}` + shopifyMsg
 
       if (draftData.success) {
 if (draftData.checkoutUrl) {
