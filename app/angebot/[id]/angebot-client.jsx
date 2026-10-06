@@ -84,7 +84,7 @@ function InfoTip({ img, text, wide, warn }) {
         onMouseEnter={() => { if (window.matchMedia('(hover:hover) and (min-width:961px)').matches) setHover(true) }}
         onMouseLeave={() => setHover(false)}
         onClick={(e) => { e.stopPropagation(); setHover(false); setOpen(true) }}
-      >{warn ? '!' : 'i'}</span>
+      >i</span>
       {hover && (
         <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide === 'c' ? ' cwide' : wide === 'u' ? ' uwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible', ...(pos.maxH ? { '--mh': pos.maxH + 'px' } : {}) } : { left: 0, top: 0, visibility: 'hidden' }}>
           {content}
@@ -608,7 +608,10 @@ const discType = offer.disc_type || 'pct'
 const discVal = parseFloat(offer.disc_val) || 0
 const vatPct = parseFloat(offer.vat_pct) || 19
 const discAmt = discType === 'pct' ? base * (discVal / 100) : discVal
-const net = discType === 'pct' ? base * (1 - discVal / 100) : Math.max(0, base - discVal)
+const extraPct = parseFloat(offer.extra_disc_pct) || 0
+const net1 = discType === 'pct' ? base * (1 - discVal / 100) : Math.max(0, base - discVal)
+const extraAmt = net1 * extraPct / 100
+const net = net1 - extraAmt
 const vatAmt = net * (vatPct / 100)
 const final = net + vatAmt
   const discDisplay = discType === 'pct' ? `${discVal}%` : `€ ${discVal.toFixed(2)}`
@@ -629,6 +632,7 @@ const final = net + vatAmt
   const usageImg = offer.usage ? '/email/verwendung.jpg' : null
   const listBrutto = base * (1 + vatPct / 100)
   const discBrutto = discAmt * (1 + vatPct / 100)
+  const extraBrutto = extraAmt * (1 + vatPct / 100)
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
   const sizeChanged = sm.enabled && selW !== sm.W0
@@ -668,7 +672,7 @@ const final = net + vatAmt
         .ii-wrap { position:relative; display:inline-flex; vertical-align:middle; }
         .ii { width:16px; height:16px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:10px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; text-transform:none; letter-spacing:0; }
         .ii:hover { background:#71717a; }
-        .ii.ii-warn { background:#dc2626; font-style:normal; font-family:inherit; animation: warnPulse 1.8s ease-in-out infinite; }
+        .ii.ii-warn { background:#f59e0b; }
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
         .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:860px; max-width:calc(100vw - 40px); }
@@ -1097,6 +1101,7 @@ const final = net + vatAmt
               <div className="oc-price">
                 {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
                 {discAmt > 0 && <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>}
+                {extraAmt > 0 && <div className="oc-row disc"><span>Extra-Rabatt ({extraPct}%)</span><span>− {eur(extraBrutto)}</span></div>}
                 <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
                 <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
               </div>
@@ -1332,7 +1337,7 @@ const final = net + vatAmt
           <div className="sb-note">Kostenloser Versand · {offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</div>
         </div>
         <div className="sb-row">
-          {discAmt > 0 && <span className="sb-badge">−{discDisplay}</span>}
+          {discAmt > 0 && <span className="sb-badge">−{discDisplay}{extraPct > 0 ? ` −${extraPct}%` : ''}</span>}
           <div className="sb-price">{discAmt > 0 && <s>{eur(listBrutto)}</s>}<b>{final > 0 ? eur(final) : '–'}</b></div>
           <a href={offer.checkout_url || '#'} onClick={accept} className="cta-btn" tabIndex={showBar ? 0 : -1} target={offer.checkout_url && !sizeChanged ? '_blank' : undefined} rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>
