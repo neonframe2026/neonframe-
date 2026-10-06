@@ -691,6 +691,7 @@ const final = net + vatAmt
         .oc-star { font-size:24px; color:#60c8f0; text-shadow:0 0 12px rgba(96,200,240,.7); }
         .oc-body { padding:18px 20px 20px; }
         .cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; margin-bottom:16px; }
+        .cfg-grid { grid-template-columns:auto auto 1fr; } .cfg-grid > div { grid-column:1 / -1; } .cfg-grid > .cfg-half { grid-column:auto; margin-right:26px; }
         .cfg-label { display:flex !important; align-items:center; gap:6px; }
         .size-sel { appearance:none; -webkit-appearance:none; height:40px; padding:0 38px 0 14px; border:1.5px solid #d4d4d8; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; color:#111; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 13px center; cursor:pointer; max-width:100%; }
         .size-sel:focus { outline:none; border-color:#60c8f0; }
@@ -1079,13 +1080,13 @@ const final = net + vatAmt
                   </div>
                 )}
                 {offer.backplate && (
-                  <div>
+                  <div className="cfg-half">
                     <span className="cfg-label">Rückwandform {backplateImg && <InfoTip img={backplateImg} wide="x" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate}</div>
                   </div>
                 )}
                 {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
-                  <div>
+                  <div className="cfg-half">
                     <span className="cfg-label">Rückwandfarbe {backplateColorImg && <InfoTip img={backplateColorImg} wide="x" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate_color}</div>
                   </div>
