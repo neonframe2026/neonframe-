@@ -25,11 +25,11 @@ function colorDot(s = '') {
 // ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
 function tipText(text = '') {
   // "Kleiner gewünscht?" / "Größer gewünscht?" in fett und jeweils in eigener Zeile
-  const parts = text.split(/(Kleiner gew\u00fcnscht\?|Gr\u00f6\u00dfer gew\u00fcnscht\?)/)
+  const parts = text.split(/(Kleiner oder gr\u00f6\u00dfer gew\u00fcnscht\?)/)
   if (parts.length === 1) return text
   const out = [<span key="a">{parts[0].trim()}</span>]
   for (let k = 1; k < parts.length; k += 2) {
-    out.push(<span key={k} style={{ display: 'block' }}><b style={{ fontWeight: 700 }}>{parts[k]}</b>{' '}{(parts[k + 1] || '').trim()}</span>)
+    out.push(<span key={k} style={{ display: 'block' }}>{parts[k]}{' '}{(parts[k + 1] || '').trim()}</span>)
   }
   return <>{out}</>
 }
@@ -599,7 +599,7 @@ export default function AngebotPage({ offer }) {
     return () => io.disconnect()
   }, [])
   const sizeInfo = sm.enabled
-    ? `Für dieses Design beträgt die Mindestgröße ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen. Größer gewünscht? Kontaktiere uns - wir schalten dir deine Wunschgröße gerne frei.`
+    ? `Für dieses Design beträgt die Mindestgröße ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner oder größer gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen oder deine Wunschgröße freischalten.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
