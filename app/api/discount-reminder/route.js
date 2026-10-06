@@ -42,7 +42,7 @@ export async function POST(req) {
     })
     if (!r.ok) return Response.json({ error: 'E-Mail Versand fehlgeschlagen: ' + (await r.text()).slice(0, 150) }, { status: 500 })
 
-    await supabase.from('offers').update({ discount_reminder_sent_at: new Date().toISOString() }).eq('id', o.id)
+    await supabase.from('offers').update({ discount_reminder_sent_at: new Date().toISOString(), status: 'discount_reminded' }).eq('id', o.id)
     return Response.json({ success: true })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
