@@ -24,9 +24,14 @@ function colorDot(s = '') {
 
 // ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
 function tipText(text = '') {
-  const i = text.indexOf('Kleiner gewünscht?')
-  if (i <= 0) return text
-  return <>{text.slice(0, i).trim()}<span style={{ display: 'block' }}>{text.slice(i)}</span></>
+  // "Kleiner gewünscht?" / "Größer gewünscht?" in fett und jeweils in eigener Zeile
+  const parts = text.split(/(Kleiner gew\u00fcnscht\?|Gr\u00f6\u00dfer gew\u00fcnscht\?)/)
+  if (parts.length === 1) return text
+  const out = [<span key="a">{parts[0].trim()}</span>]
+  for (let k = 1; k < parts.length; k += 2) {
+    out.push(<span key={k} style={{ display: 'block' }}><b style={{ fontWeight: 700 }}>{parts[k]}</b>{' '}{(parts[k + 1] || '').trim()}</span>)
+  }
+  return <>{out}</>
 }
 
 function InfoTip({ img, text, wide, warn }) {
@@ -42,14 +47,22 @@ function InfoTip({ img, text, wide, warn }) {
     if (!ic || !pop) return
     const r = ic.getBoundingClientRect()
     const pw = pop.offsetWidth, ph = pop.offsetHeight
-    const vw = window.innerWidth, vh = window.innerHeight, m = 12
-    let left = r.left - 10
-    if (left + pw > vw - m) left = vw - m - pw
-    if (left < m) left = m
-    let top = r.bottom + 10
-    if (top + ph > vh - m) top = r.top - 10 - ph
-    if (top < m) top = Math.max(m, vh - m - ph)
-    setPos({ left, top })
+    const vw = window.innerWidth, vh = window.innerHeight, m = 12, g = 14
+    const clampX = (x) => Math.max(m, Math.min(vw - m - pw, x))
+    const clampY = (y) => Math.max(m, Math.min(vh - m - ph, y))
+    // Reihenfolge: unten, oben, rechts, links – das Fenster darf das ⓘ (und damit den Mauszeiger) nie verdecken
+    let p = null
+    if (r.bottom + g + ph <= vh - m) p = { left: clampX(r.left - 10), top: r.bottom + g }
+    else if (r.top - g - ph >= m) p = { left: clampX(r.left - 10), top: r.top - g - ph }
+    else if (r.right + g + pw <= vw - m) p = { left: r.right + g, top: clampY(r.top + r.height / 2 - ph / 2) }
+    else if (r.left - g - pw >= m) p = { left: r.left - g - pw, top: clampY(r.top + r.height / 2 - ph / 2) }
+    else {
+      // passt nirgends ganz: auf die größere Seite (oben/unten) setzen und verkleinern
+      const below = vh - m - (r.bottom + g), above = r.top - g - m
+      const maxH = Math.max(below, above)
+      p = below >= above ? { left: clampX(r.left - 10), top: r.bottom + g, maxH } : { left: clampX(r.left - 10), top: m, maxH }
+    }
+    setPos(p)
   }, [])
 
   useEffect(() => {
@@ -73,7 +86,7 @@ function InfoTip({ img, text, wide, warn }) {
         onClick={(e) => { e.stopPropagation(); setHover(false); setOpen(true) }}
       >{warn ? '!' : 'i'}</span>
       {hover && (
-        <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide === 'c' ? ' cwide' : wide === 'u' ? ' uwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible' } : { left: 0, top: 0, visibility: 'hidden' }}>
+        <span ref={popRef} className={`ii-pop${wide === 'x' ? ' xwide' : wide === 'c' ? ' cwide' : wide === 'u' ? ' uwide' : wide ? ' wide' : ''}`} style={pos ? { left: pos.left, top: pos.top, visibility: 'visible', ...(pos.maxH ? { '--mh': pos.maxH + 'px' } : {}) } : { left: 0, top: 0, visibility: 'hidden' }}>
           {content}
         </span>
       )}
@@ -586,7 +599,7 @@ export default function AngebotPage({ offer }) {
     return () => io.disconnect()
   }, [])
   const sizeInfo = sm.enabled
-    ? `Für dieses Design beträgt die Mindestgröße ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.`
+    ? `Für dieses Design beträgt die Mindestgröße ${sm.minW}\u00a0x\u00a0${sm.heightFor(sm.minW)}\u00a0CM. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen. Größer gewünscht? Kontaktiere uns - wir schalten dir deine Wunschgröße gerne frei.`
     : (offer.size_warning_enabled && offer.size_warning_text) || ''
   const selH = sm.enabled ? sm.heightFor(selW) : sm.H0
 
@@ -659,7 +672,8 @@ const final = net + vatAmt
         .ii-pop { display:block; position:fixed; z-index:99999; pointer-events:none; background:#fff; border:1px solid #eee; border-radius:12px; padding:6px; box-shadow:0 12px 34px rgba(0,0,0,.18); }
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
         .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:860px; max-width:calc(100vw - 40px); }
-        .ii-txt { display:block; width:470px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
+        .ii-pop img { max-height:calc(var(--mh, 100vh) - 24px) !important; }
+        .ii-txt { display:block; width:560px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
@@ -1041,7 +1055,7 @@ const final = net + vatAmt
                       ) : (
                         <div className="cfg-pill">{offer.width && offer.height ? `${offer.width} × ${offer.height} cm` : offer.width || offer.height}</div>
                       )}
-                      {multiPart && <InfoTip warn text="Schilder ab 110 cm Breite können aus mehreren Teilen bestehen." />}
+                      {multiPart && <InfoTip warn text="Neonschilder über 100 cm können aus mehreren Teilen bestehen." />}
                     </div>
                   </div>
                 )}
