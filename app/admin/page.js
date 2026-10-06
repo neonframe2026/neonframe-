@@ -221,6 +221,28 @@ function cleanSizeRows(rows) {
   return out.length ? out : null
 }
 
+
+// Bild quadratisch (1:1) machen und hochladen – für das Shopify-Produktbild im Checkout
+// Nichts wird abgeschnitten: das Bild wird mittig auf eine dunkle quadratische Fläche gesetzt
+async function makeSquareUpload(src, offerId) {
+  if (!src) return null
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src })
+    const iw = img.naturalWidth, ih = img.naturalHeight
+    const out = Math.min(Math.max(iw, ih), 1200)
+    const c = document.createElement('canvas'); c.width = out; c.height = out
+    const ctx = c.getContext('2d')
+    ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, out, out)
+    const sc = out / Math.max(iw, ih), dw = iw * sc, dh = ih * sc
+    ctx.drawImage(img, (out - dw) / 2, (out - dh) / 2, dw, dh)
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9))
+    if (!blob) return null
+    const fd = new FormData(); fd.append('file', blob, `shopify-${Date.now()}.jpg`); fd.append('offerId', String(offerId || 'new'))
+    const up = await fetch('/api/upload', { method: 'POST', body: fd })
+    return (await up.json()).url || null
+  } catch { return null }
+}
+
 function EditModal({ offer, onClose, onSaved }) {
   const [form, setForm] = useState({
     offer_num: offer.offer_num || offer.custom_id || '',
@@ -305,7 +327,9 @@ function EditModal({ offer, onClose, onSaved }) {
       // Shopify-Produkt + Entwurf an neue Maße/Preise anpassen (nur solange noch nicht bestellt)
       if (!['confirmed', 'in_production', 'shipped', 'delivered', 'unsubscribed'].includes(form.status)) {
         try {
-          const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id }) })
+          const imgChanged = (uploadedImgs[1] || null) !== (offer.preview_image_2 || null) || (uploadedImgs[0] || null) !== (offer.preview_image || null)
+          const squareUrl = imgChanged || !offer.shopify_product_id ? await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], offer.id) : null
+          const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, imageUrl: squareUrl, refreshImage: !!squareUrl }) })
           const sd = await sr.json()
           if (sd.error) alert('Shopify: ' + sd.error)
         } catch {}
@@ -1429,7 +1453,8 @@ offerId = data.custom_id || data.id
       let checkoutUrl = f.url || null
       let shopifyMsg = ''
       try {
-        const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: dbId }) })
+        const squareUrl = await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], dbId)
+        const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: dbId, imageUrl: squareUrl, refreshImage: true }) })
         const sd = await sr.json()
         if (sd.checkoutUrl) { checkoutUrl = sd.checkoutUrl; shopifyMsg = '\n\n✅ Shopify-Bestellentwurf erstellt' }
         else shopifyMsg = `\n\n⚠️ Shopify: ${sd.error || 'Fehler'}`
