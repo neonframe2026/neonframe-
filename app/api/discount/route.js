@@ -173,16 +173,15 @@ function buildPlainDiscountEmail({ firstName, extra, basePct, offerLink, unsubsc
 <body style="margin:0;padding:0;background:#ffffff">
 <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;max-width:560px;padding:24px 20px">
 <p style="${p}">Hallo ${firstName || ''},</p>
-<p style="${p}">diese Woche bündeln wir mehrere Aufträge in einer gemeinsamen Produktion und sparen dadurch bei Material und Fertigung. Diesen Vorteil geben wir gerne an dich weiter: Du bekommst <b>zusätzlich ${extra}&nbsp;% Rabatt</b> auf deinen bereits bestehenden <b>${basePct}&nbsp;% Rabatt</b>.${newPrice ? ` Dein Schild liegt damit jetzt bei <b>${newPrice}</b>.` : ''}</p>
+<p style="${p}">diese Woche bündeln wir mehrere Aufträge in einer gemeinsamen Produktion und sparen dadurch bei Material und Fertigung. Diesen Vorteil geben wir gerne an dich weiter: Du bekommst <b>zusätzlich ${extra}&nbsp;% Rabatt</b> auf deinen bereits bestehenden <b>${basePct}&nbsp;% Rabatt</b>.</p>
 <p style="${p}">Der Rabatt ist schon in deinem Angebot eingetragen:<br><a href="${offerLink}" style="color:#0891b2">${offerLink}</a></p>
 <p style="${p}">Änderungswünsche? Antworte einfach auf diese Mail.</p>
 <p style="${p}"><b>Bitte beachte:</b> Da die Produktion fest eingeplant ist, gilt der Extra-Rabatt nur bis zum <b>${validUntil}</b>.</p>
 <p style="margin:0 0 18px">Viele Grüße<br>Dein NeonFrame-Team</p>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e5e7eb"><tr>
-<td style="padding:16px 16px 0 0;vertical-align:top"><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" width="64" height="64" alt="NeonFrame" style="display:block;border-radius:10px;border:0"></td>
-<td style="padding:16px 0 0 16px;border-left:2px solid #22d3ee;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#444444;vertical-align:top">
-<b style="font-size:15px;color:#111111">NeonFrame</b><br>
-Individuelle LED-Neonschilder<br>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="padding:0 16px 0 0;vertical-align:middle"><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" width="100" height="100" alt="NeonFrame" style="display:block;width:100px;height:100px;border-radius:12px;border:0"></td>
+<td style="padding:0 0 0 16px;border-left:2px solid #22d3ee;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:25px;color:#444444;vertical-align:middle">
+<b style="font-size:17px;color:#111111">NeonFrame</b><br>
 📞 <a href="tel:+4917656197641" style="color:#444444;text-decoration:none">+49 176 56197641</a><br>
 ✉️ <a href="mailto:info@neonframe.de" style="color:#0891b2;text-decoration:none">info@neonframe.de</a><br>
 🌐 <a href="https://neonframe.de" style="color:#0891b2;text-decoration:none">neonframe.de</a>
