@@ -45,8 +45,11 @@ export async function POST(req) {
     // Rabatt NICHT ändern – er wird vorher von Hand im Admin angepasst (z. B. 20 % -> 30 %)
     const baseNet = parseFloat(offer.base_price) || 0
     const curAmt = offer.disc_type === 'pct' ? baseNet * (parseFloat(offer.disc_val) || 0) / 100 : (parseFloat(offer.disc_val) || 0)
-    const newPct = baseNet > 0 ? Math.round(curAmt / baseNet * 100) : 0
-    const oldPct = Math.max(0, newPct - EXTRA_PCT)
+    const ex = parseFloat(offer.extra_disc_pct) || 0
+    const basePct = baseNet > 0 ? Math.round(curAmt / baseNet * 100) : 0
+    // Neu: Extra-Rabatt-Feld (z. B. 20 % + 10 % Extra). Ohne Feld wie bisher (Rabatt von Hand erhöht).
+    const newPct = ex > 0 ? 'extra' : basePct
+    const oldPct = ex > 0 ? basePct : Math.max(0, basePct - EXTRA_PCT)
 
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
@@ -66,7 +69,7 @@ export async function POST(req) {
           oldPct, newPct,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink, unsubscribeUrl, imageUrl,
-          discount: newPct,
+          discount: ex > 0 ? `${basePct} % + ${ex}` : newPct,
           width: offer.width, height: offer.height, colors: offer.colors, variant: offer.usage,
         }),
       }),
