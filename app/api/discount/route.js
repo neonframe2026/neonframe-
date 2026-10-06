@@ -54,7 +54,11 @@ export async function POST(req) {
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${offerId}`
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
 
-    const personalImageUrl = await storeEmailImage(offerId, 'discount')
+    // Neuer Endpreis für die Mail
+    const vat = 1 + (parseFloat(offer.vat_pct) || 19) / 100
+    const afterDisc = offer.disc_type === 'pct' ? baseNet * (1 - (parseFloat(offer.disc_val) || 0) / 100) : Math.max(0, baseNet - (parseFloat(offer.disc_val) || 0))
+    const finalNew = afterDisc * (1 - ex / 100) * vat
+    const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -62,15 +66,13 @@ export async function POST(req) {
       body: JSON.stringify({
         from: 'NeonFrame <info@neonframe.de>',
         to: [customerEmail],
-        subject: `+10 % extra auf dein Neon-Schild – NeonFrame`,
+        subject: `Dein Neon-Schild – kleines Update zum Preis`,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
-        html: buildDiscountEmail({
-          personalImageUrl,
-          oldPct, newPct,
-          firstName: customerName?.split(' ')[0] || 'dort',
-          offerLink, unsubscribeUrl, imageUrl,
-          discount: ex > 0 ? `${basePct} % + ${ex}` : newPct,
-          width: offer.width, height: offer.height, colors: offer.colors, variant: offer.usage,
+        html: buildPlainDiscountEmail({
+          firstName: customerName?.split(' ')[0] || '',
+          extra: ex > 0 ? ex : EXTRA_PCT, basePct: ex > 0 ? basePct : oldPct, offerLink, unsubscribeUrl,
+          newPrice: finalNew > 0 ? eur(finalNew) : null,
+          validUntil: new Date(Date.now() + 4 * 86400000).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }),
         }),
       }),
     })
@@ -162,4 +164,29 @@ function buildDiscountEmail({ personalImageUrl, oldPct, newPct, firstName, offer
 </body>
 </html>`
   return html.replace(/>\s+</g, '><')
+}
+
+// Schlichte, persönliche Mail – nur Text, wie von Hand geschrieben
+function buildPlainDiscountEmail({ firstName, extra, basePct, offerLink, unsubscribeUrl, newPrice, validUntil }) {
+  const p = 'margin:0 0 16px;'
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#ffffff">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;max-width:560px;padding:24px 20px">
+<p style="${p}">Hallo ${firstName || ''},</p>
+<p style="${p}">diese Woche bündeln wir mehrere Aufträge in einer gemeinsamen Produktion und sparen dadurch bei Material und Fertigung. Diesen Vorteil geben wir gerne an dich weiter: Du bekommst <b>zusätzlich ${extra}&nbsp;% Rabatt</b> auf deinen bereits bestehenden <b>${basePct}&nbsp;% Rabatt</b>.${newPrice ? ` Dein Schild liegt damit jetzt bei <b>${newPrice}</b>.` : ''}</p>
+<p style="${p}">Der Rabatt ist schon in deinem Angebot eingetragen:<br><a href="${offerLink}" style="color:#0891b2">${offerLink}</a></p>
+<p style="${p}">Änderungswünsche? Antworte einfach auf diese Mail.</p>
+<p style="${p}"><b>Bitte beachte:</b> Da die Produktion fest eingeplant ist, gilt der Extra-Rabatt nur bis zum <b>${validUntil}</b>.</p>
+<p style="margin:0 0 18px">Viele Grüße<br>Dein NeonFrame-Team</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e5e7eb"><tr>
+<td style="padding:16px 16px 0 0;vertical-align:top"><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" width="64" height="64" alt="NeonFrame" style="display:block;border-radius:10px;border:0"></td>
+<td style="padding:16px 0 0 16px;border-left:2px solid #22d3ee;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.7;color:#444444;vertical-align:top">
+<b style="font-size:15px;color:#111111">NeonFrame</b><br>
+Individuelle LED-Neonschilder<br>
+📞 <a href="tel:+4917656197641" style="color:#444444;text-decoration:none">+49 176 56197641</a><br>
+✉️ <a href="mailto:info@neonframe.de" style="color:#0891b2;text-decoration:none">info@neonframe.de</a><br>
+🌐 <a href="https://neonframe.de" style="color:#0891b2;text-decoration:none">neonframe.de</a>
+</td></tr></table>
+<p style="margin:28px 0 0;font-size:11px;color:#999999">Keine weiteren Mails zu diesem Angebot? <a href="${unsubscribeUrl}" style="color:#999999">Hier abmelden</a></p>
+</div></body></html>`
 }
