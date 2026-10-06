@@ -39,7 +39,7 @@ export async function GET(request) {
     const today = new Date().toISOString().slice(0, 10)
     const { data: done } = await supabase.from('offers').select('id, status, valid_until, shopify_product_id, shopify_draft_id').not('shopify_product_id', 'is', null)
     for (const o of done || []) {
-      const open = ['offer_sent', 'recontacted', 'discount_offered'].includes(o.status)
+      const open = ['offer_sent', 'recontacted', 'discount_offered', 'discount_reminded'].includes(o.status)
       const expired = open && o.valid_until && o.valid_until < today
       if (o.status === 'unsubscribed' || expired || o.status === 'delivered') {
         await removeOfferShopify(o)
