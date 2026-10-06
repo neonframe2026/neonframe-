@@ -224,6 +224,18 @@ function cleanSizeRows(rows) {
 
 // Bild quadratisch (1:1) machen und hochladen – für das Shopify-Produktbild im Checkout
 // Nichts wird abgeschnitten: das Bild wird mittig auf eine dunkle quadratische Fläche gesetzt
+// Checkout-Bild (schon 1:1) hochladen; ist es schon eine URL, wird es direkt genommen
+async function uploadCheckoutImage(src, offerId) {
+  if (!src) return null
+  if (!src.startsWith('data')) return src
+  try {
+    const blob = await (await fetch(src)).blob()
+    const fd = new FormData(); fd.append('file', blob, `checkout-${Date.now()}.jpg`); fd.append('offerId', String(offerId || 'new'))
+    const up = await fetch('/api/upload', { method: 'POST', body: fd })
+    return (await up.json()).url || null
+  } catch { return null }
+}
+
 async function makeSquareUpload(src, offerId) {
   if (!src) return null
   try {
@@ -241,6 +253,30 @@ async function makeSquareUpload(src, offerId) {
     const up = await fetch('/api/upload', { method: 'POST', body: fd })
     return (await up.json()).url || null
   } catch { return null }
+}
+
+
+// Feld für das Checkout-Bild (1:1)
+function CheckoutImageField({ src, onChange, inputId, dark }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, border: '1px dashed #22d3ee', borderRadius: 12, background: dark ? 'rgba(34,211,238,.05)' : 'var(--input-bg)' }}>
+      <label htmlFor={inputId} style={{ width: 84, height: 84, borderRadius: 10, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
+        {src ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 26 }}>🛒</span>}
+      </label>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>Checkout-Bild (1:1)</div>
+        <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>Wird im Shopify-Checkout angezeigt. Quadratisch hochladen. Ohne Bild wird automatisch Bild 2 genommen.</div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>
+          {src && <span onClick={() => onChange(null)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#ef4444', border: '1px solid #ef444466', borderRadius: 8, padding: '5px 10px' }}>Entfernen</span>}
+        </div>
+      </div>
+      <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+        const f = e.target.files?.[0]; e.target.value = ''
+        if (f) compressImage(f).then(onChange).catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
+      }} />
+    </div>
+  )
 }
 
 function EditModal({ offer, onClose, onSaved }) {
@@ -270,6 +306,7 @@ function EditModal({ offer, onClose, onSaved }) {
     size_warning_text: offer.size_warning_text || 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
   })
   const [saving, setSaving] = useState(false)
+  const [checkoutImg, setCheckoutImg] = useState(offer.checkout_image || null)
   const [imgSrcs, setImgSrcs] = useState([
     offer.preview_image || null,
     offer.preview_image_2 || null,
@@ -327,8 +364,14 @@ function EditModal({ offer, onClose, onSaved }) {
       // Shopify-Produkt + Entwurf an neue Maße/Preise anpassen (nur solange noch nicht bestellt)
       if (!['confirmed', 'in_production', 'shipped', 'delivered', 'unsubscribed'].includes(form.status)) {
         try {
-          const imgChanged = (uploadedImgs[1] || null) !== (offer.preview_image_2 || null) || (uploadedImgs[0] || null) !== (offer.preview_image || null)
-          const squareUrl = imgChanged || !offer.shopify_product_id ? await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], offer.id) : null
+          let squareUrl = null
+          if (checkoutImg !== (offer.checkout_image || null)) {
+            // Checkout-Bild neu, geändert oder entfernt
+            squareUrl = checkoutImg ? await uploadCheckoutImage(checkoutImg, offer.id) : await makeSquareUpload(uploadedImgs[1] || uploadedImgs[0], offer.id)
+            await fetch(`/api/offers?id=${offer.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checkout_image: checkoutImg ? squareUrl : null }) })
+          } else if (!checkoutImg && (!offer.shopify_product_id || (uploadedImgs[1] || null) !== (offer.preview_image_2 || null) || (uploadedImgs[0] || null) !== (offer.preview_image || null))) {
+            squareUrl = await makeSquareUpload(uploadedImgs[1] || uploadedImgs[0], offer.id)
+          }
           const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, imageUrl: squareUrl, refreshImage: !!squareUrl }) })
           const sd = await sr.json()
           if (sd.error) alert('Shopify: ' + sd.error)
@@ -375,6 +418,7 @@ function EditModal({ offer, onClose, onSaved }) {
 
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
+            <div style={{ marginBottom: 14 }}><CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="edit-checkout-img" /></div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               {[0,1,2].map(idx => (
@@ -1114,6 +1158,7 @@ export default function AdminPage() {
   const [sizeRows, setSizeRows] = useState([{ w: '', h: '', vk: '' }])
   const [origVk, setOrigVk] = useState('')
   const [imgSrcs, setImgSrcs] = useState([])
+  const [checkoutImg, setCheckoutImg] = useState(null)
   const [parseStatus, setParseStatus] = useState(null)
   const [publishing, setPublishing] = useState(false)
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -1164,6 +1209,7 @@ export default function AdminPage() {
     setSizeRows([{ w: '', h: '', vk: '' }])
     setOrigVk('')
     setImgSrcs([])
+    setCheckoutImg(null)
     setPublishedLink(null)
     setParseStatus(null)
     setPreviewOfferId(null)
@@ -1453,7 +1499,8 @@ offerId = data.custom_id || data.id
       let checkoutUrl = f.url || null
       let shopifyMsg = ''
       try {
-        const squareUrl = await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], dbId)
+        const squareUrl = checkoutImg ? await uploadCheckoutImage(checkoutImg, dbId) : await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], dbId)
+        if (checkoutImg && squareUrl) await fetch(`/api/offers?id=${dbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checkout_image: squareUrl }) })
         const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: dbId, imageUrl: squareUrl, refreshImage: true }) })
         const sd = await sr.json()
         if (sd.checkoutUrl) { checkoutUrl = sd.checkoutUrl; shopifyMsg = '\n\n✅ Shopify-Bestellentwurf erstellt' }
@@ -1675,6 +1722,7 @@ if (tab === 'create') return (
 
         <CCard t="Dateien">
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="checkout-img-upload" dark />
             <label className="nf-cdrop" htmlFor="multi-img-upload" style={{...cDrop,padding:'14px 16px',justifyContent:'center'}}>
               <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
                 const files = Array.from(e.target.files)
