@@ -583,6 +583,11 @@ function HomeBtn({ c }) {
 }
 
 function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
+  if (typeof document !== 'undefined' && !document.getElementById('nf-home-grid-css')) {
+    const st = document.createElement('style'); st.id = 'nf-home-grid-css'
+    st.textContent = '.nf-home-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}@media(max-width:820px){.nf-home-grid{grid-template-columns:1fr;gap:16px}}'
+    document.head.appendChild(st)
+  }
     const n = offers.filter(mIsRed).length
   const card = { background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 18, padding: 32, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }
   const redPill = { background: '#dc2626', color: '#fff', borderRadius: 20, fontSize: 12, fontWeight: 800, padding: '3px 9px' }
@@ -594,7 +599,6 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
   const small = [
     { icon: '↩️', title: 'Nachfassen', badge: n, text: n ? `${n} ${n === 1 ? 'Angebot wartet' : 'Angebote warten'} auf eine Erinnerung, einen Rabatt oder eine Bewertungsanfrage.` : 'Alles erledigt – aktuell keine Erinnerungen fällig.', btn: '↩ Erinnerungen senden', onClick: () => setTab('manage') },
     { icon: '🧪', title: 'Testmodus', badge: NF_TEST_MODE ? 'AN' : null, text: NF_TEST_MODE ? 'Alle Mails sind jederzeit manuell sendbar, Zeitsperren sind aus.' : 'Aus – alle Zeitsperren und Regeln gelten normal.', btn: NF_TEST_MODE ? '⏹ Testmodus ausschalten' : '▶ Testmodus einschalten', onClick: () => { try { localStorage.setItem('nf_test_mode', NF_TEST_MODE ? '0' : '1') } catch {} ; window.location.reload() } },
-    { icon: '🛒', title: 'Bestellentwürfe / Produkt', text: 'Shopify Draft Orders und das Produkt zum Preis-Anpassen.', links: [{ btn: '🛒 Entwürfe', href: SHOPIFY_DRAFTS }, { btn: '🏷️ Produkt', href: SHOPIFY_PRODUCT }] },
   ]
 
   return (
@@ -621,26 +625,14 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 64px' }}>
         <h1 style={{ fontSize: 38, fontWeight: 800, margin: '0 0 32px' }}>Willkommen 👋</h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(420px,1fr))', gap: 24, marginBottom: 24 }}>
-          {main.map(c => (
-            <div key={c.title} style={{ ...card, minHeight: 360, padding: 40, background: c.dark ? 'radial-gradient(ellipse at 20% 0%,#0e3a4a 0%,#0a0a0a 70%)' : 'var(--panel)', color: c.dark ? '#fff' : 'var(--text)', borderColor: c.dark ? NEON + '66' : 'var(--border)' }}>
-              <div style={{ fontSize: 48 }}>{c.icon}</div>
-              <h3 style={{ margin: '8px 0 0', fontSize: 34, fontWeight: 800 }}>{c.title}</h3>
-              <p style={{ margin: '0 0 24px', fontSize: 16, lineHeight: 1.6, color: c.dark ? '#9ca3af' : 'var(--text-muted)', maxWidth: 460 }}>{c.text}</p>
-              <HomeBtn c={c} />
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 24 }}>
-          {small.map(c => (
-            <div key={c.title} style={{ ...card, minHeight: 240 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 26 }}>{c.icon}</span>
-                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{c.title}</h3>
-                {(c.badge > 0 || typeof c.badge === 'string') && <span style={redPill}>{c.badge}</span>}
-              </div>
-              <p style={{ margin: '0 0 16px', fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)' }}>{c.text}</p>
+        {/* 4 gleich große Kacheln (2×2, auf dem Handy untereinander) */}
+        <div className="nf-home-grid">
+          {[...main, ...small].map(c => (
+            <div key={c.title} style={{ ...card, minHeight: 300, padding: 36, background: c.dark ? 'radial-gradient(ellipse at 20% 0%,#0e3a4a 0%,#0a0a0a 70%)' : 'var(--panel)', color: c.dark ? '#fff' : 'var(--text)', borderColor: c.dark ? NEON + '66' : 'var(--border)', position: 'relative' }}>
+              {(c.badge > 0 || typeof c.badge === 'string') && <span style={{ ...redPill, position: 'absolute', top: 20, right: 20 }}>{c.badge}</span>}
+              <div style={{ fontSize: 40 }}>{c.icon}</div>
+              <h3 style={{ margin: '6px 0 0', fontSize: 28, fontWeight: 800 }}>{c.title}</h3>
+              <p style={{ margin: '0 0 20px', fontSize: 15, lineHeight: 1.6, color: c.dark ? '#9ca3af' : 'var(--text-muted)', maxWidth: 460 }}>{c.text}</p>
               <HomeBtn c={c} />
             </div>
           ))}
