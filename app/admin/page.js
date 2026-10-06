@@ -14,16 +14,19 @@ const STATUS_OPTIONS = [
   { value: 'unsubscribed',    label: 'Abgemeldet',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
 ]
 
-function calcPrices(basePrice, discType, discVal, vatPct) {
+function calcPrices(basePrice, discType, discVal, vatPct, extraPct) {
   const base = parseFloat(basePrice) || 0
   const dv = parseFloat(discVal) || 0
   const vat = parseFloat(vatPct) || 19
-  const net = discType === 'pct' ? base * (1 - dv / 100) : Math.max(0, base - dv)
+  const ex = parseFloat(extraPct) || 0
+  const net1 = discType === 'pct' ? base * (1 - dv / 100) : Math.max(0, base - dv)
+  const extraAmt = net1 * ex / 100
+  const net = net1 - extraAmt
   const vatAmt = net * (vat / 100)
   const total = net + vatAmt
   const rrp = base * (1 + vat / 100)
   const discAmt = discType === 'pct' ? base * (dv / 100) : dv
-  return { net, vatAmt, total, rrp, discAmt }
+  return { net, vatAmt, total, rrp, discAmt, extraAmt }
 }
 
 // Endpreis (brutto) -> Listenpreis (netto) zurückrechnen
@@ -292,6 +295,7 @@ function EditModal({ offer, onClose, onSaved }) {
     base_price: offer.base_price || '',
     disc_type: offer.disc_type || 'pct',
     disc_val: offer.disc_val || '20',
+    extra_disc_pct: offer.extra_disc_pct || '',
     vat_pct: offer.vat_pct || '19',
     delivery: offer.delivery || '',
     checkout_url: offer.checkout_url || '',
@@ -314,7 +318,7 @@ function EditModal({ offer, onClose, onSaved }) {
   ])
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
-  const prices = calcPrices(form.base_price, form.disc_type, form.disc_val, form.vat_pct)
+  const prices = calcPrices(form.base_price, form.disc_type, form.disc_val, form.vat_pct, form.extra_disc_pct)
 
   async function handleImage(e, idx) {
     const file = e.target.files[0]; if (!file) return
@@ -347,6 +351,7 @@ function EditModal({ offer, onClose, onSaved }) {
         backplate: form.backplate, backplate_color: form.backplate_color, usage: form.usage,
         base_price: parseFloat(form.base_price) || 0, disc_type: form.disc_type,
         disc_val: parseFloat(form.disc_val) || 0, vat_pct: parseFloat(form.vat_pct) || 19,
+        extra_disc_pct: parseFloat(form.extra_disc_pct) || 0,
         net_price: prices.net, final_price: prices.total,
         delivery: form.delivery, checkout_url: form.checkout_url,
         customer_note: form.customer_note || null,
@@ -495,6 +500,14 @@ function EditModal({ offer, onClose, onSaved }) {
                   </select>
                 </div>
                 <div><label style={lbl}>Rabatt ({form.disc_type === 'pct' ? '%' : '€'})</label><input style={inp} type="number" step="0.01" value={form.disc_val} onChange={e => set('disc_val', e.target.value)} /></div>
+              </div>
+              <div>
+                <label style={lbl}>Extra-Rabatt (%) – wird zusätzlich auf den Preis nach Rabatt gegeben</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input style={{ ...inp, flex: 1 }} type="number" step="1" value={form.extra_disc_pct} onChange={e => set('extra_disc_pct', e.target.value)} placeholder="z. B. 10 (leer = kein Extra-Rabatt)" />
+                  {[10, 15].map(v => <button key={v} type="button" onClick={() => set('extra_disc_pct', String(v))} style={{ ...inp, width: 'auto', cursor: 'pointer', fontWeight: 700 }}>+{v} %</button>)}
+                </div>
+                {prices.extraAmt > 0 && <div style={{ fontSize: 11, color: '#16a34a', marginTop: 5 }}>Extra-Rabatt: − € {(prices.extraAmt * (1 + (parseFloat(form.vat_pct) || 19) / 100)).toFixed(2)} (brutto)</div>}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div><label style={lbl}>MwSt. (%)</label><input style={inp} type="number" value={form.vat_pct} onChange={e => set('vat_pct', e.target.value)} /></div>
@@ -781,7 +794,7 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onMail }) {
   const items = [
     ...(NF_TEST_MODE ? [{ label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') }] : []),
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Preis im Angebot + Shopify anpassen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Extra-Rabatt im Angebot eintragen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist seit 3 Tagen beim Kunden' : 'Ab 3 Tagen nach der Zustellung')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
     ...(NF_TEST_MODE ? [
       { label: '🧪 Produktions-Mail', hint: 'Testmodus – sofort senden', on: !!o.customer_email, act: () => onMail('produktion') },
@@ -836,7 +849,7 @@ function MInternalNote({ o }) {
 }
 
 function MDetail({ o, onEdit, onContact, onReview, onDiscount, onMail, onToggle, onDelete, onStatus }) {
-  const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct)
+  const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, o.extra_disc_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
   return (
     <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1400 }}>
@@ -888,6 +901,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onMail, onToggle,
         <MCard title="Preis">
           <MKv k="Listenpreis (netto)" v={mEur(o.base_price)} />
           {p.discAmt > 0 && <MKv k={`Rabatt (${o.disc_type === 'pct' ? o.disc_val + '%' : mEur(o.disc_val)})`} v={'− ' + mEur(p.discAmt)} color="#22c55e" />}
+          {p.extraAmt > 0 && <MKv k={`Extra-Rabatt (${o.extra_disc_pct}%)`} v={'− ' + mEur(p.extraAmt)} color="#22c55e" />}
           <MKv k="Netto nach Rabatt" v={mEur(p.net)} />
           <MKv k={`MwSt. (${o.vat_pct || 19}%)`} v={'+ ' + mEur(p.vatAmt)} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12 }}>
@@ -960,7 +974,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
     try {
       const res = await fetch('/api/discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink: mLink(o) }) })
       const data = await res.json()
-      if (data.success) { alert(`✅ Rabatt-Mail gesendet (${data.newPct} % Rabatt).`); loadOffers() } else { alert('Fehler: ' + data.error) }
+      if (data.success) { alert(`✅ Rabatt-Mail gesendet (${data.newPct === 'extra' ? '+ Extra-Rabatt' : data.newPct + ' % Rabatt'}).`); loadOffers() } else { alert('Fehler: ' + data.error) }
     } catch (err) { alert('Fehler: ' + err.message) }
   }
 
