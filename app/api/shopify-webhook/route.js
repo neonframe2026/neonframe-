@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { removeOfferShopify } from '../../../lib/shopify-admin'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 const DELAY_MINUTES = 15
@@ -30,9 +31,14 @@ export async function POST(request) {
       .from('offers')
       .update({ status: 'confirmed', ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}) })
       .ilike('checkout_url', `%${token}%`)
-      .select('id, project, customer_email, order_email_sent_at')
+      .select('id, project, customer_email, order_email_sent_at, shopify_product_id')
 
     if (error) return Response.json({ error: error.message }, { status: 500 })
+
+    // Verstecktes Angebots-Produkt archivieren (Bild bleibt in der Bestellung sichtbar)
+    for (const o of offers || []) {
+      if (o.shopify_product_id) await removeOfferShopify({ shopify_product_id: o.shopify_product_id }, { archiveOnly: true })
+    }
 
     // Produktions-Mail nur EINMAL pro Angebot (Shopify schickt Webhooks manchmal doppelt)
     let scheduled = 0
