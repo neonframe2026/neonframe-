@@ -7,6 +7,7 @@ const STATUS_OPTIONS = [
   { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
   { value: 'recontacted',     label: 'Nochmals kontaktiert', color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
   { value: 'discount_offered', label: 'Rabatt angeboten',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
+  { value: 'discount_reminded', label: 'Rabatt erinnert',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
   { value: 'confirmed',       label: 'Bestellt',             color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
   { value: 'in_production',   label: 'In Produktion',        color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
   { value: 'shipped',         label: 'Versendet',            color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
@@ -738,7 +739,7 @@ function MTimeline({ o }) {
   const prodDone = !!prodAt && prodAt.getTime() <= Date.now()
   const time = (d) => d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'
   const at = (v) => v ? time(new Date(v)) : '—'
-  const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered'].includes(o.status)
+  const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered', 'discount_reminded'].includes(o.status)
   const ev = [
     { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true },
     { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#22d3ee', done: recontacted },
