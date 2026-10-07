@@ -641,6 +641,9 @@ const final = net + vatAmt
     if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
     e.preventDefault()
     if (accepting) return
+    const desk = window.matchMedia('(min-width: 769px) and (pointer: fine)').matches
+    const win = desk ? window.open('', '_blank') : null
+    if (win) { try { win.document.write('<title>Checkout wird geladen …</title><body style="margin:0;height:100vh;display:grid;place-items:center;font-family:-apple-system,Segoe UI,sans-serif;color:#555">Checkout wird geladen …</body>') } catch {} }
     setAccepting(true)
     setStep(0)
     const wait = (ms) => new Promise(r => setTimeout(r, ms))
@@ -653,11 +656,17 @@ const final = net + vatAmt
         clearTimeout(t1); clearTimeout(t2)
         setStep(3); await wait(500)
         setStep(4); await wait(350)
-        window.location.href = d.checkoutUrl
+        if (win && !win.closed) {
+          win.location.href = d.checkoutUrl
+          setAccepting(false); setStep(0)
+        } else {
+          window.location.href = d.checkoutUrl
+        }
         return
       }
       alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal oder schreib uns an info@neonframe.de.')
     } catch { alert('Da ist etwas schiefgelaufen. Bitte versuche es nochmal.') }
+    if (win && !win.closed) win.close()
     clearTimeout(t1); clearTimeout(t2)
     setAccepting(false); setStep(0)
   }
