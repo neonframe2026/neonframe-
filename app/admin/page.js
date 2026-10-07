@@ -544,6 +544,11 @@ function EditModal({ offer, onClose, onSaved }) {
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: -6 }}>Neue Sendungsnummer speichern → Versand-Mail geht raus, Status „Versendet“.</div>
               <div><label style={lbl}>Notizen für den Kunden</label>
+                <select style={{ ...inp, marginBottom: 8, cursor: 'pointer' }} value="" onChange={e => { const t = e.target.value; if (!t) return; set('customer_note', form.customer_note ? form.customer_note + '\n' + t : t) }}>
+                  <option value="">Fertigen Text einfügen …</option>
+                  <option value={'"TEXT" wird hochwertig per UV-Druck umgesetzt.'}>UV-Druck</option>
+                  <option value="Das Neonschild muss mit einer Rückwand geliefert werden. Dies ist bei diesem Entwurf die einzig mögliche Ausführung und sorgt gleichzeitig für das schönste Ergebnis.">Rückwand notwendig</option>
+                </select>
                 <textarea style={{ ...inp, minHeight: 72, resize: 'vertical', lineHeight: 1.5 }} value={form.customer_note} onChange={e => set('customer_note', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
               </div>
             </div>
@@ -1863,8 +1868,13 @@ if (tab === 'create') return (
           <CCard t="Weitere Einstellungen">
             <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
               <CSeg label="Status" value={selects.status} opts={STATUS_OPTIONS} onChange={v => updSelect('status', v)} />
-              <div><label style={cLbl}>Checkout-URL (Shopify Draft Order Link)</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https..." /></div>
-              <div><label style={cLbl}>Notizen für den Kunden</label><textarea className="nf-cin" style={{...cIn,minHeight:84,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." /></div>
+              <div><label style={cLbl}>Checkout-URL (Shopify Draft Order Link)</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https..." /></div>              <div><label style={cLbl}>Notizen für den Kunden</label>
+                <select className="nf-cin" style={{...cIn,marginBottom:8,cursor:'pointer'}} value="" onChange={e => { const t = e.target.value; if (!t) return; const ta = document.getElementById('nf-customer-note'); const v = ta.value ? ta.value + '\n' + t : t; ta.value = v; updText('customerNote', v); ta.focus() }}>
+                  <option value="">Fertigen Text einfügen …</option>
+                  <option value={'"TEXT" wird hochwertig per UV-Druck umgesetzt.'}>UV-Druck</option>
+                  <option value="Das Neonschild muss mit einer Rückwand geliefert werden. Dies ist bei diesem Entwurf die einzig mögliche Ausführung und sorgt gleichzeitig für das schönste Ergebnis.">Rückwand notwendig</option>
+                </select>
+                <textarea id="nf-customer-note" className="nf-cin" style={{...cIn,minHeight:84,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." /></div>
             </div>
           </CCard>
         </div>
