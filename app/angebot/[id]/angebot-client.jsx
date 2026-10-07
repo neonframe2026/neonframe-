@@ -1082,7 +1082,7 @@ const final = net + vatAmt
                 {offer.backplate && (
                   <div className="cfg-half">
                     <span className="cfg-label">Rückwandform {backplateImg && <InfoTip img={backplateImg} wide="x" />}</span>
-                    <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate}{offer.backplate?.toLowerCase() === 'ohne' && <span style={{ marginLeft: 6, color: '#0e9f6e', fontWeight: 700 }}>+8 %</span>}</div>
+                    <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.backplate}{offer.backplate?.toLowerCase() === 'ohne' && ' +8%'}</div>
                   </div>
                 )}
                 {offer.backplate_color && offer.backplate?.toLowerCase() !== 'ohne' && (
