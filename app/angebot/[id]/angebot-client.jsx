@@ -230,6 +230,9 @@ function Gallery({ images }) {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef({ dragging: false, moved: false, startX: 0, startY: 0, startPan: { x: 0, y: 0 } })
+  // Handy: im Vollbild wischen
+  const lbTouch = useRef(null)
+  const [lbDrag, setLbDrag] = useState(0)
   const ZOOM = 1.6
   const total = images.length
   const DURATION = 320
@@ -320,7 +323,24 @@ function Gallery({ images }) {
     <>
       {/* LIGHTBOX */}
       {lightbox && (
-        <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+        <div
+          onClick={() => setLightbox(false)}
+          onTouchStart={(e) => { if (zoomed || e.touches.length > 1) return; lbTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, dir: null } }}
+          onTouchMove={(e) => {
+            const t = lbTouch.current; if (!t || zoomed) return
+            const dx = e.touches[0].clientX - t.x, dy = e.touches[0].clientY - t.y
+            if (!t.dir) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; t.dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v' }
+            if (t.dir !== 'h') return
+            setLbDrag((current === 0 && dx > 0) || (current === total - 1 && dx < 0) ? dx / 3 : dx)
+          }}
+          onTouchEnd={() => {
+            const t = lbTouch.current; lbTouch.current = null
+            if (!t || t.dir !== 'h') { setLbDrag(0); return }
+            if (lbDrag < -60 && current < total - 1) setCurrent(c => c + 1)
+            else if (lbDrag > 60 && current > 0) setCurrent(c => c - 1)
+            setLbDrag(0)
+          }}
+          style={{ position: 'fixed', inset: 0, zIndex: 99999, touchAction: 'none', background: 'rgba(0,0,0,0.96)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <div style={{ position: 'absolute', top: 20, left: 24, display: 'flex', alignItems: 'center', gap: 14, zIndex: 2, color: '#fff' }}>
             {total > 1 && <span style={{ fontSize: 13, opacity: 0.75 }}>{current + 1} / {total}</span>}
                        <button onClick={(e) => { e.stopPropagation(); setPan({ x: 0, y: 0 }); setZoomed(z => !z) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: '#fff' }}>
@@ -368,9 +388,9 @@ function Gallery({ images }) {
               display: 'block',
               userSelect: 'none',
               cursor: zoomed ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in',
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${(lbVisible ? 1 : 0.9) * (zoomed ? ZOOM : 1)})`,
+              transform: `translate(${pan.x + lbDrag}px, ${pan.y}px) scale(${(lbVisible ? 1 : 0.9) * (zoomed ? ZOOM : 1)})`,
               opacity: lbVisible ? 1 : 0,
-              transition: isDragging ? 'none' : (zoomed ? 'transform .25s ease' : 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease'),
+              transition: (isDragging || lbDrag !== 0) ? 'none' : (zoomed ? 'transform .25s ease' : 'transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s ease'),
             }}
           />
           {total > 1 && current > 0 && (
