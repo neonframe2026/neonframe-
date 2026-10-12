@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { logEmail } from '../../../lib/email-log'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -22,6 +23,7 @@ export async function POST(req) {
     if (!test && hours < 72) return Response.json({ error: 'Erst 3 Tage nach der Rabatt-Mail möglich' }, { status: 400 })
 
     const until = o.discount_valid_until ? new Date(o.discount_valid_until) : new Date(new Date(o.extra_discount_at).getTime() + 4 * 86400000)
+    if (!test && until.getTime() <= Date.now()) return Response.json({ error: 'Der Extra-Rabatt ist schon abgelaufen' }, { status: 400 })
     const validUntil = until.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' })
     const base = parseFloat(o.base_price) || 0
     const basePct = o.disc_type === 'pct' ? (parseFloat(o.disc_val) || 0) : (base > 0 ? Math.round((parseFloat(o.disc_val) || 0) / base * 100) : 0)
@@ -29,19 +31,22 @@ export async function POST(req) {
     const link = offerLink || `https://angebote.neonframe.de/angebot/${o.custom_id || o.id}`
     const unsubscribeUrl = `https://angebote.neonframe.de/abmelden/${o.id}`
 
+    const subject = 'Dein Extra-Rabatt endet morgen'
+    const html = buildReminderEmail({ firstName: (o.project || '').split(' ')[0], extra, basePct, validUntil, offerLink: link, unsubscribeUrl })
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'NeonFrame <info@neonframe.de>',
         to: [o.customer_email],
-        subject: 'Dein Extra-Rabatt endet morgen',
+        subject,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
-        html: buildReminderEmail({ firstName: (o.project || '').split(' ')[0], extra, basePct, validUntil, offerLink: link, unsubscribeUrl }),
+        html,
       }),
     })
     if (!r.ok) return Response.json({ error: 'E-Mail Versand fehlgeschlagen: ' + (await r.text()).slice(0, 150) }, { status: 500 })
 
+    await logEmail(o.id, 'rabatt_erinnerung', subject, html, o.customer_email)
     await supabase.from('offers').update({ discount_reminder_sent_at: new Date().toISOString(), status: 'discount_reminded' }).eq('id', o.id)
     return Response.json({ success: true })
   } catch (err) {

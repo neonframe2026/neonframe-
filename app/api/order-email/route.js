@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { logEmail } from '../../../lib/email-log'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 
@@ -18,6 +19,7 @@ export async function POST(req) {
 
     const delay = Math.max(0, Number(delayMinutes) || 0)
     const sendAt = new Date(Date.now() + delay * 60 * 1000).toISOString()
+    const html = buildOrderEmail(o.project?.split(' ')[0])
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -26,11 +28,12 @@ export async function POST(req) {
         to: [o.customer_email],
         subject: 'Danke für deine Bestellung – dein Schild geht in Produktion ✨',
         ...(delay > 0 ? { scheduled_at: sendAt } : {}),
-        html: buildOrderEmail(o.project?.split(' ')[0]),
+        html,
       }),
     })
     if (!res.ok) return Response.json({ error: 'Versand fehlgeschlagen: ' + (await res.text()).slice(0, 200) }, { status: 500 })
 
+    await logEmail(o.id, 'produktion', 'Danke für deine Bestellung – dein Schild geht in Produktion ✨', html, o.customer_email)
     await supabase.from('offers').update({ order_email_sent_at: sendAt }).eq('id', o.id)
     return Response.json({ success: true, delay })
   } catch (err) {

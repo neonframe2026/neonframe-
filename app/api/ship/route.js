@@ -29,7 +29,7 @@ export async function POST(req) {
       shipped_at: new Date().toISOString(),
       today_email_sent_at: null,
     }
-    await sendMail(o.customer_email, SUBJECT_SHIPPED, buildShippedEmail({ ...o, ...update }))
+    await sendMail(o.customer_email, SUBJECT_SHIPPED, buildShippedEmail({ ...o, ...update }), { offerId: o.id, type: 'versand' })
     const { error } = await supabase.from('offers').update(update).eq('id', o.id)
     if (error) return Response.json({ error: error.message }, { status: 500 })
 

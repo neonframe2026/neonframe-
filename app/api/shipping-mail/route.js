@@ -12,7 +12,7 @@ export async function POST(req) {
     if (!o.customer_email) return Response.json({ error: 'Keine E-Mail hinterlegt' }, { status: 400 })
 
     const today = type === 'heute'
-    await sendMail(o.customer_email, today ? SUBJECT_TODAY : SUBJECT_SHIPPED, today ? buildTodayEmail(o) : buildShippedEmail(o))
+    await sendMail(o.customer_email, today ? SUBJECT_TODAY : SUBJECT_SHIPPED, today ? buildTodayEmail(o) : buildShippedEmail(o), { offerId: o.id, type: today ? 'heute' : 'versand' })
     return Response.json({ success: true })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })

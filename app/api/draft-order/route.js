@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logEmail } from '../../../lib/email-log'
 
 // Holt Bild, Ausführung und Rabatt direkt aus dem Angebot in Supabase
 async function loadOfferExtras(offerLink) {
@@ -7,7 +8,7 @@ async function loadOfferExtras(offerLink) {
     const key = decodeURIComponent(String(offerLink || '').split('/angebot/')[1] || '').split(/[?#]/)[0]
     if (!key) return null
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    const cols = 'preview_image, usage, disc_type, disc_val'
+    const cols = 'id, preview_image, usage, disc_type, disc_val'
     let { data } = await supabase.from('offers').select(cols).eq('custom_id', key).maybeSingle()
     if (!data && /^\d+$/.test(key)) {
       const res = await supabase.from('offers').select(cols).eq('id', key).maybeSingle()
@@ -47,6 +48,8 @@ export async function POST(request) {
       if (!discount && offer.disc_type === 'pct' && parseFloat(offer.disc_val) > 0) discount = offer.disc_val
     }
 
+    const subject = `Dein persönliches Neon-Schild – Angebot ist bereit 🎉`
+    const html = buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, finalPrice, width, height, colors, delivery, imageUrl, discount, variant })
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -56,8 +59,8 @@ export async function POST(request) {
       body: JSON.stringify({
         from: 'NeonFrame <angebote@neonframe.de>',
         to: [customerEmail],
-        subject: `Dein persönliches Neon-Schild – Angebot ist bereit 🎉`,
-        html: buildCustomerEmail({ customerName, offerNum, offerLink, checkoutUrl, finalPrice, width, height, colors, delivery, imageUrl, discount, variant }),
+        subject,
+        html,
       }),
     })
 
@@ -67,6 +70,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'E-Mail Versand fehlgeschlagen' }, { status: 500 })
     }
 
+    if (offer?.id) await logEmail(offer.id, 'angebot', subject, html, customerEmail)
     return NextResponse.json({ success: true })
 
   } catch (err) {

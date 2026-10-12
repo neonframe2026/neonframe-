@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
+import { expireAll } from '../../../lib/discount'
 import { buildShippedEmail, buildTodayEmail, sendMail, SUBJECT_SHIPPED, SUBJECT_TODAY } from '../../../lib/shipping-emails'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +33,10 @@ export async function GET(request) {
     await sendMail(o.customer_email, today ? SUBJECT_TODAY : SUBJECT_SHIPPED, today ? buildTodayEmail(o) : buildShippedEmail(o))
     return Response.json({ success: true, test: today ? 'heute' : 'versand', to: o.customer_email })
   }
+
+  // ---- Abgelaufene Extra-Rabatte automatisch entfernen (Preis + Shopify-Entwurf) ----
+  let expired = 0
+  try { const before = await expireAll(supabase); expired = before.filter(x => x.extra_discount_expired_at).length } catch (e) { console.error('Extra-Rabatt:', e) }
 
   // ---- Shopify aufräumen: Angebots-Produkte von beendeten Angeboten entfernen ----
   const cleaned = []
@@ -75,7 +80,7 @@ export async function GET(request) {
         await supabase.from('offers').update({ status: 'delivered', delivered_at: s.status.timestamp || new Date().toISOString() }).eq('id', o.id)
         results.push({ id: o.id, status: 'delivered' })
       } else if (!o.today_email_sent_at && OUT_FOR_DELIVERY.test(text)) {
-        if (o.customer_email) await sendMail(o.customer_email, SUBJECT_TODAY, buildTodayEmail(o))
+        if (o.customer_email) await sendMail(o.customer_email, SUBJECT_TODAY, buildTodayEmail(o), { offerId: o.id, type: 'heute' })
         await supabase.from('offers').update({ today_email_sent_at: new Date().toISOString() }).eq('id', o.id)
         results.push({ id: o.id, status: 'in Zustellung – Mail gesendet' })
       } else {
@@ -87,5 +92,5 @@ export async function GET(request) {
     await new Promise(res => setTimeout(res, 5500)) // DHL erlaubt max. 1 Abfrage pro 5 Sek.
   }
 
-  return Response.json({ checked: results.length, results, cleaned })
+  return Response.json({ checked: results.length, results, cleaned, expired })
 }

@@ -752,16 +752,17 @@ function MTimeline({ o }) {
   const at = (v) => v ? time(new Date(v)) : '—'
   const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered', 'discount_reminded'].includes(o.status)
   const ev = [
-    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true },
-    { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#22d3ee', done: recontacted },
-    { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) : '—', c: '#22d3ee', done: !!o.extra_discount_applied },
-    { t: '✉️ Rabatt-Erinnerung gesendet', d: at(o.discount_reminder_sent_at), c: '#22d3ee', done: !!o.discount_reminder_sent_at },
+    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true, k: 'angebot' },
+    { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#22d3ee', done: recontacted, k: 'erinnerung' },
+    { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) + (o.discount_valid_until && !o.extra_discount_expired_at ? ' · gültig bis ' + at(o.discount_valid_until) : '') : '—', c: '#22d3ee', done: !!o.extra_discount_applied, k: 'rabatt' },
+    { t: '✉️ Rabatt-Erinnerung gesendet', d: at(o.discount_reminder_sent_at), c: '#22d3ee', done: !!o.discount_reminder_sent_at, k: 'rabatt_erinnerung' },
+    ...(o.extra_discount_expired_at ? [{ t: '⏱️ Extra-Rabatt abgelaufen – automatisch entfernt', d: at(o.extra_discount_expired_at), c: '#f97316', done: true }] : []),
     { t: 'Bestellt', d: mOrderedAt(o) ? at(mOrderedAt(o)) : (bought ? 'erledigt' : '—'), c: '#10b981', done: bought },
-    { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#10b981', done: prodDone },
-    { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#10b981', done: shipped },
-    { t: '✉️ „Heute kommt“-Mail gesendet', d: at(o.today_email_sent_at), c: '#10b981', done: !!o.today_email_sent_at },
+    { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#10b981', done: prodDone, k: 'produktion' },
+    { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#10b981', done: shipped, k: 'versand' },
+    { t: '✉️ „Heute kommt“-Mail gesendet', d: at(o.today_email_sent_at), c: '#10b981', done: !!o.today_email_sent_at, k: 'heute' },
     { t: 'Zugestellt', d: at(o.delivered_at), c: '#10b981', done: o.status === 'delivered' },
-    { t: '✉️ Bewertungs-Mail gesendet', d: at(o.review_email_sent_at), c: '#facc15', done: !!o.review_email_sent_at },
+    { t: '✉️ Bewertungs-Mail gesendet', d: at(o.review_email_sent_at), c: '#facc15', done: !!o.review_email_sent_at, k: 'bewertung' },
   ]
   return (
     <div>
@@ -769,8 +770,13 @@ function MTimeline({ o }) {
         <div key={i} style={{ display: 'flex', gap: 12, position: 'relative', paddingBottom: i < ev.length - 1 ? 16 : 0 }}>
           {i < ev.length - 1 && <span style={{ position: 'absolute', left: 6, top: 16, bottom: 0, width: 2, background: 'var(--border)' }} />}
           <span style={{ width: 14, height: 14, borderRadius: '50%', flexShrink: 0, marginTop: 2, background: e.done ? e.c : 'transparent', border: `2px solid ${e.done ? e.c : 'var(--border)'}`, boxShadow: e.done ? `0 0 10px ${e.c}88` : 'none' }} />
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: e.done ? 'var(--text)' : 'var(--text-faint)' }}>{e.t}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: e.done ? 'var(--text)' : 'var(--text-faint)' }}>{e.t}</div>
+              {e.done && e.k && (
+                <button type="button" onClick={() => window.open(`/api/email-log?offerId=${o.id}&type=${e.k}`, '_blank')} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Anschauen</button>
+              )}
+            </div>
             <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{e.d}</div>
           </div>
         </div>
@@ -810,7 +816,7 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onDiscReminder, onMa
   const items = [
     ...(NF_TEST_MODE ? [{ label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') }] : []),
     { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 12 ? 'Erinnerung ohne Rabatt' : 'Ab 12 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 12)), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mDiscOk(o) ? 'Vorher Extra-Rabatt im Angebot eintragen' : (mRecontacted(o) ? 'Ab 12 Std. nach der Erinnerung' : 'Erst nach der Erinnerungs-Mail'))), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mDiscOk(o)), act: onDiscount },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mDiscOk(o) ? `+${parseFloat(o.extra_disc_pct) > 0 ? o.extra_disc_pct : 10} % Extra-Rabatt automatisch` : (mRecontacted(o) ? 'Ab 12 Std. nach der Erinnerung' : 'Erst nach der Erinnerungs-Mail'))), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mDiscOk(o)), act: onDiscount },
     { label: '⏰ Rabatt Erinnerung', hint: NF_TEST_MODE ? 'Testmodus' : (!o.extra_discount_at ? 'Erst nach der Rabatt-Mail' : (o.discount_reminder_sent_at ? 'Schon gesendet – erneut senden' : (mDiscReminderOk(o) ? 'Extra-Rabatt läuft morgen ab' : 'Ab 3 Tagen nach der Rabatt-Mail'))), on: !!o.customer_email && !unsub && !mBought(o) && !!o.extra_discount_at && (NF_TEST_MODE || mDiscReminderOk(o)), act: onDiscReminder },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist seit 3 Tagen beim Kunden' : 'Ab 3 Tagen nach der Zustellung')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
     ...(NF_TEST_MODE ? [
@@ -985,9 +991,9 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
   }
     async function discount(o) {
     if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
-    const pct = o.disc_type === 'pct' ? o.disc_val : '–'
-    const price = o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'
-    if (!confirm(`Rabatt-Mail an ${o.customer_email} senden?\n\nDas Angebot hat aktuell ${pct} % Rabatt (Preis: ${price}).\n\nHast du den Extra-Rabatt im Angebot schon eingetragen (Bearbeiten → Extra-Rabatt)?`)) return
+    const ex = parseFloat(o.extra_disc_pct) > 0 ? parseFloat(o.extra_disc_pct) : 10
+    const np = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, ex)
+    if (!confirm(`Rabatt-Mail an ${o.customer_email} senden?\n\nEs werden automatisch +${ex} % Extra-Rabatt eingetragen – im Angebot und im Shopify-Checkout.\nNeuer Preis: € ${np.total.toFixed(2)}\n\nDer Extra-Rabatt gilt 4 Tage und wird danach automatisch wieder entfernt.`)) return
     try {
       const res = await fetch('/api/discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink: mLink(o) }) })
       const data = await res.json()
@@ -1009,7 +1015,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
     if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
     if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
     try {
-      const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project }) })
+      const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project, offerId: o.id }) })
       const data = await res.json()
       if (data.success) {
         await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ review_email_sent_at: new Date().toISOString() }) }).catch(() => {})
@@ -2067,7 +2073,7 @@ if (tab === 'create') return (
                           if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
                           if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
                           try {
-                            const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project }) })
+                            const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project, offerId: o.id }) })
                             const data = await res.json()
                             if (data.success) { alert('✅ Bewertungsanfrage gesendet!') } else { alert('Fehler: ' + data.error) }
                           } catch (err) { alert('Fehler: ' + err.message) }

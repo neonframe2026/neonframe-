@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { logEmail } from '../../../lib/email-log'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 export const dynamic = 'force-dynamic'
@@ -69,18 +70,8 @@ export async function POST(req) {
 
     const personalImageUrl = await storeEmailImage(offerId, 'recontact')
 
-    const emailRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'NeonFrame <info@neonframe.de>',
-        to: [customerEmail],
-        subject: `Dein Angebot wartet noch auf dich – NeonFrame 💡`,
-        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
-        html: buildRecontactEmail({
+    const subject = `Dein Angebot wartet noch auf dich – NeonFrame 💡`
+    const html = buildRecontactEmail({
           personalImageUrl,
           firstName: customerName?.split(' ')[0] || 'dort',
           offerLink,
@@ -91,7 +82,19 @@ export async function POST(req) {
           height: offer?.height || height,
           colors: offer?.colors || colors,
           variant: offer?.usage,
-        }),
+        })
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'NeonFrame <info@neonframe.de>',
+        to: [customerEmail],
+        subject,
+        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
+        html,
       }),
     })
 
@@ -100,6 +103,8 @@ export async function POST(req) {
       console.error('Email error:', err)
       return Response.json({ error: 'E-Mail Versand fehlgeschlagen' }, { status: 500 })
     }
+
+    await logEmail(offerId, 'erinnerung', subject, html, customerEmail)
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://angebote.neonframe.de'
     await fetch(`${baseUrl}/api/offers?id=${offerId}`, {

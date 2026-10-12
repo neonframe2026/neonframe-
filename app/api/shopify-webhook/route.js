@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
+import { logEmail } from '../../../lib/email-log'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
@@ -47,6 +48,7 @@ export async function POST(request) {
       if (o.order_email_sent_at || !email || !process.env.RESEND_API_KEY) continue
 
       const sendAt = new Date(Date.now() + DELAY_MINUTES * 60 * 1000).toISOString()
+      const html = buildOrderEmail(o.project?.split(' ')[0])
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -55,10 +57,11 @@ export async function POST(request) {
           to: [email],
           subject: 'Danke für deine Bestellung – dein Schild geht in Produktion ✨',
           scheduled_at: sendAt,
-          html: buildOrderEmail(o.project?.split(' ')[0]),
+          html,
         }),
       })
       if (res.ok) {
+        await logEmail(o.id, 'produktion', 'Danke für deine Bestellung – dein Schild geht in Produktion ✨', html, email)
         await supabase.from('offers').update({ order_email_sent_at: sendAt }).eq('id', o.id)
         scheduled++
       } else {

@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
+import { setExtraDiscount, EXTRA_PCT, EXTRA_DAYS } from '../../../lib/discount'
+import { logEmail } from '../../../lib/email-log'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 const FONT = "font-family:Arial,Helvetica,sans-serif;"
-const EXTRA_PCT = 10
 
 // Bild beim Versand EINMAL bauen und fertig in Supabase Storage speichern
 // -> lädt beim Kunden so schnell wie die anderen Bilder.
@@ -38,11 +39,19 @@ export async function POST(req) {
     if (!RESEND_KEY) return Response.json({ error: 'E-Mail nicht konfiguriert' }, { status: 500 })
 
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    const { data: offer, error } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
+    let { data: offer, error } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (error || !offer) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
     if (offer.status === 'unsubscribed') return Response.json({ error: 'Dieser Kunde hat sich von Erinnerungen abgemeldet.' }, { status: 400 })
 
-    // Rabatt NICHT ändern – er wird vorher von Hand im Admin angepasst (z. B. 20 % -> 30 %)
+    // Extra-Rabatt automatisch eintragen (+10 %), Preise + Shopify-Entwurf anpassen – erst danach geht die Mail raus.
+    // Steht schon ein Extra-Rabatt im Angebot (z. B. 15 %), bleibt der.
+    const prevExtra = parseFloat(offer.extra_disc_pct) || 0
+    const autoApplied = !(prevExtra > 0)
+    if (autoApplied) {
+      try { offer = await setExtraDiscount(supabase, offer, EXTRA_PCT) }
+      catch (e) { return Response.json({ error: 'Extra-Rabatt konnte nicht eingetragen werden (Mail NICHT gesendet): ' + e.message }, { status: 500 }) }
+    }
+
     const baseNet = parseFloat(offer.base_price) || 0
     const curAmt = offer.disc_type === 'pct' ? baseNet * (parseFloat(offer.disc_val) || 0) / 100 : (parseFloat(offer.disc_val) || 0)
     const ex = parseFloat(offer.extra_disc_pct) || 0
@@ -55,40 +64,45 @@ export async function POST(req) {
     const imageUrl = offer.preview_image && String(offer.preview_image).startsWith('http') ? offer.preview_image : null
 
     // Extra-Rabatt gilt 4 Tage ab Versand
-    const validUntilDate = new Date(Date.now() + 4 * 86400000)
+    const validUntilDate = new Date(Date.now() + EXTRA_DAYS * 86400000)
     // Neuer Endpreis für die Mail
     const vat = 1 + (parseFloat(offer.vat_pct) || 19) / 100
     const afterDisc = offer.disc_type === 'pct' ? baseNet * (1 - (parseFloat(offer.disc_val) || 0) / 100) : Math.max(0, baseNet - (parseFloat(offer.disc_val) || 0))
     const finalNew = afterDisc * (1 - ex / 100) * vat
     const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 
+    const subject = `Dein Neon-Schild – kleines Update zum Preis`
+    const html = buildPlainDiscountEmail({
+      firstName: customerName?.split(' ')[0] || '',
+      extra: ex > 0 ? ex : EXTRA_PCT, basePct: ex > 0 ? basePct : oldPct, offerLink, unsubscribeUrl,
+      newPrice: finalNew > 0 ? eur(finalNew) : null,
+      validUntil: validUntilDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }),
+    })
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'NeonFrame <info@neonframe.de>',
         to: [customerEmail],
-        subject: `Dein Neon-Schild – kleines Update zum Preis`,
+        subject,
         headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
-        html: buildPlainDiscountEmail({
-          firstName: customerName?.split(' ')[0] || '',
-          extra: ex > 0 ? ex : EXTRA_PCT, basePct: ex > 0 ? basePct : oldPct, offerLink, unsubscribeUrl,
-          newPrice: finalNew > 0 ? eur(finalNew) : null,
-          validUntil: validUntilDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }),
-        }),
+        html,
       }),
     })
     if (!emailRes.ok) {
       console.error('Email error:', await emailRes.text())
+      // Mail ging nicht raus -> Extra-Rabatt wieder auf den alten Stand
+      if (autoApplied) await setExtraDiscount(supabase, offer, 0).catch(() => {})
       return Response.json({ error: 'E-Mail Versand fehlgeschlagen' }, { status: 500 })
     }
+    await logEmail(offerId, 'rabatt', subject, html, customerEmail)
 
     await supabase.from('offers').update({
       extra_discount_applied: true, extra_discount_at: new Date().toISOString(), status: 'discount_offered',
-      discount_valid_until: validUntilDate.toISOString(), discount_reminder_sent_at: null,
+      discount_valid_until: validUntilDate.toISOString(), discount_reminder_sent_at: null, extra_discount_expired_at: null,
     }).eq('id', offerId)
 
-    return Response.json({ success: true, newPct })
+    return Response.json({ success: true, newPct, extraPct: ex, finalPrice: finalNew })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
   }

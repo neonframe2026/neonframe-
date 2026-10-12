@@ -4,8 +4,10 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import AngebotPage from './angebot-client'
+import { expireIfDue } from '../../../lib/discount'
 
 export const revalidate = 0
+export const maxDuration = 60
 
 export async function generateMetadata() {
   return { title: 'Ihr persönliches Angebot – NeonFrame' }
@@ -21,7 +23,8 @@ let { data } = await supabase.from('offers').select('*').eq('custom_id', id).sin
     const res = await supabase.from('offers').select('*').eq('id', id).single()
     data = res.data
   }
-  return data || null
+  // Extra-Rabatt abgelaufen? -> automatisch entfernen, bevor der Kunde das Angebot sieht
+  return data ? await expireIfDue(supabase, data) : null
 }
 
 export default async function Page({ params }) {

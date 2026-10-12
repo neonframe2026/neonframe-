@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { logEmail } from '../../../lib/email-log'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
@@ -8,7 +9,7 @@ const FONT = "font-family:Arial,Helvetica,sans-serif;"
 const UNSUBSCRIBE = 'mailto:info@neonframe.de?subject=Abmelden'
 
 export async function POST(request) {
-  const { customerEmail, customerName } = await request.json()
+  const { customerEmail, customerName, offerId } = await request.json()
   if (!customerEmail) return NextResponse.json({ error: 'Keine E-Mail' }, { status: 400 })
 
   const firstName = customerName?.split(' ')[0] || ''
@@ -57,6 +58,7 @@ export async function POST(request) {
       html,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (offerId) await logEmail(offerId, 'bewertung', 'Wie gefällt dir dein NeonFrame-Schild? ⭐', html, customerEmail)
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

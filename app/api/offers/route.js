@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
+import { expireIfDue, discountExpired } from '../../../lib/discount'
+
+export const maxDuration = 60
 
 function getSupabase() {
   return createClient(
@@ -17,12 +20,15 @@ export async function GET(request) {
   if (id) {
     const { data, error } = await supabase.from('offers').select('*').eq('id', id).single()
     if (error) return NextResponse.json({ error: error.message }, { status: 404 })
-    return NextResponse.json(data)
+    return NextResponse.json(await expireIfDue(supabase, data))
   }
 
   const { data, error } = await supabase.from('offers').select('*').order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  // Abgelaufene Extra-Rabatte automatisch entfernen
+  const list = []
+  for (const o of data || []) list.push(discountExpired(o) ? await expireIfDue(supabase, o) : o)
+  return NextResponse.json(list)
 }
 
 export async function POST(request) {
