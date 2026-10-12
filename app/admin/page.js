@@ -675,8 +675,10 @@ const mReviewOk = (o) => mBought(o) && (o.delivered_at ? mHours(o.delivered_at) 
 const mReviewDue = (o) => !o.review_email_sent_at && mReviewOk(o)
 // Rabatt-Erinnerung: 3 Tage nach der Rabatt-Mail (1 Tag bevor der Extra-Rabatt abläuft), solange nicht bestellt
 const mDiscReminderOk = (o) => !!o.extra_discount_at && o.status !== 'unsubscribed' && !mBought(o) && mHours(o.extra_discount_at) >= 72
-const mDiscReminderDue = (o) => mDiscReminderOk(o) && !o.discount_reminder_sent_at && (!o.discount_valid_until || new Date(o.discount_valid_until).getTime() > Date.now())
-const mIsRed = (o) => (mHours(o.created_at) >= 24 && o.status === 'offer_sent') || (mHours(o.created_at) >= 48 && o.status === 'recontacted' && !o.extra_discount_applied) || mReviewDue(o) || mDiscReminderDue(o)
+// Rote Anzeige nur solange der Status noch auf "Rabatt angeboten" steht – manuell weiterstellen blendet sie aus
+const mDiscReminderDue = (o) => mDiscReminderOk(o) && o.status === 'discount_offered' && !o.discount_reminder_sent_at && (!o.discount_valid_until || new Date(o.discount_valid_until).getTime() > Date.now())
+// Erinnerung ab 12 Std. (Status "Angebot erhalten"), Rabatt ab 24 Std. (Status "Nochmals kontaktiert")
+const mIsRed = (o) => (mHours(o.created_at) >= 12 && o.status === 'offer_sent') || (mHours(o.created_at) >= 24 && o.status === 'recontacted' && !o.extra_discount_applied) || mReviewDue(o) || mDiscReminderDue(o)
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -803,8 +805,8 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onDiscReminder, onMa
     const unsub = o.status === 'unsubscribed'
   const items = [
     ...(NF_TEST_MODE ? [{ label: '🧪 Angebots-Mail', hint: 'Testmodus – erneut senden', on: !!o.customer_email, act: () => onMail('angebot') }] : []),
-    { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 24 ? 'Erinnerung ohne Rabatt' : 'Ab 24 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 24)), act: onContact },
-        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 48 ? 'Vorher Extra-Rabatt im Angebot eintragen' : 'Ab 48 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 48), act: onDiscount },
+    { label: '↩ Erneut kontaktieren', hint: NF_TEST_MODE ? 'Testmodus' : (unsub ? 'Kunde hat sich abgemeldet' : (!o.customer_email ? 'Keine E-Mail hinterlegt' : (mHours(o.created_at) >= 12 ? 'Erinnerung ohne Rabatt' : 'Ab 12 Std. nach dem Angebot'))), on: !!o.customer_email && (NF_TEST_MODE || (!unsub && mHours(o.created_at) >= 12)), act: onContact },
+        { label: '🏷️ Rabatt anbieten', hint: o.extra_discount_applied ? 'Schon gesendet – erneut senden' : (NF_TEST_MODE ? 'Testmodus' : (mHours(o.created_at) >= 24 ? 'Vorher Extra-Rabatt im Angebot eintragen' : 'Ab 24 Std. nach dem Angebot')), on: !!o.customer_email && !unsub && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && (NF_TEST_MODE || mHours(o.created_at) >= 24), act: onDiscount },
     { label: '⏰ Rabatt Erinnerung', hint: NF_TEST_MODE ? 'Testmodus' : (!o.extra_discount_at ? 'Erst nach der Rabatt-Mail' : (o.discount_reminder_sent_at ? 'Schon gesendet – erneut senden' : (mDiscReminderOk(o) ? 'Extra-Rabatt läuft morgen ab' : 'Ab 3 Tagen nach der Rabatt-Mail'))), on: !!o.customer_email && !unsub && !mBought(o) && !!o.extra_discount_at && (NF_TEST_MODE || mDiscReminderOk(o)), act: onDiscReminder },
     { label: '⭐ Bewertung anfragen', hint: NF_TEST_MODE ? 'Testmodus' : (o.review_email_sent_at ? 'Schon gesendet – erneut senden' : (mReviewOk(o) ? 'Schild ist seit 3 Tagen beim Kunden' : 'Ab 3 Tagen nach der Zustellung')), on: !!o.customer_email && (NF_TEST_MODE || mReviewOk(o)), act: onReview },
     ...(NF_TEST_MODE ? [
@@ -886,7 +888,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
 
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {mDiscReminderDue(o) ? 'Extra-Rabatt läuft morgen ab – Zeit für die Rabatt-Erinnerung.' : mReviewDue(o) ? 'Seit 3 Tagen zugestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit über 48 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 24 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
+          ⚠️ {mDiscReminderDue(o) ? 'Extra-Rabatt läuft morgen ab – Zeit für die Rabatt-Erinnerung.' : mReviewDue(o) ? 'Seit 3 Tagen zugestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit über 24 Stunden keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 12 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
         </div>
       )}
 
