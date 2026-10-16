@@ -1473,7 +1473,11 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       const first = rows.find(r => r.w === d.min?.w) || rows[0]
       if (first) { setOrigVk(de(first.vk)); setEndPrice((Math.round(first.vk * 1.10 * 100) / 100).toFixed(2)) }
             const extra = rows.filter(r => r.w !== d.min?.w)
-      if (extra.length) setSizeRows(extra.map(r => ({ w: String(r.w), h: String(r.h), vk: de(r.vk) })))
+      if (extra.length) setSizeRows(extra.map(r => ({ w: String(r.w), h: String(r.h), vk: de(r.vk) })))       // Bilder von TNC: 1 = realistische 3D-Vorschau, 2 = Design
+      const pics = [d.realistic_image, d.design_image].filter(Boolean)
+      const loaded = []
+      for (const u of pics) { try { const b = await (await fetch('/api/tnc-image?url=' + encodeURIComponent(u))).blob(); loaded.push(await compressImage(b)) } catch {} }
+      if (loaded.length) setImgSrcs(loaded)
       setFormKey(k => k + 1)
       setParseStatus({ type: 'ok', msg: `TNC-Angebot ${d.num} geladen: ${rows.length} Größen ab ${d.min?.w} x ${d.min?.h} cm. Bitte prüfen und Projekt + E-Mail eintragen.` })
       schedulePreview()
