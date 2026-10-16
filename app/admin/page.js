@@ -1451,7 +1451,33 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     const doc = emailIframeRef.current.contentDocument || emailIframeRef.current.contentWindow.document
     if (doc) { doc.open(); doc.write(html); doc.close() }
   }
-
+  // TNC-Link aus Kenzos Mail -> Angebotsdaten + Größentabelle automatisch ausfüllen
+  const [tncLink, setTncLink] = useState('')
+  async function handleTNC() {
+    const link = tncLink.trim(); if (!link) return
+    setParseStatus({ type: 'loading', msg: 'TNC-Angebot wird geladen... (ca. 10 Sek.)' })
+    try {
+      const q = /^\d{8,}$/.test(link) ? 'id=' + link : 'url=' + encodeURIComponent(link)
+      const d = await (await fetch('/api/tnc-import?' + q)).json()
+      if (d.error) throw new Error(d.error)
+      const rows = (d.size_options || []).filter(r => !r.disabled && r.vk > 0)
+      const de = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      if (d.num) fRef.current.num = d.num
+      if (d.min?.w) fRef.current.w = String(d.min.w)
+      if (d.min?.h) fRef.current.h = String(d.min.h)
+      if (d.colors) fRef.current.color = d.colors
+      if (d.backplate) updSelect('backplate', d.backplate)
+      if (d.usage) updSelect('usage', d.usage)
+      const first = rows.find(r => r.w === d.min?.w) || rows[0]
+      if (first) { setOrigVk(de(first.vk)); setEndPrice((Math.round(first.vk * 1.10 * 100) / 100).toFixed(2)) }
+      if (rows.length) setSizeRows(rows.map(r => ({ w: String(r.w), h: String(r.h), vk: de(r.vk) })))
+      setFormKey(k => k + 1)
+      setParseStatus({ type: 'ok', msg: `TNC-Angebot ${d.num} geladen: ${rows.length} Größen ab ${d.min?.w} x ${d.min?.h} cm. Bitte prüfen und Projekt + E-Mail eintragen.` })
+      schedulePreview()
+    } catch (err) {
+      setParseStatus({ type: 'err', msg: 'TNC-Fehler: ' + err.message })
+    }
+  }
   async function handlePDF(e) {
     const file = e.target.files[0]; if (!file) return
     setParseStatus({ type: 'loading', msg: 'PDF wird gelesen...' })
@@ -1793,6 +1819,10 @@ if (tab === 'create') return (
                 ) : null)}
               </div>
             )}
+                          <div style={{display:'flex',gap:8}}>
+              <input className="nf-cin" style={{...cIn,flex:1}} value={tncLink} onChange={e => setTncLink(e.target.value)} placeholder="TNC-Link aus Kenzos Mail einfügen" />
+              <button className="nf-cb" onClick={handleTNC} style={{background:C_NEON,border:'none',color:'#04101f',borderRadius:12,padding:'0 16px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>⚡ Von TNC laden</button>
+            </div>
             <div style={{display:'flex',gap:8}}>
               <label className="nf-cdrop" htmlFor="pdf-upload" style={{...cDrop,flex:1,padding:'11px 14px'}}>
                 <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
