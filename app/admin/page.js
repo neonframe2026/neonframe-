@@ -268,7 +268,7 @@ function CropModal({ src, onDone, onClose }) {
   const [sq, setSq] = useState(null)
   useEffect(() => {
     const i = new Image()
-    i.onload = () => { const w = i.naturalWidth, h = i.naturalHeight, s = Math.min(w, h) * 0.8; setNat({ w, h }); setSq({ x: (w - s) / 2, y: (h - s) / 2, s }) }
+    i.onload = () => { const w = i.naturalWidth, h = i.naturalHeight, s = Math.min(w, h); setNat({ w, h }); setSq({ x: (w - s) / 2, y: (h - s) / 2, s }) }
     i.src = src
   }, [src])
   const clamp = (q) => { const s = Math.max(50, Math.min(q.s, nat.w, nat.h)); return { s, x: Math.max(0, Math.min(q.x, nat.w - s)), y: Math.max(0, Math.min(q.y, nat.h - s)) } }
