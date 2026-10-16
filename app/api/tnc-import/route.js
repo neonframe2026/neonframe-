@@ -97,7 +97,7 @@ export async function GET(req) {
       backplate: mapBackplate(sign.backplates?.current?.name || sign.backplate),
       usage: mapUsage(sign.useCases?.current?.name || sign.indoor_or_outdoor),
       min: { w: minW, h: Number(sign.minSize?.value?.split('x')[1]) || Number(String(sign.sizes?.minSize?.value || '').split('x')[1]) || Number(sign.height) || 0 },
-      design_image: file.permanent_url || file.webp_url || '',
+      design_image: file.permanent_url || file.webp_url || '', realistic_image: sign.realisticPreviewUrl || '',
       design_name: file.name || '',
       size_options,
     })
