@@ -1453,8 +1453,8 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
   }
   // TNC-Link aus Kenzos Mail -> Angebotsdaten + Größentabelle automatisch ausfüllen
   const [tncLink, setTncLink] = useState('')
-  async function handleTNC() {
-    const link = tncLink.trim(); if (!link) return
+    async function handleTNC(linkArg, pre) {
+    const link = String(typeof linkArg === 'string' ? linkArg : tncLink).trim(); if (!link) return
     setParseStatus({ type: 'loading', msg: 'TNC-Angebot wird geladen... (ca. 10 Sek.)' })
     try {
       const q = /^\d{8,}$/.test(link) ? 'id=' + link : 'url=' + encodeURIComponent(link)
@@ -1462,7 +1462,9 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       if (d.error) throw new Error(d.error)
       const rows = (d.size_options || []).filter(r => !r.disabled && r.vk > 0)
       const de = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      if (d.num) fRef.current.num = d.num
+            if (d.num) fRef.current.num = d.num
+      if (pre?.project) fRef.current.project = pre.project
+      if (pre?.email) fRef.current.customerEmail = pre.email
       if (d.min?.w) fRef.current.w = String(d.min.w)
       if (d.min?.h) fRef.current.h = String(d.min.h)
       if (d.colors) fRef.current.color = d.colors
@@ -1479,6 +1481,15 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       setParseStatus({ type: 'err', msg: 'TNC-Fehler: ' + err.message })
     }
   }
+    // Link aus der Agenten-Mail: /admin?tnc=...&project=...&email=... füllt das Formular automatisch
+  useEffect(() => {
+    if (!authed) return
+    const sp = new URLSearchParams(window.location.search)
+    const t = sp.get('tnc'); if (!t) return
+    setTab('create'); setTncLink(t)
+    handleTNC(t, { project: sp.get('project') || '', email: sp.get('email') || '' })
+    window.history.replaceState(null, '', window.location.pathname)
+  }, [authed])
   async function handlePDF(e) {
     const file = e.target.files[0]; if (!file) return
     setParseStatus({ type: 'loading', msg: 'PDF wird gelesen...' })
