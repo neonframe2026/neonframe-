@@ -260,8 +260,56 @@ async function makeSquareUpload(src, offerId) {
 }
 
 
+// Quadrat aus einem Bild ausschneiden (Ziehen = verschieben, Regler oder Mausrad = Größe)
+function CropModal({ src, onDone, onClose }) {
+  const boxRef = useRef(null)
+  const drag = useRef(null)
+  const [nat, setNat] = useState(null)
+  const [sq, setSq] = useState(null)
+  useEffect(() => {
+    const i = new Image()
+    i.onload = () => { const w = i.naturalWidth, h = i.naturalHeight, s = Math.min(w, h) * 0.8; setNat({ w, h }); setSq({ x: (w - s) / 2, y: (h - s) / 2, s }) }
+    i.src = src
+  }, [src])
+  const clamp = (q) => { const s = Math.max(50, Math.min(q.s, nat.w, nat.h)); return { s, x: Math.max(0, Math.min(q.x, nat.w - s)), y: Math.max(0, Math.min(q.y, nat.h - s)) } }
+  const resize = (s) => setSq(q => clamp({ s, x: q.x + q.s / 2 - s / 2, y: q.y + q.s / 2 - s / 2 }))
+  const down = (e) => { e.preventDefault(); drag.current = { px: e.clientX, py: e.clientY, x: sq.x, y: sq.y }; e.currentTarget.setPointerCapture(e.pointerId) }
+  const move = (e) => {
+    if (!drag.current || !boxRef.current) return
+    const k = boxRef.current.clientWidth / nat.w, d = drag.current
+    setSq(q => clamp({ ...q, x: d.x + (e.clientX - d.px) / k, y: d.y + (e.clientY - d.py) / k }))
+  }
+  async function apply() {
+    const img = await new Promise((r, j) => { const im = new Image(); im.onload = () => r(im); im.onerror = j; im.src = src })
+    const out = Math.min(1200, Math.round(sq.s))
+    const c = document.createElement('canvas'); c.width = out; c.height = out
+    c.getContext('2d').drawImage(img, sq.x, sq.y, sq.s, sq.s, 0, 0, out, out)
+    onDone(c.toDataURL('image/jpeg', 0.9))
+  }
+  const btn = { padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#111', border: '1px solid #333', borderRadius: 14, padding: 16, width: 'min(720px, 100%)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>Checkout-Bild zuschneiden</div>
+        <div style={{ fontSize: 12, color: '#9ca3af' }}>Quadrat mit der Maus verschieben. Größe mit dem Regler oder dem Mausrad ändern.</div>
+        {nat && sq ? (
+          <div ref={boxRef} onWheel={e => resize(sq.s * (e.deltaY > 0 ? 1.05 : 0.95))} style={{ position: 'relative', width: '100%', aspectRatio: `${nat.w} / ${nat.h}`, overflow: 'hidden', borderRadius: 8, userSelect: 'none', touchAction: 'none' }}>
+            <img src={src} alt="" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+            <div onPointerDown={down} onPointerMove={move} onPointerUp={() => { drag.current = null }} style={{ position: 'absolute', left: `${sq.x / nat.w * 100}%`, top: `${sq.y / nat.h * 100}%`, width: `${sq.s / nat.w * 100}%`, height: `${sq.s / nat.h * 100}%`, border: '2px solid #22d3ee', boxShadow: '0 0 0 9999px rgba(0,0,0,.55)', cursor: 'move' }} />
+          </div>
+        ) : <div style={{ color: '#9ca3af', fontSize: 13 }}>Bild wird geladen...</div>}
+        {nat && sq && <input type="range" min={50} max={Math.min(nat.w, nat.h)} value={Math.round(sq.s)} onChange={e => resize(+e.target.value)} />}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ ...btn, background: 'transparent', border: '1px solid #444', color: '#ddd' }}>Abbrechen</button>
+          <button onClick={apply} disabled={!sq} style={{ ...btn, background: '#22d3ee', border: 'none', color: '#04101f' }}>Übernehmen</button>
+        </div>
+      </div>
+    </div>
+  )
+}
 // Feld für das Checkout-Bild (1:1)
-function CheckoutImageField({ src, onChange, inputId, dark }) {
+function CheckoutImageField({ src, onChange, inputId, dark, cropSrc }) {
+  const [crop, setCrop] = useState(false)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, border: '1px dashed #22d3ee', borderRadius: 12, background: dark ? 'rgba(34,211,238,.05)' : 'var(--input-bg)' }}>
       <label htmlFor={inputId} style={{ width: 84, height: 84, borderRadius: 10, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
@@ -273,8 +321,10 @@ function CheckoutImageField({ src, onChange, inputId, dark }) {
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>
           {src && <span onClick={() => onChange(null)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#ef4444', border: '1px solid #ef444466', borderRadius: 8, padding: '5px 10px' }}>Entfernen</span>}
+                      {cropSrc && <span onClick={() => setCrop(true)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild 1 zuschneiden</span>}
         </div>
       </div>
+      {crop && <CropModal src={cropSrc} onClose={() => setCrop(false)} onDone={d => { onChange(d); setCrop(false) }} />}                  
       <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
         const f = e.target.files?.[0]; e.target.value = ''
         if (f) compressImage(f).then(onChange).catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
@@ -1477,7 +1527,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       const pics = [d.realistic_image, d.design_image].filter(Boolean)
       const loaded = []
       for (const u of pics) { try { const b = await (await fetch('/api/tnc-image?url=' + encodeURIComponent(u))).blob(); loaded.push(await compressImage(b)) } catch {} }
-      try { loaded.push(await compressImage(await (await fetch('/lieferumfang.jpg')).blob())) } catch {}
+      try { loaded.push(await compressImage(await (await fetch('/Lieferumfang.png')).blob())) } catch {}
       if (loaded.length) setImgSrcs(loaded)
       setFormKey(k => k + 1)
       setParseStatus({ type: 'ok', msg: `TNC-Angebot ${d.num} geladen: ${rows.length} Größen ab ${d.min?.w} x ${d.min?.h} cm. Bitte prüfen und Projekt + E-Mail eintragen.` })
@@ -1805,7 +1855,7 @@ if (tab === 'create') return (
 
         <CCard t="Dateien">
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="checkout-img-upload" dark />
+            <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="checkout-img-upload" dark cropSrc={imgSrcs[0]} />
             <label className="nf-cdrop" htmlFor="multi-img-upload" style={{...cDrop,padding:'14px 16px',justifyContent:'center'}}>
               <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
                 const files = Array.from(e.target.files)
