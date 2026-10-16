@@ -96,6 +96,7 @@ export async function GET(req) {
       colors: (sign.colors?.current || []).map(c => c.name).join(', '),
       backplate: mapBackplate(sign.backplates?.current?.name || sign.backplate),
       usage: mapUsage(sign.useCases?.current?.name || sign.indoor_or_outdoor),
+      current: { w: Number(sign.width) || minW, h: Number(sign.height) || 0 },
       min: { w: minW, h: Number(sign.minSize?.value?.split('x')[1]) || Number(String(sign.sizes?.minSize?.value || '').split('x')[1]) || Number(sign.height) || 0 },
       design_image: file.permanent_url || file.webp_url || '', realistic_image: sign.realisticPreviewUrl || '',
       design_name: file.name || '',
