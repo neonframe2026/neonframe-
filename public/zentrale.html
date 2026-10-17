@@ -146,6 +146,15 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .st{margin-left:auto;font:500 11px var(--mono);color:var(--ok);display:flex;align-items:center;gap:5px}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.4s infinite}
 @keyframes blink{50%{opacity:.25}}
+.fuauto{display:grid;grid-template-columns:12px 1fr;gap:10px;align-items:start;padding:11px 13px;border-radius:12px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3)}
+.fuauto .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);margin-top:4px;box-shadow:0 0 8px var(--ok)}
+.fuauto b{font-size:13.5px}.fuauto small{display:block;color:var(--muted);font-size:12px;line-height:1.45;margin-top:2px}
+ul.fulog{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+ul.fulog li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:9px;align-items:center;font-size:13px}
+ul.fulog li small{display:block;font:500 11px var(--mono);color:var(--muted)}
+ul.fulog time{font:500 11px var(--mono);color:var(--muted);white-space:nowrap}
+.fic{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:700}
+.fic.ok{background:var(--ok);color:#04150d}.fic.wait{background:rgba(255,255,255,.08);color:var(--muted)}
 ul.tasks{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 ul.tasks li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:9px;align-items:start;font-size:13px}
 ul.tasks li .mk{width:18px;height:18px;border-radius:50%;background:var(--ok);color:#04150d;display:grid;place-items:center;font-size:10.5px;font-weight:700}
@@ -269,7 +278,7 @@ const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].peopl
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
   'Änderungs-Agent': { live: true, tasks: ['Erkennt Änderungs-Mails von Kenzo', 'Legt die Änderung bei Tom bereit, mit Vorher und Nachher', 'Aktualisiert Angebot und Shopify mit einem Klick', 'Informiert den Kunden per Mail'] },
-  'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung'] },
+  'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
 const isActive = (p) => !!AGENT_INFO[p.agent];
 DEPTS.forEach(d => { d.active = d.people.filter(isActive) });
@@ -622,7 +631,14 @@ function renderCard(){
   let extra = '';
   if (p===LISA) extra = `<div><div class="preph"><p class="lbl">Wartet auf Freigabe</p>${offerTasks().length?`<span class="tag-ready">${offerTasks().length} bereit</span>`:''}</div>${tlist(offerTasks(), 'Öffnen & freigeben')}</div><div><p class="lbl">Neueste Angebote</p>${olist(DATA.orders.slice(0,5))}</div><div class="iacts"><button class="b pri" data-nav="create">+ Angebot erstellen</button><button class="b" data-nav="manage">Alle Angebote</button></div>`;
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
-  if (p===EMMA) extra = `<div><div class="preph"><p class="lbl">Fällig</p>${DATA.due.length?`<span class="tag-ready">${DATA.due.length}</span>`:''}</div>${DATA.due.length?olist(DATA.due):'<p class="isub">Alles erledigt. Nichts fällig.</p>'}</div><div class="iacts"><button class="b pri" data-nav="manage">↩ Jetzt nachfassen</button></div>`;
+  if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
+    const ap=F2.approve.length?`<div class="items">${F2.approve.map(t=>`<div class="item"><div class="itop"><span class="inum">${esc(t.nr)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.label)} · fällig ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-fu="${t.id}">${t.kind==='rabatt'?'Rabatt senden':'Jetzt senden'}</button><button class="b ghost" data-fuskip="${t.id}">Überspringen</button></div></div>`).join('')}</div>${F2.approve.length>1?`<button class="b wide" data-fuall="1">Alle ${F2.approve.length} freigeben</button>`:''}`:'<p class="isub">Nichts zum Freigeben.</p>';
+    const ln=(rows,ic)=>rows.length?`<ul class="fulog">${rows.map(r=>`<li><span class="fic ${ic}">${ic==='ok'?'✓':'⏱'}</span><span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${esc(r.when)}</time></li>`).join('')}</ul>`:'<p class="isub">Nichts geplant.</p>';
+    extra = `<div class="fuauto"><span class="dot"></span><div><b>Automatik an</b><small>Emma schickt Erinnerung, Rabatt-Erinnerung und Bewertung selbst, nur zwischen 8:10 und 20:00 Uhr. Rabatte nur mit deiner Freigabe.</small></div></div>
+    <div><div class="preph"><p class="lbl">Wartet auf deine Freigabe</p>${F2.approve.length?`<span class="tag-ready">${F2.approve.length}</span>`:''}</div>${ap}</div>
+    <div><p class="lbl">Schickt Emma als Nächstes</p>${ln(F2.next,'wait')}</div>
+    <div><p class="lbl">Zuletzt gesendet</p>${ln(F2.sent,'ok')}</div>
+    <div class="iacts"><button class="b" data-nav="manage">Alle Angebote</button></div>`; }
   card.innerHTML=`
    <div class="chead"><span class="av" style="background:${d.color}">${ini(p.name)}</span>
      <div><div class="eyebrow"><i style="background:${d.color}"></i>${d.name}</div><h2>${p.name}</h2><div class="role">${p.role}</div></div>
@@ -636,6 +652,10 @@ function renderCard(){
    <div class="cfoot">${first} entscheidet. ${p.agent} bereitet vor.</div>`;
   card.querySelector('#cx').onclick=closeCard;
   card.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>goTab(b.dataset.nav));
+  const fuBtn=(b,msg)=>{ b.disabled=true; b.textContent='Wird gesendet...'; post(msg); };
+  card.querySelectorAll('[data-fu]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'send', id: b.dataset.fu }));
+  card.querySelectorAll('[data-fuskip]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'skip', id: b.dataset.fuskip }));
+  card.querySelectorAll('[data-fuall]').forEach(b=>b.onclick=()=>{ if(!confirm(`Alle ${(DATA.fu?.approve||[]).length} Mails jetzt senden?`)) return; fuBtn(b,{ type: 'nf-fu', action: 'all' }); });
   card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>post({ type: 'nf-open', id: b.dataset.open }));
   card.querySelectorAll('[data-dismiss]').forEach(b=>b.onclick=()=>{ post({ type: 'nf-dismiss', id: b.dataset.dismiss }); DATA.tasks = DATA.tasks.filter(t => t.id !== b.dataset.dismiss); updateBadges(); renderCard(); });
 }
@@ -649,7 +669,7 @@ function updateBadges(){
   setB(DEPTS[5]._lbl, n); setB(EMMA._tag, n);
   setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u);
   okbar.hidden = !n;
-  okbar.textContent = `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
+  okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
   if (typeof onResize === 'function') requestAnimationFrame(onResize);
   if(!drop.hidden) renderDrop();
 }
@@ -684,7 +704,7 @@ function showToast(title,sub,who,ini2){
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
   const before = new Set(DATA.tasks.map(t => t.id));
-  DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], stats: e.data.stats || DATA.stats };
+  DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, stats: e.data.stats || DATA.stats };
   const fresh = DATA.tasks.filter(t => !before.has(t.id));
   renderStats(); updateBadges();
   if (openP) renderCard(); else if (focused && !card.hidden) renderRoom(focused);
