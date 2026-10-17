@@ -1,0 +1,163 @@
+import { createClient } from '@supabase/supabase-js'
+
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const maxDuration = 60
+
+// Follow-up-Agent (Emma)
+// GET                      -> Übersicht für die Zentrale: { approve, next, sent }
+// GET ?run=1&key=...       -> Automatik (cron-job.org alle 10 Min.): schickt fällige Mails, nur 8:10 bis 20:00 Uhr
+// POST { action: 'send' | 'skip', id }   -> Freigabe aus der Zentrale (id = "<offerId>:<art>")
+//
+// Automatisch: Erinnerung (12 Std. nach Angebot), Rabatt-Erinnerung (3 Tage nach Rabatt), Bewertung (3 Tage nach Zustellung)
+// Nur mit Freigabe: Rabatt-Mail (12 Std. nach Erinnerung)
+// Was vor dem Start der Automatik schon fällig war, wird nicht automatisch geschickt, sondern liegt zur Freigabe bei Emma.
+
+const SITE = 'https://angebote.neonframe.de'
+const START = new Date('2026-10-17T18:00:00Z').getTime() // Start der Automatik (17.10.2026, 20:00 Uhr)
+const MAX_OLD_DAYS = 14 // ältere liegengebliebene Angebote gar nicht mehr anzeigen
+const BOUGHT = ['confirmed', 'in_production', 'shipped', 'delivered']
+const H = 3600000
+const KIND = { erinnerung: 'Erinnerung', rabatt: 'Rabatt-Mail', rabatt_erinnerung: 'Rabatt-Erinnerung', bewertung: 'Bewertung' }
+
+const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const t = (d) => (d ? new Date(d).getTime() : 0)
+
+// ---------- Uhrzeit Deutschland ----------
+function berlin(ms) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+    .formatToParts(new Date(ms)).map(x => [x.type, x.value]))
+  const y = +p.year, m = +p.month, d = +p.day, h = +p.hour % 24, mi = +p.minute
+  const offset = Date.UTC(y, m - 1, d, h, mi) - Math.floor(ms / 60000) * 60000
+  return { y, m, d, mins: h * 60 + mi, offset }
+}
+const FROM = 8 * 60 + 10, TO = 20 * 60 // 8:10 bis 20:00 Uhr
+const inWindow = (ms) => { const b = berlin(ms); return b.mins >= FROM && b.mins < TO }
+// Wann darf die Mail raus? Nachts fällig -> nächster Morgen 8:10
+function sendAt(due) {
+  const b = berlin(due)
+  if (b.mins >= FROM && b.mins < TO) return due
+  const at = Date.UTC(b.y, b.m - 1, b.d, 8, 10) - b.offset
+  return b.mins < FROM ? at : at + 24 * H
+}
+function when(ms) {
+  const b = berlin(ms), n = berlin(Date.now())
+  const hm = `${Math.floor(b.mins / 60)}:${String(b.mins % 60).padStart(2, '0')}`
+  const day = Date.UTC(b.y, b.m - 1, b.d), today = Date.UTC(n.y, n.m - 1, n.d)
+  if (day === today) return 'heute ' + hm
+  if (day === today + 24 * H) return 'morgen ' + hm
+  if (day === today - 24 * H) return 'gestern ' + hm
+  return `${String(b.d).padStart(2, '0')}.${String(b.m).padStart(2, '0')}. ${hm}`
+}
+
+// ---------- Was ist bei welchem Angebot dran? ----------
+function step(o) {
+  if (!o.customer_email || o.status === 'unsubscribed' || o.unsubscribed) return null
+  if (BOUGHT.includes(o.status)) {
+    if (o.review_email_sent_at) return null
+    const ordered = o.order_email_sent_at ? t(o.order_email_sent_at) - 15 * 60000 : 0
+    const due = o.delivered_at ? t(o.delivered_at) + 72 * H : ordered ? ordered + 240 * H : 0
+    return due ? { kind: 'bewertung', due } : null
+  }
+  if (o.status === 'offer_sent') return { kind: 'erinnerung', due: t(o.created_at) + 12 * H }
+  if (o.status === 'recontacted' && !o.extra_discount_applied) {
+    const rec = o.recontacted_at ? t(o.recontacted_at) : t(o.created_at) + 12 * H
+    return { kind: 'rabatt', due: rec + 12 * H }
+  }
+  if (o.status === 'discount_offered' && o.extra_discount_at && !o.discount_reminder_sent_at) {
+    if (o.discount_valid_until && t(o.discount_valid_until) <= Date.now()) return null
+    return { kind: 'rabatt_erinnerung', due: t(o.extra_discount_at) + 72 * H }
+  }
+  return null
+}
+
+async function load() {
+  const sb = db()
+  const { data: offers, error } = await sb.from('offers').select('*').order('created_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  const { data: logs } = await sb.from('agent_tasks').select('*').in('type', ['fu_sent', 'fu_skip']).order('created_at', { ascending: false }).limit(300)
+  const skipped = new Set((logs || []).filter(l => l.type === 'fu_skip').map(l => l.tnc_id))
+  const now = Date.now()
+  const items = []
+  for (const o of offers || []) {
+    const s = step(o)
+    if (!s) continue
+    const id = `${o.id}:${s.kind}`
+    if (skipped.has(id)) continue
+    if (s.due < now - MAX_OLD_DAYS * 24 * H) continue
+    const manual = s.kind === 'rabatt' || s.due < START
+    items.push({ o, id, ...s, manual, at: sendAt(Math.max(s.due, START)) })
+  }
+  return { items, logs: (logs || []).filter(l => l.type === 'fu_sent') }
+}
+
+// ---------- Mail schicken (nutzt die bestehenden Mail-Routen) ----------
+async function send(o, kind) {
+  const offerLink = `${SITE}/angebot/${o.custom_id || o.id}`
+  const post = async (path, body) => {
+    const r = await fetch(`${SITE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const j = await r.json().catch(() => ({}))
+    if (!j.success) throw new Error(j.error || `${path} fehlgeschlagen`)
+  }
+  if (kind === 'erinnerung') {
+    await post('recontact', { offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink, price: o.final_price, width: o.width, height: o.height, colors: o.colors })
+    await db().from('offers').update({ recontacted_at: new Date().toISOString() }).eq('id', o.id)
+  } else if (kind === 'rabatt') {
+    await post('discount', { offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink })
+  } else if (kind === 'rabatt_erinnerung') {
+    await post('discount-reminder', { offerId: o.id, offerLink })
+  } else if (kind === 'bewertung') {
+    await post('review-request', { customerEmail: o.customer_email, customerName: o.project, offerId: o.id })
+    await db().from('offers').update({ review_email_sent_at: new Date().toISOString() }).eq('id', o.id)
+  }
+  await db().from('agent_tasks').insert([{ type: 'fu_sent', tnc_id: `${o.id}:${kind}`, project: o.project || '', email: KIND[kind], status: 'log', done_at: new Date().toISOString() }])
+}
+
+const nr = (o) => String(o.offer_num || o.custom_id || String(o.id).slice(0, 8))
+
+export async function GET(req) {
+  try {
+    const sp = new URL(req.url).searchParams
+    const { items, logs } = await load()
+
+    if (sp.get('run')) {
+      if (process.env.FOLLOWUP_KEY && sp.get('key') !== process.env.FOLLOWUP_KEY) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
+      if (!inWindow(Date.now())) return Response.json({ success: true, sent: 0, info: 'Außerhalb 8:10 bis 20:00 Uhr, keine Mails' })
+      const done = [], failed = []
+      for (const it of items.filter(i => !i.manual && i.at <= Date.now()).slice(0, 10)) {
+        try { await send(it.o, it.kind); done.push(it.id) } catch (e) { failed.push({ id: it.id, error: e.message }) }
+      }
+      return Response.json({ success: true, sent: done.length, done, failed })
+    }
+
+    const now = Date.now()
+    return Response.json({
+      approve: items.filter(i => i.manual && i.due <= now).map(i => ({ id: i.id, kind: i.kind, nr: nr(i.o), name: i.o.project || 'ohne Projekt', label: KIND[i.kind] + (i.kind === 'rabatt' ? ' mit Extra-Rabatt' : ' (vor dem Start fällig)'), at: new Date(i.due).toISOString() })),
+      next: items.filter(i => !i.manual && i.at <= now + 36 * H).sort((a, b) => a.at - b.at).slice(0, 8)
+        .map(i => ({ kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: (x => x <= now + 5 * 60000 ? 'gleich' : when(x))(Math.max(i.at, sendAt(now))), note: i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })),
+      sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
+    })
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function POST(req) {
+  try {
+    const { action, id } = await req.json()
+    const [offerId, kind] = String(id || '').split(':')
+    if (!offerId || !KIND[kind]) return Response.json({ error: 'Ungültige Aufgabe' }, { status: 400 })
+    if (action === 'skip') {
+      await db().from('agent_tasks').insert([{ type: 'fu_skip', tnc_id: id, status: 'done', done_at: new Date().toISOString() }])
+      return Response.json({ success: true })
+    }
+    const { data: o } = await db().from('offers').select('*').eq('id', offerId).maybeSingle()
+    if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
+    const s = step(o)
+    if (!s || s.kind !== kind) return Response.json({ error: 'Diese Mail ist nicht mehr fällig' }, { status: 400 })
+    await send(o, kind)
+    return Response.json({ success: true })
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 })
+  }
+}
