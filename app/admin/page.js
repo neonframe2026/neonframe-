@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import TncUpdatePage2 from './tnc-update-page'
 
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW ?? 'neonframe2025'
 
@@ -1886,7 +1887,7 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
 if (tab === 'tncupdate') return (
     <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
       <ThemeVars />
-      <TncUpdatePage id={updateId} onBack={() => setTab('home')} />
+            <TncUpdatePage2 id={updateId} onBack={() => setTab('home')} CheckoutImageField={CheckoutImageField} uploadCheckoutImage={uploadCheckoutImage} />
     </div>
   )
 if (tab === 'home') return (
