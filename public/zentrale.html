@@ -637,7 +637,7 @@ function renderCard(){
     extra = `<div class="fuauto"><span class="dot"></span><div><b>Automatik an</b><small>Emma schickt Erinnerung, Rabatt-Erinnerung und Bewertung selbst, nur zwischen 8:10 und 20:00 Uhr. Rabatte nur mit deiner Freigabe.</small></div></div>
     <div><div class="preph"><p class="lbl">Wartet auf deine Freigabe</p>${F2.approve.length?`<span class="tag-ready">${F2.approve.length}</span>`:''}</div>${ap}</div>
     <div><p class="lbl">Schickt Emma als Nächstes</p>${ln(F2.next,'wait')}</div>
-    <div><p class="lbl">Zuletzt gesendet</p>${ln(F2.sent,'ok')}</div>
+    <div><p class="lbl">Zuletzt gesendet</p>${F2.sent.length?ln(F2.sent,'ok'):'<p class="isub">Noch nichts gesendet.</p>'}</div>
     <div class="iacts"><button class="b" data-nav="manage">Alle Angebote</button></div>`; }
   card.innerHTML=`
    <div class="chead"><span class="av" style="background:${d.color}">${ini(p.name)}</span>
