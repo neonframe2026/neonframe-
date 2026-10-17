@@ -109,11 +109,11 @@ export async function POST(req) {
       const link = `${SITE}/angebot/${o.custom_id || o.id}`
       const first = (o.project || '').split(' ')[0] || 'dort'
       const subject = 'Dein Angebot wurde angepasst 💡'
-      const html = buildMail({ first, link, image: imgs[0] || imgs[1] || o.preview_image, size: `${next.width} × ${next.height} cm`, colors: next.colors, price: r2(net * vat) })
+      const html = buildMail({ first, link, image: imgs[0] || imgs[1] || o.preview_image, size: `${next.width} × ${next.height} cm`, colors: next.colors, variant: next.usage, discount: o.disc_type === 'pct' && parseFloat(o.disc_val) > 0 ? o.disc_val : null, price: r2(net * vat) })
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: 'NeonFrame <info@neonframe.de>', to: [o.customer_email], subject, html }),
+        body: JSON.stringify({ from: 'NeonFrame <angebote@neonframe.de>', to: [o.customer_email], subject, html }),
       })
       mailSent = res.ok
       if (res.ok) await logEmail(o.id, 'angebot_update', subject, html, o.customer_email)
@@ -125,22 +125,37 @@ export async function POST(req) {
   }
 }
 
-function buildMail({ first, link, image, size, colors, price }) {
+function buildMail({ first, link, image, size, colors, variant, price, discount, assets }) {
   const F = 'font-family:Arial,Helvetica,sans-serif;'
+  const A = assets || 'https://angebote.neonframe.de/email'
   const eur = Number(price).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
-  const spec = (l, v) => `<td align="center" style="${F}padding:12px 6px"><div style="${F}font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#22d3ee">${l}</div><div style="${F}padding-top:4px;font-size:14px;font-weight:bold;color:#ffffff">${v}</div></td>`
-  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#09080a">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#09080a"><tr><td align="center" style="padding:24px 12px">
+  const specRows = [['Größe', size], ['Ausführung', variant], ['Farben', colors], ['Preis', eur]]
+    .filter(([, v]) => v)
+    .map(([l, v]) => `<tr><td width="100" valign="top" style="${F}padding:6px 0;font-size:14px;line-height:20px;font-weight:bold;color:#475569;width:100px">${l}:</td><td valign="top" style="${F}padding:6px 0;font-size:14px;line-height:20px;color:#111111">${v}</td></tr>`).join('')
+  const imageCell = image ? `<td class="stack" width="160" valign="top" align="center" style="width:160px;padding:0 18px 0 0">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center">
+        <tr><td align="center"><a href="${link}" target="_blank" style="text-decoration:none;border:0"><img class="stack-img" src="${image}" width="140" alt="Deine neue Vorschau" style="display:block;width:140px;max-width:140px;height:auto;border:2px solid #0ea5e9;border-radius:10px;margin:0 auto"></a></td></tr>
+        ${discount ? `<tr><td height="10" style="height:10px;font-size:1px;line-height:1px">&nbsp;</td></tr><tr><td align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td bgcolor="#10b981" style="${F}padding:5px 12px;font-size:12px;line-height:16px;font-weight:bold;color:#ffffff;border-radius:6px">${discount} % RABATT</td></tr></table></td></tr>` : ''}
+      </table></td>` : ''
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only">
+<style>:root{color-scheme:light only;supported-color-schemes:light only}@media (max-width:600px){.pad{padding:26px 20px 22px !important}.stack{display:block !important;width:100% !important;padding:0 !important}.stack-img{margin:0 auto 10px !important}.stack-spec{padding-top:12px !important}.btn{padding:16px 20px !important}.btntxt{font-size:16px !important}}</style></head>
+<body style="margin:0;padding:0;background:#f4f4f5">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f5" style="background:#f4f4f5"><tr><td align="center" style="padding:32px 10px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px">
-<tr><td style="${F}padding:8px 0 20px;font-size:22px;font-weight:bold;color:#ffffff">Neon<span style="color:#7fdcff">Frame</span></td></tr>
-<tr><td style="${F}font-size:16px;line-height:24px;color:#e5e7eb;padding-bottom:18px">Hallo ${first},<br><br>wir haben dein Angebot nach deinen Wünschen angepasst. Schau es dir gerne in Ruhe an.</td></tr>
-${image ? `<tr><td style="padding:0 0 0"><a href="${link}"><img src="${image}" width="600" alt="Deine neue Vorschau" style="display:block;width:100%;max-width:600px;height:auto;border:0;border-radius:12px 12px 0 0"></a></td></tr>` : ''}
-<tr><td bgcolor="#111c2e" style="background:#111c2e;border-radius:${image ? '0 0 12px 12px' : '12px'}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${spec('Größe', size)}${spec('Farben', colors || '')}${spec('Preis', eur)}</tr></table></td></tr>
-<tr><td align="center" style="padding:26px 0">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#22d3ee" style="border-radius:10px"><a href="${link}" style="${F}display:inline-block;padding:14px 28px;font-size:16px;font-weight:bold;color:#04101f;text-decoration:none">Angepasstes Angebot ansehen</a></td></tr></table>
+<tr><td bgcolor="#09080a" style="background:#09080a;padding:0;font-size:0;line-height:0"><img src="${A}/header.png" width="600" alt="NeonFrame" style="display:block;width:100%;max-width:600px;height:auto;border:0"></td></tr>
+<tr><td class="pad" bgcolor="#ffffff" style="background:#ffffff;padding:36px 36px 28px">
+<div style="${F}margin:0 0 16px;font-size:22px;line-height:28px;font-weight:bold;color:#111111">Hallo ${first},</div>
+<div style="${F}margin:0 0 20px;font-size:15px;line-height:24px;color:#333333">wir haben dein Angebot nach deinen Wünschen angepasst. Die neuen Details haben wir dir hier zusammengefasst. Dein Angebot ist weiterhin für dich reserviert.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8fafc" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px"><tr><td style="padding:16px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${imageCell}<td class="stack stack-spec" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${specRows}</table></td></tr></table>
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="24" style="height:24px;font-size:1px;line-height:1px">&nbsp;</td></tr><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" class="btn" bgcolor="#0ea5e9" style="background:#0ea5e9;border-radius:12px;padding:18px 40px"><a class="btntxt" href="${link}" target="_blank" style="${F}white-space:nowrap;font-size:18px;line-height:22px;font-weight:bold;color:#ffffff;text-decoration:none;display:inline-block"><span style="color:#ffffff;text-decoration:none">Angepasstes Angebot ansehen</span></a></td></tr></table>
+</td></tr><tr><td height="30" style="height:30px;font-size:1px;line-height:1px">&nbsp;</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0;line-height:0;font-size:0"><a href="mailto:info@neonframe.de" style="text-decoration:none;border:0"><img src="${A}/kontakt.png" width="528" alt="Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de" style="display:block;width:100%;max-width:528px;height:auto;border:0;border-radius:12px"></a></td></tr></table>
+<div style="${F}margin:26px 0 4px;font-size:15px;line-height:22px;color:#555555">Viele Grüße</div>
+<div style="${F}margin:0;font-size:15px;line-height:22px;font-weight:bold;color:#111111">Dein NeonFrame-Team</div>
 </td></tr>
-<tr><td style="${F}font-size:14px;line-height:22px;color:#9ca3af">Fragen oder noch ein Wunsch? Antworte einfach auf diese E-Mail.<br><br>Liebe Grüße<br>Phillip von NeonFrame</td></tr>
-<tr><td align="center" style="${F}padding:28px 0 0;font-size:12px;color:#4b5563"><a href="https://neonframe.de" style="color:#22d3ee;text-decoration:none">neonframe.de</a> · info@neonframe.de</td></tr>
+<tr><td align="center" bgcolor="#f8fafc" style="${F}background:#f8fafc;border-top:1px solid #eeeeee;padding:20px 36px;font-size:12px;line-height:18px;color:#aaaaaa;border-radius:0 0 16px 16px"><a href="https://neonframe.de" style="color:#0ea5e9;text-decoration:none">neonframe.de</a> &nbsp;·&nbsp; <a href="mailto:info@neonframe.de" style="color:#0ea5e9;text-decoration:none">info@neonframe.de</a></td></tr>
 </table></td></tr></table></body></html>`.replace(/>\s+</g, '><')
 }
