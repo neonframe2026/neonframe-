@@ -1316,7 +1316,7 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
-  const [tab, setTab] = useState('home')
+  const [tab, setTab] = useState('zentrale')
   const [updateId, setUpdateId] = useState('')
   const [previewTab, setPreviewTab] = useState('angebot')
   const [offers, setOffers] = useState([])
