@@ -620,7 +620,6 @@ function renderRoom(id){
   card.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>goTab(b.dataset.nav));
   const ab=card.querySelector('#askB'); if(ab) ab.onclick=()=>{ if(card.querySelector('#askT').value.trim()){ card.querySelector('#askOk').hidden=false; card.querySelector('#askT').value=''; } };
 }
-document.getElementById('classicBtn').onclick=()=>goTab('home');
 document.getElementById('logoutBtn').onclick=()=>post({ type: 'nf-logout' });
 const okbar=document.getElementById('okbar');
 function renderCard(){
