@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import ZentraleFrame from './zentrale-frame'
 import TncUpdatePage2 from './tnc-update-page'
 
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW ?? 'neonframe2025'
@@ -694,6 +695,13 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
 
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 64px' }}>
         <h1 style={{ fontSize: 38, fontWeight: 800, margin: '0 0 32px' }}>Willkommen 👋</h1>
+        <div onClick={() => setTab('zentrale')} style={{ cursor: 'pointer', marginBottom: 24, borderRadius: 18, padding: '28px 32px', background: 'linear-gradient(120deg,#050a17,#0f2a5c)', border: '1px solid #1c3058', color: '#e8f1ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>🏢 KI-Zentrale</div>
+            <div style={{ fontSize: 14, color: '#86a0c9', marginTop: 6 }}>Dein 3D-Büro mit allen Abteilungen und KI-Agenten.</div>
+          </div>
+          <span style={{ background: '#60c8f0', color: '#04101f', borderRadius: 10, padding: '12px 20px', fontWeight: 800, fontSize: 14 }}>Zentrale öffnen →</span>
+        </div>
 
         {/* 4 gleich große Kacheln (2×2, auf dem Handy untereinander) */}
         <div className="nf-home-grid">
@@ -1889,6 +1897,9 @@ if (tab === 'tncupdate') return (
       <ThemeVars />
             <TncUpdatePage2 id={updateId} onBack={() => setTab('home')} CheckoutImageField={CheckoutImageField} uploadCheckoutImage={uploadCheckoutImage} />
     </div>
+  )
+if (tab === 'zentrale') return (
+    <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought} />
   )
 if (tab === 'home') return (
     <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
