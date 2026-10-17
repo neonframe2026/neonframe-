@@ -30,6 +30,7 @@ async function load(req, id) {
     colors: tnc.colors || offer.colors, backplate: tnc.backplate || offer.backplate, usage: tnc.usage || offer.usage,
     realistic_image: tnc.realistic_image || '', design_image: tnc.design_image || '',
     size_options: rows.filter(r => r.w !== row.w).map(r => ({ w: r.w, h: r.h, vk: r.vk })),
+    all: rows.map(r => ({ w: r.w, h: r.h, vk: r.vk })),
   }
   return { offer, next }
 }
@@ -69,8 +70,17 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { id, notify } = await req.json()
+    const { id, notify, edit } = await req.json()
     const { offer: o, next } = await load(req, id)
+
+    // Eigene Änderungen aus dem Admin übernehmen (Komma oder Punkt erlaubt)
+    const ed = edit || {}
+    const num = v => { const t = String(v ?? '').trim(); if (!t) return NaN; return t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t) }
+    if (num(ed.width) > 0) next.width = num(ed.width)
+    if (num(ed.height) > 0) next.height = num(ed.height)
+    if (num(ed.final) > 0) next.final = r2(num(ed.final))
+    for (const k of ['colors', 'backplate', 'usage']) if (ed[k]) next[k] = ed[k]
+    next.size_options = next.all.filter(r => r.w !== next.width)
 
     // Preis wie bei der Größenauswahl: Endpreis = Empf. VK + 10 %, daraus Listenpreis netto zurückrechnen
     const dType = o.disc_type || 'pct'
@@ -91,13 +101,13 @@ export async function POST(req) {
       size_options: next.size_options.length ? next.size_options : null,
       ...(imgs[0] ? { preview_image: imgs[0] } : {}),
       ...(imgs[1] ? { preview_image_2: imgs[1] } : {}),
-      ...(imgs.length ? { checkout_image: null } : {}),
+      ...(ed.checkout_image ? { checkout_image: ed.checkout_image } : imgs.length ? { checkout_image: null } : {}),
     }
 
     let ids = {}
     let shopifyError = null
     try {
-      const shopImg = imgs[1] || imgs[0]
+      const shopImg = ed.checkout_image || imgs[1] || imgs[0]
       ids = await syncOfferShopify({ ...o, ...updated }, shopImg ? { imageUrl: shopImg, refreshImage: true } : {})
     } catch (e) { shopifyError = e.message }
 
