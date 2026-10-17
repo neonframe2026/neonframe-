@@ -6,13 +6,16 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   const ref = useRef(null)
   const [tasks, setTasks] = useState([])
   const tasksRef = useRef([])
+  const [fu, setFu] = useState(null)
+  const fuRef = useRef(null)
+  const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
   // Offene Aufgaben der Agenten laden (und jede Minute neu)
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load()
-    const t = setInterval(load, 60000)
+    load(); loadFu()
+    const t = setInterval(() => { load(); loadFu() }, 60000)
     return () => { alive = false; clearInterval(t) }
   }, [])
 
@@ -30,7 +33,8 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       type: 'nf-data',
       tasks: tasksRef.current.map(t => ({ id: t.id, type: t.type, tnc: t.tnc_id, name: t.project || 'ohne Projekt', email: t.email || '', at: t.created_at })),
       orders: offers.slice(0, 8).map(row),
-      due: offers.filter(mIsRed).map(row),
+      fu: fuRef.current || undefined,
+      due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : offers.filter(mIsRed).map(row),
       stats: {
         total: offers.length,
         open: offers.filter(o => !mBought(o) && o.published).length,
@@ -51,6 +55,19 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
         if (t.type === 'update') onOpenUpdate(t.tnc_id)
         else onOpenOffer(t.tnc_id, { project: t.project || '', email: t.email || '' })
       }
+      if (e.data?.type === 'nf-fu') {
+        const ids = e.data.action === 'all' ? (fuRef.current?.approve || []).map(a => a.id) : [e.data.id]
+        const action = e.data.action === 'skip' ? 'skip' : 'send'
+        ;(async () => {
+          const errs = []
+          for (const id of ids) {
+            const j = await fetch('/api/followup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, id }) }).then(r => r.json()).catch(err => ({ error: err.message }))
+            if (j.error) errs.push(j.error)
+          }
+          if (errs.length) alert('Fehler: ' + errs.join(', '))
+          loadFu()
+        })()
+      }
       if (e.data?.type === 'nf-dismiss') fetch('/api/agent-tasks?id=' + encodeURIComponent(e.data.id), { method: 'PATCH' }).then(() => {
         tasksRef.current = tasksRef.current.filter(x => x.id !== e.data.id); setTasks(tasksRef.current)
       })
@@ -59,7 +76,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks])
+  useEffect(() => { send() }, [offers, tasks, fu])
 
   return (
     <iframe
