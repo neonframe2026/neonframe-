@@ -113,6 +113,7 @@ export async function POST(req) {
 
     const { error } = await db().from('offers').update({ ...updated, ...ids }).eq('id', o.id)
     if (error) throw new Error(error.message)
+    await db().from('agent_tasks').update({ status: 'done', done_at: new Date().toISOString() }).eq('type', 'update').eq('tnc_id', String(id)).eq('status', 'open')
 
     let mailSent = false
     if (notify && o.customer_email && process.env.RESEND_API_KEY) {
