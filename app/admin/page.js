@@ -1898,7 +1898,7 @@ if (tab === 'tncupdate') return (
             <TncUpdatePage2 id={updateId} onBack={() => setTab('home')} CheckoutImageField={CheckoutImageField} uploadCheckoutImage={uploadCheckoutImage} />
     </div>
   )
-if (tab === 'zentrale') return (
+if (tab === 'zentrale' || tab === 'home') return (
         <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
       onOpenOffer={(t, pre) => { setTab('create'); setTncLink(t); handleTNC(t, pre) }}
       onOpenUpdate={(u) => { setUpdateId(u); setTab('tncupdate') }} />
