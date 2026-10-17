@@ -1222,11 +1222,93 @@ function CSeg({ label, value, opts, onChange }) {
 }
 // =================== ENDE ERSTELLEN (Design) ===================
 
+// Änderung von TNC: Vorher/Nachher anzeigen und mit einem Klick übernehmen
+function TncUpdatePage({ id, onBack }) {
+  const [d, setD] = useState(null)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(null)
+  const [notify, setNotify] = useState(true)
+  useEffect(() => {
+    fetch('/api/tnc-update?id=' + encodeURIComponent(id)).then(r => r.json()).then(j => j.error ? setErr(j.error) : setD(j)).catch(e => setErr(e.message))
+  }, [id])
+  const eur = (n) => (parseFloat(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+  async function apply() {
+    setBusy(true); setErr('')
+    try {
+      const j = await (await fetch('/api/tnc-update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, notify }) })).json()
+      if (j.error) throw new Error(j.error)
+      setDone(j)
+    } catch (e) { setErr(e.message) }
+    setBusy(false)
+  }
+  const box = { background: 'var(--card, #14161c)', border: '1px solid var(--border)', borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }
+  const row = (l, a, b) => {
+    const ch = String(a ?? '') !== String(b ?? '')
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: 14 }}>
+        <span style={{ color: 'var(--text-faint)' }}>{l}</span>
+        <span style={{ color: ch ? 'var(--text-faint)' : 'var(--text)', textDecoration: ch ? 'line-through' : 'none' }}>{a || '–'}</span>
+        <span style={{ fontWeight: ch ? 700 : 400, color: ch ? '#22c55e' : 'var(--text)' }}>{b || '–'}</span>
+      </div>
+    )
+  }
+  const btn = { padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', border: 'none' }
+  return (
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div onClick={onBack} style={{ cursor: 'pointer', color: 'var(--text-faint)', fontSize: 13 }}>← Zur Startseite</div>
+      <h1 style={{ margin: 0, fontSize: 28 }}>🔄 Angebot geändert</h1>
+      {err && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', fontSize: 13 }}>{err}</div>}
+      {!d && !err && <div style={{ color: 'var(--text-faint)' }}>Neue Daten werden von TNC geladen... (ca. 10 Sek.)</div>}
+      {d && (
+        <>
+          <div style={{ fontSize: 14, color: 'var(--text-faint)' }}>TNC-Angebot <b style={{ color: 'var(--text)' }}>{id}</b> · {d.before.project || 'ohne Projekt'} · {d.before.customer_email || 'keine E-Mail'}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            <div style={box}>
+              <b>Vorher</b>
+              {d.before.images[0] && <img src={d.before.images[0]} alt="" style={{ width: '100%', borderRadius: 10 }} />}
+            </div>
+            <div style={{ ...box, borderColor: '#22c55e66' }}>
+              <b style={{ color: '#22c55e' }}>Nachher</b>
+              {(d.after.realistic_image || d.after.design_image) && <img src={d.after.realistic_image || d.after.design_image} alt="" style={{ width: '100%', borderRadius: 10 }} />}
+            </div>
+          </div>
+          <div style={box}>
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1fr', gap: 10, fontSize: 12, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.06em' }}><span></span><span>Vorher</span><span>Nachher</span></div>
+            {row('Größe', d.before.width && `${d.before.width} × ${d.before.height} cm`, `${d.after.width} × ${d.after.height} cm`)}
+            {row('Endpreis', eur(d.before.final), eur(d.after.final))}
+            {row('Farbe', d.before.colors, d.after.colors)}
+            {row('Rückwand', d.before.backplate, d.after.backplate)}
+            {row('Verwendung', d.before.usage, d.after.usage)}
+            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Größentabelle: {d.after.size_options.length} weitere Größen. Bild 3 (Lieferumfang) bleibt. Das Checkout-Bild wird durch das neue Design ersetzt.</div>
+          </div>
+          {done ? (
+            <div style={{ padding: '14px 16px', borderRadius: 12, background: '#22c55e1a', border: '1px solid #22c55e55', color: '#22c55e', fontSize: 14, lineHeight: 1.6 }}>
+              ✓ Angebot aktualisiert{done.mailSent ? ' und Kunde per Mail informiert' : ''}.<br />
+              {done.shopifyError && <span style={{ color: '#f59e0b' }}>Shopify: {done.shopifyError}<br /></span>}
+              <a href={`/angebot/${done.offerId}`} target="_blank" rel="noreferrer" style={{ color: '#22c55e' }}>Angebotsseite ansehen</a>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button onClick={apply} disabled={busy} style={{ ...btn, background: '#60c8f0', color: '#04101f', opacity: busy ? .6 : 1 }}>{busy ? 'Wird übernommen...' : 'Übernehmen'}</button>
+              <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14, cursor: 'pointer' }}>
+                <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} disabled={!d.before.customer_email} />
+                Kunde per Mail informieren
+              </label>
+              <button onClick={onBack} style={{ ...btn, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}>Abbrechen</button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
   const [tab, setTab] = useState('home')
+  const [updateId, setUpdateId] = useState('')
   const [previewTab, setPreviewTab] = useState('angebot')
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
@@ -1544,6 +1626,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
   useEffect(() => {
     if (!authed) return
     const sp = new URLSearchParams(window.location.search)
+    const u = sp.get('tncupdate'); if (u) { setUpdateId(u); setTab('tncupdate'); window.history.replaceState(null, '', window.location.pathname); return }
     const t = sp.get('tnc'); if (!t) return
     setTab('create'); setTncLink(t)
     handleTNC(t, { project: sp.get('project') || '', email: sp.get('email') || '' })
@@ -1800,6 +1883,12 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
     <div style={{display:'flex',flexDirection:'column',gap:5}}><label style={S.label}>{label}</label>{children}</div>
   )
 
+if (tab === 'tncupdate') return (
+    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+      <ThemeVars />
+      <TncUpdatePage id={updateId} onBack={() => setTab('home')} />
+    </div>
+  )
 if (tab === 'home') return (
     <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
       <ThemeVars />
