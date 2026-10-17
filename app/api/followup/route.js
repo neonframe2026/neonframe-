@@ -133,8 +133,13 @@ export async function GET(req) {
     const now = Date.now()
     return Response.json({
       approve: items.filter(i => i.manual && i.due <= now).map(i => ({ id: i.id, kind: i.kind, nr: nr(i.o), name: i.o.project || 'ohne Projekt', label: KIND[i.kind] + (i.kind === 'rabatt' ? ' mit Extra-Rabatt' : ' (vor dem Start fällig)'), at: new Date(i.due).toISOString() })),
-      next: items.filter(i => !i.manual && i.at <= now + 36 * H).sort((a, b) => a.at - b.at).slice(0, 8)
-        .map(i => ({ kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: (x => x <= now + 5 * 60000 ? 'gleich' : when(x))(Math.max(i.at, sendAt(now))), note: i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })),
+      // Automatische Mails + Rabatt-Mails, die bald zur Freigabe kommen (nächste 36 Std.)
+      next: items.filter(i => (!i.manual || i.due > now) && Math.min(i.at, i.due) <= now + 36 * H)
+        .map(i => i.manual
+          ? { at: i.due, kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: when(i.due), note: 'dann zur Freigabe bei dir' }
+          : { at: Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
+        .sort((a, b) => a.at - b.at).slice(0, 12)
+        .map(({ at, ...r }) => ({ ...r, when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
       sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
     })
   } catch (err) {
