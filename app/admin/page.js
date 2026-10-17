@@ -1899,7 +1899,9 @@ if (tab === 'tncupdate') return (
     </div>
   )
 if (tab === 'zentrale') return (
-    <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought} />
+        <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
+      onOpenOffer={(t, pre) => { setTab('create'); setTncLink(t); handleTNC(t, pre) }}
+      onOpenUpdate={(u) => { setUpdateId(u); setTab('tncupdate') }} />
   )
 if (tab === 'home') return (
     <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
