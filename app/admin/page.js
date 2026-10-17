@@ -1530,6 +1530,10 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       try { loaded.push(await compressImage(await (await fetch('/Lieferumfang.png')).blob())) } catch {}
       if (loaded.length) setImgSrcs(loaded)
       setFormKey(k => k + 1)
+      let dup = null
+      try { const all = await (await fetch('/api/offers')).json(); dup = (Array.isArray(all) ? all : []).find(o => String(o.offer_num) === String(d.num)) } catch {}
+      if (dup) setParseStatus({ type: 'err', msg: `Achtung: Zu TNC-Angebot ${d.num} gibt es schon ein Angebot (${dup.project || 'ohne Projekt'}). Bei einer Änderung bitte das bestehende Angebot unter "Verwalten" bearbeiten, sonst hat der Kunde zwei Angebote.` })
+      else
       setParseStatus({ type: 'ok', msg: `TNC-Angebot ${d.num} geladen: ${rows.length} Größen ab ${d.min?.w} x ${d.min?.h} cm. Bitte prüfen und Projekt + E-Mail eintragen.` })
       schedulePreview()
     } catch (err) {
