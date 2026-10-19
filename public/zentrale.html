@@ -109,10 +109,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .ptag small{font-size:10.5px;color:var(--muted)}
 .ptag em{font:500 10.5px var(--mono);font-style:normal;color:var(--accent);display:flex;align-items:center;justify-content:center;gap:5px}
 .ptag .badge{position:absolute;top:-8px;right:-8px;margin:0}
-.ptag.off,.dlabel.off{opacity:0;pointer-events:none}
+.ptag.off,.dlabel.off,.hlabel.off{opacity:0;pointer-events:none}
+.hlabel{transition:opacity .25s}
 .hlabel{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#3f7bff,#2459e6);border:0;border-radius:99px;padding:7px 15px;box-shadow:0 8px 22px rgba(47,107,255,.35);white-space:nowrap;font-size:12px;pointer-events:none}
 .hlabel b{color:#fff;font-weight:600}
-.hlabel span{color:var(--muted)}
+.hlabel span{color:rgba(255,255,255,.78);font-weight:400;font-size:11px}
 
 .hint{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:12px;font-size:12px;color:var(--muted);pointer-events:none;background:var(--glass);border:1px solid var(--line);border-radius:8px;padding:5px 10px}
 .zoom{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:70px;display:grid;gap:4px}
@@ -675,7 +676,7 @@ DEPTS.forEach((d,i)=>{
 /* ================= Labels ================= */
 let hovD=null; function setHov(d){ hovD=d; DEPTS.forEach(x=>x._lbl&&x._lbl.classList.toggle('hov',x===d)); }
 const labelsEl=document.getElementById('labels');
-const hubLbl=document.createElement('div'); hubLbl.className='hlabel'; hubLbl.innerHTML='<b>● NeonFrame Intelligence</b>'; labelsEl.appendChild(hubLbl);
+const hubLbl=document.createElement('div'); hubLbl.className='hlabel'; hubLbl.innerHTML='<b>● NeonFrame Intelligence</b><span>verbindet alle Abteilungen</span>'; labelsEl.appendChild(hubLbl);
 DEPTS.forEach(d=>{
   const b=document.createElement('button'); b.className='dlabel'; b.style.setProperty('--c',d.color);
   const na=d.active.length; if(!na) b.classList.add('planned');
@@ -698,10 +699,11 @@ function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('ari
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
 function overDist(){ return isMob()?fitDist(34,40)*.95:fitDist(50,40)*.78; }
-function overPhi(){ return isMob()?.86:1.0; }
-function roomDist(){ return fitDist(19,15); }
+function overPhi(){ return isMob()?1.0:1.2; }
+function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
+function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
 function roomZoom(){ return 1; }
-function focusRoom(id){ clearTimeout(cardT); openP=null; card.hidden=true; cardT=setTimeout(()=>{ if(focused===id&&!openP) renderRoom(id); }, reduce?0:450); focused=id; goal.copy(rooms[id].g.position).add(new THREE.Vector3(0,.8,0)); distGoal=roomDist(); thetaGoal=nearTheta(Math.PI/4); phiGoal=.98; flyTo(1700); setNav(); DEPTS.forEach(d=>d._lbl.classList.toggle('dim',d.id!==id)); }
+function focusRoom(id){ clearTimeout(cardT); openP=null; card.hidden=true; cardT=setTimeout(()=>{ if(focused===id&&!openP) renderRoom(id); }, reduce?0:450); focused=id; goal.copy(rooms[id].g.position).add(new THREE.Vector3(0,.6,0)); distGoal=roomDist(); thetaGoal=nearTheta(Math.PI/4); phiGoal=1.0; cardShift(distGoal); flyTo(1150); setNav(); DEPTS.forEach(d=>d._lbl.classList.toggle('dim',d.id!==id)); }
 function overview(){ focused=null; goal.set(0,1.5,0); distGoal=overDist(); phiGoal=overPhi(); flyTo(1500); setNav(); DEPTS.forEach(d=>d._lbl.classList.remove('dim')); closeCard(); }
 
 /* ================= Karte ================= */
@@ -711,16 +713,16 @@ function openPerson(p){
   openP=p; focused=p.dept.id; card.classList.remove('room'); setNav(); DEPTS.forEach(d=>d._lbl.classList.toggle('dim',d.id!==focused));
   // Nah an den Bildschirm des Mitarbeiters fahren, Karte daneben
   const sp=p.screen.clone(); p.room.localToWorld(sp);
-  const asp=W/H; distGoal=isMob()?13:10.5; thetaGoal=nearTheta(Math.PI/4); phiGoal=1.05;
+  const asp=W/H; distGoal=isMob()?5.4:4.6; thetaGoal=nearTheta(Math.PI/4-.45); phiGoal=1.12;
   const visH=2*distGoal*Math.tan(cam.fov*Math.PI/360), visW=visH*asp;
   const right=new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)), up=new THREE.Vector3(0,1,0);
-  goal.copy(sp);
-  if(W>760) goal.add(right.multiplyScalar(visW*Math.min(.3,215/W))); else goal.add(up.multiplyScalar(-visH*.27));
-  flyTo(1500);
+  goal.copy(sp); goal.y-=.05; goal.add(new THREE.Vector3(0,0,.55).applyQuaternion(p.room.quaternion));
+  if(W>760) goal.add(right.multiplyScalar(visW*Math.min(.22,180/W))); else goal.add(up.multiplyScalar(-visH*.25));
+  flyTo(1250);
   clearTimeout(cardT); card.hidden=true;
-  cardT=setTimeout(()=>{ if(openP===p){ renderCard(); card.hidden=false; } }, reduce?0:1200);
+  cardT=setTimeout(()=>{ if(openP===p){ renderCard(); card.hidden=false; } }, reduce?0:900);
 }
-function closeCard(){ clearTimeout(cardT); const was=openP; openP=null; card.hidden=true; card.classList.remove('room'); if(was&&focused){ goal.copy(rooms[focused].g.position).add(new THREE.Vector3(0,.8,0)); distGoal=roomDist(); flyTo(1300); renderRoom(focused); } }
+function closeCard(){ clearTimeout(cardT); const was=openP; openP=null; card.hidden=true; card.classList.remove('room'); if(was&&focused){ goal.copy(rooms[focused].g.position).add(new THREE.Vector3(0,.6,0)); distGoal=roomDist(); thetaGoal=nearTheta(Math.PI/4); phiGoal=1.0; cardShift(distGoal); flyTo(1150); renderRoom(focused); } }
 const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const olist = (rows) => rows.length ? `<div class="olist">${rows.map(o=>`<button class="orow" data-nav="manage" style="text-align:left"><span class="inum">${esc(o.nr)}</span><span>${esc(o.name)}</span><span class="s ${o.cls}">${esc(o.status)}</span></button>`).join('')}</div>` : '<p>Noch keine Einträge.</p>';
 function roomActions(d){
@@ -918,10 +920,10 @@ function frame(){
   spinners.forEach(o=>{ o.rotation.y=t*.8; o.rotation.x=t*.4; });
   DEPTS.forEach(d=>{ const rm=rooms[d.id]; const cd=cam.position.clone().sub(rm.g.position).setY(0).normalize();
     rm.walls.forEach(w=>{ const goalO=w.n.dot(cd)>.12?0:1; w.o+=(goalO-w.o)*(reduce?1:.14); const o=w.o; w.m.opacity=o; w.tm.opacity=o; w.m.depthWrite=o>.95; w.objs.forEach(x=>{ x.visible=o>.03; if(x!==w.objs[0]&&x!==w.objs[1]&&x.material){ x.material.transparent=true; x.material.opacity=o; } }); });
-    const hy=(hovD===d&&!openP)?.22:0; rm.g.position.y+=(hy-rm.g.position.y)*(reduce?1:.15); });
+    const hy=0; rm.g.position.y+=(hy-rm.g.position.y)*(reduce?1:.15); });
   DEPTS.forEach(d=>{ const r=rooms[d.id]; r.pulse.position.lerpVectors(r.from,r.to,reduce?.5:((t*.3+r.ph)%1));
-    place(d._lbl, tmp.copy(r.g.position).add(new THREE.Vector3(-1.5,3.6,-3.6))); });
-  place(hubLbl, new THREE.Vector3(0,8.2,0));
+    place(d._lbl, tmp.copy(r.g.position).add(new THREE.Vector3(-1.5,3.6,-3.6))); d._lbl.classList.toggle('off',!!openP||(!!focused&&d.id!==focused)); });
+  place(hubLbl, new THREE.Vector3(0,8.2,0)); hubLbl.classList.toggle('off',!!focused);
   const showTags = dist<30;
   persons.forEach(p=>{
     const work=(p===LISA&&offerTasks().length)||(p===TOM&&updTasks().length)||(p===EMMA&&DATA.due.length);
@@ -931,7 +933,7 @@ function frame(){
     p.orb.position.y=p.og.position.y=p.r1.position.y=p.r2.position.y=y;
     if(!reduce){ p.r1.rotation.z=t; p.r2.rotation.y=t*1.4; }
     tmp.copy(p.local); p.room.localToWorld(tmp);
-    const ok=place(p._tag,tmp); p._tag.classList.toggle('off',!(showTags&&ok));
+    const ok=place(p._tag,tmp); p._tag.classList.toggle('off',!(showTags&&ok&&(!focused||p.dept.id===focused)&&(!openP||p===openP)));
   });
   renderer.render(scene,cam);
   requestAnimationFrame(frame);
