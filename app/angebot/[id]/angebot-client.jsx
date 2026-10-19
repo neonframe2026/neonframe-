@@ -24,6 +24,8 @@ function colorDot(s = '') {
 
 // ─── INFO-I mit Bild/Text (Hover am PC, Antippen am Handy) ──────────────────
 function tipText(text = '') {
+  // Zeilenumbrüche im Text = eigene Zeilen
+  if (text.includes('\n')) return <>{text.split('\n').map((l, i) => <span key={i} style={{ display: 'block' }}>{l}</span>)}</>
   // "Kleiner gewünscht?" / "Größer gewünscht?" in fett und jeweils in eigener Zeile
   const parts = text.split(/(Kleiner oder gr\u00f6\u00dfer gew\u00fcnscht\?)/)
   if (parts.length === 1) return text
@@ -607,6 +609,7 @@ export default function AngebotPage({ offer }) {
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
+  const [express, setExpress] = useState(!!offer.express)
   const [accepting, setAccepting] = useState(false)
   const [step, setStep] = useState(0)
   const ctaRef = useRef(null)
@@ -633,7 +636,11 @@ const net1 = discType === 'pct' ? base * (1 - discVal / 100) : Math.max(0, base 
 const extraAmt = net1 * extraPct / 100
 const net = net1 - extraAmt
 const vatAmt = net * (vatPct / 100)
-const final = net + vatAmt
+const final0 = net + vatAmt
+// Expresslieferung: +30 % auf den Endpreis
+const EXPRESS_PCT = 30
+const expAmt = express ? Math.round(final0 * EXPRESS_PCT) / 100 : 0
+const final = final0 + expAmt
   const discDisplay = discType === 'pct' ? `${discVal}%` : `€ ${discVal.toFixed(2)}`
   const colors = parseColors(offer.colors)
   const displayId = offer.offer_num || offer.custom_id || offer.id?.slice(0, 8)
@@ -655,7 +662,7 @@ const final = net + vatAmt
   const extraBrutto = extraAmt * (1 + vatPct / 100)
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
-  const sizeChanged = sm.enabled && selW !== sm.W0
+  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express
 
   async function accept(e) {
     if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
@@ -668,7 +675,7 @@ const final = net + vatAmt
     const t1 = setTimeout(() => setStep(s => Math.max(s, 1)), 450)
     const t2 = setTimeout(() => setStep(s => Math.max(s, 2)), 900)
     try {
-      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: selW }) })
+      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: sm.enabled ? selW : (parseFloat(offer.width) || 0), express }) })
       const d = await r.json()
       if (d.checkoutUrl) {
         clearTimeout(t1); clearTimeout(t2)
@@ -712,8 +719,8 @@ const final = net + vatAmt
         .oc-head b { display:block; font-size:21px; font-weight:800; line-height:1.2; word-break:break-word; }
         .oc-star { font-size:24px; color:#60c8f0; text-shadow:0 0 12px rgba(96,200,240,.7); }
         .oc-body { padding:18px 20px 20px; }
-        .cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 22px; margin-bottom:16px; }
-        .cfg-grid { grid-template-columns:auto auto 1fr; } .cfg-grid > div { grid-column:1 / -1; } .cfg-grid > .cfg-half { grid-column:auto; margin-right:26px; }
+        .cfg-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 10px; margin-bottom:16px; }
+        .cfg-grid { grid-template-columns:auto auto 1fr; } .cfg-grid > div { grid-column:1 / -1; } .cfg-grid > .cfg-half { grid-column:auto; margin-right:12px; }
         .cfg-label { display:flex !important; align-items:center; gap:6px; }
         .size-sel { appearance:none; -webkit-appearance:none; height:40px; padding:0 38px 0 14px; border:1.5px solid #d4d4d8; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; color:#111; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 13px center; cursor:pointer; max-width:100%; }
         .size-sel:focus { outline:none; border-color:#60c8f0; }
@@ -721,6 +728,8 @@ const final = net + vatAmt
         .oc-price { border-top:1px solid #f0f0f0; padding-top:12px; margin-bottom:14px; }
         .oc-row { display:flex; justify-content:space-between; gap:12px; font-size:14px; color:#555; padding:3px 0; }
         .oc-row.disc { color:#16a34a; font-weight:600; }
+        .oc-row.exp { color:#d97706; font-weight:600; }
+        @media(max-width:960px){ .cfg-grid { display:flex; flex-wrap:wrap; } .cfg-grid > div { flex:0 0 100%; min-width:0; } .cfg-grid > .cfg-half { flex:0 0 auto; margin-right:8px; } }
         .oc-total { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-top:8px; }
         .oc-total span { font-size:15px; font-weight:700; }
         .oc-total b { font-size:28px; font-weight:900; letter-spacing:-.02em; white-space:nowrap; }
@@ -795,7 +804,7 @@ const final = net + vatAmt
         }
         @media(max-width:960px){ .sb-space { display:none; } }
         @media(max-width:960px){
-          .cfg-grid { gap:14px 14px; }
+          .cfg-grid { gap:14px 6px; }
           .oc-total b { font-size:24px; }
           .sticky-buy { left:10px; right:10px; width:auto; bottom:calc(12px + env(safe-area-inset-bottom)); flex-direction:column; align-items:stretch; gap:9px; padding:12px; border-radius:20px; transform:translateY(calc(100% + 40px)); }
           .sticky-buy.show { transform:translateY(0); }
@@ -1114,17 +1123,27 @@ const final = net + vatAmt
                   </div>
                 )}
                 {offer.usage && (
-                  <div>
+                  <div className="cfg-half">
                     <span className="cfg-label">Verwendung {usageImg && <InfoTip img={usageImg} wide="u" />}</span>
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.usage}</div>
                   </div>
                 )}
+                <div>
+                  <span className="cfg-label">Lieferung <InfoTip text={"Standardversand beträgt 2 bis 3 Wochen.\nExpresslieferung beträgt 7 bis 10 Werktage."} /></span>
+                  <div style={{ marginTop: 4 }}>
+                    <select className="size-sel" value={express ? 'express' : 'standard'} onChange={e => setExpress(e.target.value === 'express')}>
+                      <option value="standard">Standardversand</option>
+                      <option value="express">{express ? 'Expresslieferung' : 'Expresslieferung (+30 %)'}</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="oc-price">
                 {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
                 {discAmt > 0 && <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>}
                 {extraAmt > 0 && <div className="oc-row disc"><span>Extra-Rabatt ({extraPct}%)</span><span>− {eur(extraBrutto)}</span></div>}
+                {expAmt > 0 && <div className="oc-row exp"><span>Expresslieferung (+{EXPRESS_PCT} %)</span><span>+ {eur(expAmt)}</span></div>}
                 <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
                 <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
               </div>
@@ -1143,10 +1162,10 @@ const final = net + vatAmt
               <div className="ve-ship">
                 <svg className="ve-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 3h15v13H1z" /><path d="M16 8h4l3 3v5h-7z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
                 <strong>Kostenloser Versand</strong>
-                <span>{offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
+                <span>{express ? 'Expresslieferung: ca. 7 bis 10 Werktage' : offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</span>
                 <div className="ve-express">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-                  <span className="tt"><span className="tt-t">Express anfragen</span><span className="tt-box tt-light">Expressversand: ca. 7–10 Werktage.<br />Bitte im Anpassungsfeld anfordern.</span></span>
+                  <span className="tt"><span className="tt-t">{express ? 'Express gewählt' : 'Express möglich'}</span><span className="tt-box tt-light">Expresslieferung: ca. 7 bis 10 Werktage.<br />Oben bei „Lieferung“ auswählbar.</span></span>
                 </div>
               </div>
               <div className="ve-incl">
@@ -1334,7 +1353,7 @@ const final = net + vatAmt
             <div className="ld-p">Wir bereiten deinen Checkout vor</div>
             <div className="ld-steps">
               {[
-                `Größe übernommen (${selW} × ${selH} cm)`,
+                express ? `Expresslieferung übernommen (${sm.enabled ? selW : offer.width} × ${selH} cm)` : `Größe übernommen (${selW} × ${selH} cm)`,
                 `Preis berechnet (${eur(final)})`,
                 step >= 3 ? 'Checkout erstellt' : 'Checkout wird erstellt …',
                 'Weiterleitung zum Checkout',
@@ -1357,7 +1376,7 @@ const final = net + vatAmt
         {images[0] && <img className="sb-thumb" src={images[0]} alt="" />}
         <div className="sb-info">
           <div className="sb-title">Individuelles LED-Neon-Schild – personalisiert nach Wunsch{offer.project ? <> <span>für {offer.project}</span></> : null}</div>
-          <div className="sb-note">Kostenloser Versand · {offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</div>
+          <div className="sb-note">Kostenloser Versand · {express ? 'Expresslieferung ca. 7 bis 10 Werktage' : offer.delivery ? `Geliefert zwischen ${offer.delivery}` : 'Lieferzeit 2–3 Wochen'}</div>
         </div>
         <div className="sb-row">
           {discAmt > 0 && <span className="sb-badge">−{discDisplay}{extraPct > 0 ? ` −${extraPct}%` : ''}</span>}
