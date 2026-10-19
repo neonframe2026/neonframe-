@@ -235,6 +235,7 @@ html.dark .card{background:rgba(17,22,33,.97)!important;border-color:#283246!imp
 html.dark .agentbox{background:linear-gradient(180deg,#162036,#131b2c)!important;border-color:#24345a!important}
 html.dark .nav button[aria-pressed="true"]{background:#e9eef7;color:#0b0f17}
 html.dark .fic.wait{background:#1e2738}
+.dlabel,.ptag,.hlabel{backface-visibility:hidden;-webkit-font-smoothing:antialiased}
 </style>
 </head>
 <body>
@@ -284,7 +285,7 @@ const DEPTS = [
   people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Lieferanten-Agent',f:1},{name:'David Braun',role:'Bestand',agent:'Preisvergleich-Agent',f:0}]},
  {id:'followup', name:'Follow-up & CRM', icon:'↻', color:'#34e39b', tags:['Erinnerungen','Rabatt-Mails','Bewertungen'],
   kpis:[['Offene Angebote','11'],['Mails fällig','3'],['Bewertungen','5']],
-  people:[{name:'Emma Koch',role:'CRM-Managerin',agent:'Follow-up-Agent',f:1},{name:'Paul Neumann',role:'Retention',agent:'Bewertungs-Agent',f:0}]}
+  people:[{name:'Emma Koch',role:'CRM-Managerin',agent:'Follow-up-Agent',f:1}]}
 ];
 const ini = n => n.split(' ').map(x=>x[0]).join('');
 const eur = v => v.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
@@ -658,7 +659,7 @@ DEPTS.forEach((d,i)=>{
   const deskM=std(0xcfd5df,.5,.2);
   const scrTex=screenTex(d); d._scr=scrTex;
   d.people.forEach((p,k)=>{
-    const dx = k===0 ? -2.3 : 1.2, dz=-1.9;
+    const dx = d.people.length===1 ? -.55 : (k===0 ? -2.3 : 1.2), dz=-1.9;
     const top=box(1.9,.08,.85,std(DARK?0xd9dee8:0xffffff,.45,.02)); top.position.set(dx,.8,dz); g.add(top);
     [-.88,.88].forEach(o=>{const s=box(.06,.5,.8,deskM);s.position.set(dx+o,.53,dz);g.add(s);});
     // Monitor zeigt zur Kamera, Mitarbeiter sitzt davor mit dem Rücken zu uns
@@ -710,7 +711,7 @@ persons.forEach(p=>{
 /* ================= Navigation ================= */
 const nav=document.getElementById('nav');
 let focused=null, openP=null;
-nav.innerHTML=`<button data-id="" aria-pressed="true">◎ Übersicht</button>`+DEPTS.map(d=>`<button data-id="${d.id}" aria-pressed="false"><span class="d" style="background:${d.active.length?d.color:'#5b6680'}"></span>${d.name} <span class="k">${d.active.length}</span></button>`).join('');
+nav.innerHTML=`<button data-id="" aria-pressed="true">◎ Übersicht</button>`+[...DEPTS.filter(d=>d.active.length),...DEPTS.filter(d=>!d.active.length)].map(d=>`<button data-id="${d.id}" aria-pressed="false"><span class="d" style="background:${d.active.length?d.color:'#5b6680'}"></span>${d.name} <span class="k">${d.active.length}</span></button>`).join('');
 nav.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.id?focusRoom(b.dataset.id):overview());
 
 function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.id||null)===focused))); }
@@ -921,10 +922,10 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(openP) closeCard(); els
 const v=new THREE.Vector3(), tmp=new THREE.Vector3(), clock=new THREE.Clock();
 function overlapsHead(el){ const P=(x,y,z)=>{ const v=new THREE.Vector3(x,y,z).project(cam); return [(v.x+1)/2*W,(1-v.y)/2*H]; };
   const [hx,yb]=P(0,1.8,0), [,yt]=P(0,8.4,0), [xl]=P(-2.3,5,0), [xr]=P(2.3,5,0); const hw=Math.abs(xr-xl)/2+20;
-  const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect(), L=r.left-s.left, T=r.top-s.top;
-  return L<hx+hw && L+r.width>hx-hw && T<yb && T+r.height>yt; }
+  if(!el._w){ el._w=el.offsetWidth; el._h=el.offsetHeight; } const L=el._x-el._w/2, T=el._y-el._h;
+  return L<hx+hw && L+el._w>hx-hw && T<yb && T+el._h>yt; }
 function place(el,pos){ v.copy(pos).project(cam); const x=(v.x+1)/2*W, y=(1-v.y)/2*H;
-  const off = x<-200||x>W+200||y<-100||y>H+100; el.style.transform=`translate(${Math.round(x-el.offsetWidth/2)}px,${Math.round(y-el.offsetHeight)}px)`; return !off; }
+  const off = x<-200||x>W+200||y<-100||y>H+100; el._x=x; el._y=y; el.style.transform=`translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) translate(-50%,-100%)`; return !off; }
 function frame(){
   const t=clock.getElapsedTime();
   if(tw){ const u=Math.min(1,(performance.now()-tw.t0)/tw.dur), e=easeIO(u);
