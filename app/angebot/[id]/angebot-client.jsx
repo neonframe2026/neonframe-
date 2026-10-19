@@ -54,8 +54,12 @@ function InfoTip({ img, text, wide, warn }) {
     const clampY = (y) => Math.max(m, Math.min(vh - m - ph, y))
     // Reihenfolge: unten, oben, rechts, links – das Fenster darf das ⓘ (und damit den Mauszeiger) nie verdecken
     let p = null
-    if (r.bottom + g + ph <= vh - m) p = { left: clampX(r.left - 10), top: r.bottom + g }
-    else if (r.top - g - ph >= m) p = { left: clampX(r.left - 10), top: r.top - g - ph }
+    // Bild links an der Angebotskarte ausrichten (wie bei Farbe), nicht rechts in die Ecke
+    const card = ic.closest('.offer-card')
+    const cl = card ? card.getBoundingClientRect().left + 10 : r.left - 10
+    const lx = clampX(Math.min(r.left - 10, cl))
+    if (r.bottom + g + ph <= vh - m) p = { left: lx, top: r.bottom + g }
+    else if (r.top - g - ph >= m) p = { left: lx, top: r.top - g - ph }
     else if (r.right + g + pw <= vw - m) p = { left: r.right + g, top: clampY(r.top + r.height / 2 - ph / 2) }
     else if (r.left - g - pw >= m) p = { left: r.left - g - pw, top: clampY(r.top + r.height / 2 - ph / 2) }
     else {
@@ -1353,7 +1357,7 @@ const final = final0 + expAmt
             <div className="ld-p">Wir bereiten deinen Checkout vor</div>
             <div className="ld-steps">
               {[
-                (sm.enabled && selW !== sm.W0) ? `Größe übernommen (${selW} × ${selH} cm)` : (express ? 'Expresslieferung übernommen' : 'Standardversand übernommen'),
+                (sm.enabled && selW !== sm.W0) ? `${express ? 'Größe und Expresslieferung' : 'Größe'} übernommen (${selW} × ${selH} cm)` : (express ? 'Expresslieferung übernommen' : 'Standardversand übernommen'),
                 `Preis berechnet (${eur(final)})`,
                 step >= 3 ? 'Checkout erstellt' : 'Checkout wird erstellt …',
                 'Weiterleitung zum Checkout',
