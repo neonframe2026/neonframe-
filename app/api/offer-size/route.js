@@ -7,17 +7,25 @@ export const maxDuration = 60
 
 // Kunde wählt auf der Angebotsseite eine andere Größe:
 // Preis + Maße im Angebot, im Shopify-Produkt und im vorhandenen Bestellentwurf ändern
-// Body: { offerId, width }
+// Body: { offerId, width, express }  (express = Expresslieferung +30 %, kommt als eigene Position in den Checkout)
 export async function POST(req) {
   try {
-    const { offerId, width } = await req.json()
+    const { offerId, width, express } = await req.json()
+    const exp = !!express
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const { data: o } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
 
     const w = Number(width)
     const W0 = parseFloat(o.width) || 0
-    if (w === W0 && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
+    if (w === W0 && exp === !!o.express && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
+
+    // Nur Lieferart geändert (Größe gleich): Preis bleibt, Express kommt im Checkout dazu
+    if (w === W0) {
+      const ids = await syncOfferShopify({ ...o, express: exp })
+      await supabase.from('offers').update({ express: exp, ...ids }).eq('id', o.id)
+      return Response.json({ checkoutUrl: ids.checkout_url })
+    }
 
     const rows = Array.isArray(o.size_options) ? o.size_options.filter(r => +r.w > 0 && +r.h > 0 && +r.vk > 0) : []
     const row = rows.find(r => +r.w === w)
@@ -41,7 +49,7 @@ export async function POST(req) {
 
     const updated = {
       width: w, height: +row.h, base_price: base,
-      net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows,
+      net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows, express: exp,
     }
     const ids = await syncOfferShopify({ ...o, ...updated })
     await supabase.from('offers').update({ ...updated, ...ids }).eq('id', o.id)
