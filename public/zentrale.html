@@ -104,7 +104,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .dlabel.dim{opacity:.35}
 .badge{background:var(--warn);color:#2a1600;font-size:11px;font-weight:700;border-radius:9px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;margin-left:4px}
 .ptag{display:grid;gap:1px;background:#fff;border:1px solid #e6eaf1;box-shadow:0 4px 12px rgba(20,35,70,.10);border-radius:8px;padding:5px 9px;text-align:center;white-space:nowrap;transition:opacity .25s, border-color .2s;backdrop-filter:blur(6px)}
-.ptag:hover{border-color:var(--accent)}
+.ptag{transition:opacity .25s,border-color .15s,box-shadow .15s}
+.ptag:hover,.trow:hover{border-color:color-mix(in srgb,var(--c) 85%,transparent)!important;box-shadow:0 0 10px color-mix(in srgb,var(--c) 18%,transparent)!important}
+.trow{transition:border-color .15s,box-shadow .15s}
 .ptag b{font-size:12px;font-weight:600}
 .ptag small{font-size:10.5px;color:var(--muted)}
 .ptag em{font:500 10.5px var(--mono);font-style:normal;color:var(--accent);display:flex;align-items:center;justify-content:center;gap:5px}
@@ -705,7 +707,7 @@ DEPTS.forEach(d=>{
   b.onclick=()=>focusRoom(d.id); b.onmouseenter=()=>setHov(d); b.onmouseleave=()=>setHov(null); labelsEl.appendChild(b); d._lbl=b;
 });
 persons.forEach(p=>{
-  const b=document.createElement('button'); b.className='ptag off';
+  const b=document.createElement('button'); b.className='ptag off'; b.style.setProperty('--c',p.dept.color);
   b.innerHTML=`<b>${p.name}</b><small>${p.role}</small><em><i></i>${p.agent}</em><span class="badge" hidden></span>`;
   b.onclick=()=>openPerson(p); labelsEl.appendChild(b); p._tag=b;
 });
@@ -762,7 +764,7 @@ function renderRoom(id){
      <div><div class="eyebrow"><i style="background:var(--ok)"></i>Abteilung</div><h2>${d.name}</h2></div>
      <button class="x" id="rx" aria-label="Zur Übersicht">×</button></div>
    <div class="ract">${roomActions(d)}</div>
-   <div><p class="lbl">Dein Team</p>${d.active.length?'':'<p class="isub">Noch keine Mitarbeiter. Diese Abteilung ist in Planung.</p>'}<div class="team">${d.active.map((p,k)=>`<button class="trow" data-k="${k}"><span class="av" style="background:${d.color}">${ini(p.name)}</span><span><b>${p.name}</b><small>${p.role}</small><br><em>● ${p.agent}</em></span>${p===EMMA&&DATA.due.length?`<span class="badge">${DATA.due.length}</span>`:''}</button>`).join('')}</div></div>`;
+   <div><p class="lbl">Dein Team</p>${d.active.length?'':'<p class="isub">Noch keine Mitarbeiter. Diese Abteilung ist in Planung.</p>'}<div class="team">${d.active.map((p,k)=>`<button class="trow" data-k="${k}" style="--c:${d.color}"><span class="av" style="background:${d.color}">${ini(p.name)}</span><span><b>${p.name}</b><small>${p.role}</small><br><em>● ${p.agent}</em></span>${p===EMMA&&DATA.due.length?`<span class="badge">${DATA.due.length}</span>`:''}</button>`).join('')}</div></div>`;
   card.hidden=false;
   card.querySelector('#rx').onclick=overview;
   card.querySelectorAll('.trow').forEach(b=>b.onclick=()=>{card.classList.remove('room');openPerson(d.active[+b.dataset.k]);});
