@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import ZentraleFrame from './zentrale-frame'
 import TncUpdatePage2 from './tnc-update-page'
 import AdminLogin from './login-screen'
+import SettingsPage from './settings-page'
 import { authSignOut } from '../../lib/admin-auth'
 
 const STATUS_OPTIONS = [
@@ -1882,6 +1883,7 @@ if (tab === 'tncupdate') return (
             <TncUpdatePage2 id={updateId} onBack={() => setTab('home')} CheckoutImageField={CheckoutImageField} uploadCheckoutImage={uploadCheckoutImage} />
     </div>
   )
+if (tab === 'settings') return <SettingsPage onBack={() => setTab('zentrale')} />
 if (tab === 'zentrale' || tab === 'home') return (
         <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
       onOpenOffer={(t, pre) => { setTab('create'); setTncLink(t); handleTNC(t, pre) }}
