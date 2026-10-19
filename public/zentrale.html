@@ -230,7 +230,7 @@ td.hi{font-weight:600}
 html.dark{--bg:#0b0f17;--surface:#141a26;--surface-2:#182031;--line:#232c3d;--line-2:#2b3548;--fg:#e9eef7;--muted:#8b97ad;--glass:rgba(20,26,38,.92);color-scheme:dark}
 html.dark header{background:#0f141e!important}
 html.dark .dlabel,html.dark .ptag,html.dark .nav-in{background:#151b27!important;border-color:#283246!important;box-shadow:0 8px 22px rgba(0,0,0,.45)!important}
-html.dark .dlabel.hov{border-color:var(--c)!important;box-shadow:0 0 0 1px var(--c),0 8px 26px color-mix(in srgb,var(--c) 40%,transparent)!important}
+html.dark .dlabel.hov{border-color:color-mix(in srgb,var(--c) 85%,transparent)!important;box-shadow:0 0 10px color-mix(in srgb,var(--c) 18%,transparent)!important}
 html.dark .dlabel.planned .ic{background:#283246;color:#8b97ad}
 html.dark .card{background:rgba(17,22,33,.97)!important;border-color:#283246!important;box-shadow:0 24px 60px rgba(0,0,0,.55)!important}
 html.dark .agentbox{background:linear-gradient(180deg,#162036,#131b2c)!important;border-color:#24345a!important}
@@ -907,7 +907,7 @@ canvas.addEventListener('pointermove',e=>{
   }
   setNdc(e.clientX,e.clientY); ray.setFromCamera(ndc,cam); const h=ray.intersectObjects(pickables)[0];
   canvas.style.cursor=h?'pointer':'grab';
-  const hd=h?(h.object.userData.d||h.object.userData.p?.dept):null; setHov(hd);
+  
 });
 function endPtr(e){
   const wasClick = ptrs.size===1 && moved<=5 && dragPt;
@@ -927,7 +927,7 @@ function overlapsHead(el){ const P=(x,y,z)=>{ const v=new THREE.Vector3(x,y,z).p
   const L=el._x-el._w/2, T=el._y-el._h;
   return L<hx+hw && L+el._w>hx-hw && T<yb && T+el._h>yt; }
 function place(el,pos){ v.copy(pos).project(cam); const x=(v.x+1)/2*W, y=(1-v.y)/2*H;
-  const off = x<-200||x>W+200||y<-100||y>H+100; if(!el._w||(frame.n%45===0)){ el._w=el.offsetWidth; el._h=el.offsetHeight; } el._x=x; el._y=y; const tx=Math.round(x-el._w/2), ty=Math.round(y-el._h); if(tx!==el._tx||ty!==el._ty){ el._tx=tx; el._ty=ty; el.style.transform=`translate(${tx}px,${ty}px)`; } return !off; }
+  const off = x<-200||x>W+200||y<-100||y>H+100; if(!el._w||(frame.n%45===0)){ el._w=el.offsetWidth; el._h=el.offsetHeight; } el._x=x; el._y=y; const fx=x-el._w/2, fy=y-el._h; const tx=(el._tx!=null&&Math.abs(fx-el._tx)<.85)?el._tx:Math.round(fx), ty=(el._ty!=null&&Math.abs(fy-el._ty)<.85)?el._ty:Math.round(fy); if(tx!==el._tx||ty!==el._ty){ el._tx=tx; el._ty=ty; el.style.transform=`translate(${tx}px,${ty}px)`; } return !off; }
 function frame(){ frame.n=(frame.n||0)+1;
   const t=clock.getElapsedTime();
   if(tw){ const u=Math.min(1,(performance.now()-tw.t0)/tw.dur), e=easeIO(u);
