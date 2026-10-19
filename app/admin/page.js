@@ -1833,7 +1833,8 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
 
   useEffect(() => {
     const titles = {
-      home: 'Angebote - NeonFrame',
+      home: 'Zentrale - NeonFrame',
+      zentrale: 'Zentrale - NeonFrame',
       create: 'Neues Angebot erstellen - NeonFrame',
       manage: 'Angebote verwalten - NeonFrame',
     }
