@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import ZentraleFrame from './zentrale-frame'
 import TncUpdatePage2 from './tnc-update-page'
-
-const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PW ?? 'neonframe2025'
+import AdminLogin from './login-screen'
+import { authSignOut } from '../../lib/admin-auth'
 
 const STATUS_OPTIONS = [
   { value: 'offer_sent',      label: 'Angebot erhalten',    color: '#22d3ee', bg: '#ecfeff', border: '#a5f3fc' },
@@ -1314,6 +1314,8 @@ function TncUpdatePage({ id, onBack }) {
 }
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
+  const wasAuthed = useRef(false)
+  useEffect(() => { if (authed) wasAuthed.current = true; else if (wasAuthed.current) authSignOut() }, [authed])
   const [pw, setPw] = useState('')
   const [pwErr, setPwErr] = useState(false)
   const [tab, setTab] = useState('zentrale')
@@ -1843,26 +1845,7 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
     document.title = authed && due > 0 ? `(${due}) ${base}` : base
   }, [tab, authed, offers])
 
-  if (!authed) return (
-    <div style={{position:'fixed',inset:0,background:'#f9fafb',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:16,padding:40,width:360,textAlign:'center',boxShadow:'0 4px 24px rgba(0,0,0,.08)'}}>
-        <div style={{background:'#0a0a0a',padding:'12px 16px',borderRadius:10,display:'inline-block',marginBottom:20}}>
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" style={{height:40,display:'block'}} />
-        </div>
-        <div style={{fontSize:14,color:'#6b7280',marginBottom:24}}>Admin-Bereich · Nur autorisierter Zugriff</div>
-        <input type="password" placeholder="Passwort" value={pw}
-          onChange={e => setPw(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { pw === ADMIN_PW ? (setAuthed(true), setPwErr(false)) : setPwErr(true) } }}
-          style={{width:'100%',border:'1px solid #e5e7eb',borderRadius:10,padding:'11px 14px',fontSize:16,textAlign:'center',letterSpacing:3,marginBottom:12,outline:'none',fontFamily:'inherit'}}
-        />
-        <button onClick={() => pw === ADMIN_PW ? (setAuthed(true), setPwErr(false)) : setPwErr(true)}
-          style={{width:'100%',background:'#0a0a0a',color:'#fff',border:'none',borderRadius:10,padding:12,fontWeight:600,fontSize:14,cursor:'pointer',fontFamily:'inherit'}}>
-          Einloggen
-        </button>
-        {pwErr && <div style={{color:'#ef4444',fontSize:13,marginTop:10}}>Falsches Passwort</div>}
-      </div>
-    </div>
-  )
+  if (!authed) return <AdminLogin onAuthed={() => setAuthed(true)} />
 
   const S = {
     app: {display:'flex',flexDirection:'column',height:'100vh',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'},
