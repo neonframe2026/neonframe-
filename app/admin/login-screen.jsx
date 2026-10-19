@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react'
 import { authClient, setRemember } from '../../lib/admin-auth'
 
+// Hash direkt beim Laden merken (Supabase entfernt ihn danach)
+const INIT_HASH = typeof window !== 'undefined' ? window.location.hash : ''
+
 // Login-Seite der Zentrale (Option 1 Clean Card, Darkmode)
 export default function AdminLogin({ onAuthed }) {
   const [mode, setMode] = useState('loading') // loading | login | forgot | sent | recover
@@ -15,11 +18,11 @@ export default function AdminLogin({ onAuthed }) {
   useEffect(() => {
     const sb = authClient()
     const { data: sub } = sb.auth.onAuthStateChange((ev, session) => {
-      if (ev === 'PASSWORD_RECOVERY') { setMode('recover'); return }
-      if (session && ev === 'SIGNED_IN' && !location.hash.includes('type=recovery')) onAuthed()
+      if (ev === 'PASSWORD_RECOVERY' || /type=invite/.test(INIT_HASH)) { setMode('recover'); return }
+      if (session && ev === 'SIGNED_IN' && !/type=(recovery|invite)/.test(INIT_HASH)) onAuthed()
     })
     sb.auth.getSession().then(({ data }) => {
-      if (location.hash.includes('type=recovery')) setMode('recover')
+      if (/type=(recovery|invite)/.test(INIT_HASH)) setMode('recover')
       else if (data.session) onAuthed()
       else setMode('login')
     })
@@ -84,7 +87,7 @@ export default function AdminLogin({ onAuthed }) {
           <img src="/icon-192.png" alt="NeonFrame" />
           <div>
             <h1>Neon<b>Frame</b> Zentrale</h1>
-            <div className="sub">{mode === 'recover' ? 'Neues Passwort festlegen' : mode === 'forgot' || mode === 'sent' ? 'Passwort zurücksetzen' : 'Willkommen zurück. Melde dich an.'}</div>
+            <div className="sub">{mode === 'recover' ? (/type=invite/.test(INIT_HASH) ? 'Willkommen! Lege dein Passwort fest' : 'Neues Passwort festlegen') : mode === 'forgot' || mode === 'sent' ? 'Passwort zurücksetzen' : 'Willkommen zurück. Melde dich an.'}</div>
           </div>
         </div>
 
