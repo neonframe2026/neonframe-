@@ -1,11 +1,23 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { authClient } from '../../lib/admin-auth'
 
 // Die 3D-Zentrale (public/zentrale.html) im Admin anzeigen und mit echten Daten füttern
 export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatus, mId, mBought, onOpenOffer, onOpenUpdate }) {
   const ref = useRef(null)
   const [tasks, setTasks] = useState([])
   const tasksRef = useRef([])
+  // Eingeloggter Benutzer (Name + Rolle für den Header)
+  const [user, setUser] = useState(null)
+  const userRef = useRef(null)
+  useEffect(() => {
+    authClient()?.auth.getUser().then(({ data }) => {
+      const u = data?.user; if (!u) return
+      const m = u.app_metadata || {}, um = u.user_metadata || {}
+      userRef.current = { email: u.email, name: um.name || m.name || '', role: m.role === 'admin' ? 'admin' : 'staff' }
+      setUser(userRef.current)
+    }).catch(() => {})
+  }, [])
   const [fu, setFu] = useState(null)
   const fuRef = useRef(null)
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
@@ -31,6 +43,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     const week = Date.now() - 7 * 86400000
     w.postMessage({
       type: 'nf-data',
+      user: userRef.current || undefined,
       tasks: tasksRef.current.map(t => ({ id: t.id, type: t.type, tnc: t.tnc_id, name: t.project || 'ohne Projekt', email: t.email || '', at: t.created_at })),
       orders: offers.slice(0, 8).map(row),
       fu: fuRef.current || undefined,
@@ -76,7 +89,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu])
+  useEffect(() => { send() }, [offers, tasks, fu, user])
 
   return (
     <iframe
