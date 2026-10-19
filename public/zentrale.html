@@ -405,8 +405,8 @@ const globe = new THREE.Group(); globe.position.y=4.6; hub.add(globe);
     pos[n*3]=x; pos[n*3+1]=y; pos[n*3+2]=z; col[n*3]=cc.r; col[n*3+1]=cc.g; col[n*3+2]=cc.b; n++;
   }
   const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos.subarray(0,n*3),3)); geo.setAttribute('color',new THREE.BufferAttribute(col.subarray(0,n*3),3));
-  const head=new THREE.Points(geo,new THREE.PointsMaterial({size:.03,vertexColors:true,transparent:true,opacity:.85,depthWrite:false}));
-  head.scale.setScalar(2.4); head.position.y=.6; head.rotation.y=Math.PI/4; globe.add(head); globe.userData.head=head;
+  const head=new THREE.Points(geo,new THREE.PointsMaterial({size:.03,vertexColors:true,transparent:true,opacity:.85,depthWrite:false,depthTest:false}));
+  head.renderOrder=999; head.scale.setScalar(2.4); head.position.y=.6; head.rotation.y=Math.PI/4; globe.add(head); globe.userData.head=head;
 }
 
 
@@ -699,7 +699,7 @@ function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('ari
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
 function overDist(){ return isMob()?fitDist(34,40)*.95:fitDist(50,40)*.78; }
-function overPhi(){ return isMob()?1.0:1.2; }
+function overPhi(){ return isMob()?1.25:1.35; }
 function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
 function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
 function roomZoom(){ return 1; }
