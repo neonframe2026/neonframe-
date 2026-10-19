@@ -706,7 +706,7 @@ const final = final0 + expAmt
         .ii-pop img { display:block; width:360px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); object-fit:contain; height:auto; border-radius:8px; }
         .ii-pop.wide img { width:620px; max-width:calc(100vw - 40px); } .ii-pop.cwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.uwide img { width:640px; max-width:calc(100vw - 40px); } .ii-pop.xwide img { width:860px; max-width:calc(100vw - 40px); }
         .ii-pop img { max-height:calc(var(--mh, 100vh) - 24px) !important; }
-        .ii-txt { display:block; width:560px; max-width:80vw; padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
+        .ii-txt { display:block; width:max-content; max-width:min(560px, 80vw); padding:8px 10px; font-size:13px; line-height:1.5; color:#333; text-transform:none; letter-spacing:0; font-weight:400; white-space:normal; }
         .ii-modal { position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; }
         .ii-modal-box { background:#fff; border-radius:14px; padding:10px; max-width:94vw; display:flex; flex-direction:column; gap:10px; }
         .ii-modal-box img { display:block; max-width:calc(94vw - 20px); max-height:70vh; height:auto; border-radius:8px; }
@@ -1129,11 +1129,11 @@ const final = final0 + expAmt
                   </div>
                 )}
                 <div>
-                  <span className="cfg-label">Lieferung <InfoTip text={"Standardversand beträgt 2 bis 3 Wochen.\nExpresslieferung beträgt 7 bis 10 Werktage."} /></span>
+                  <span className="cfg-label">Lieferung <InfoTip text={"Standardversand beträgt 2 bis 3 Wochen.\nExpresslieferung (+30%) beträgt 7 bis 10 Werktage."} /></span>
                   <div style={{ marginTop: 4 }}>
                     <select className="size-sel" value={express ? 'express' : 'standard'} onChange={e => setExpress(e.target.value === 'express')}>
                       <option value="standard">Standardversand</option>
-                      <option value="express">{express ? 'Expresslieferung' : 'Expresslieferung (+30 %)'}</option>
+                      <option value="express">{express ? 'Expresslieferung' : 'Expresslieferung (+30%)'}</option>
                     </select>
                   </div>
                 </div>
@@ -1143,7 +1143,7 @@ const final = final0 + expAmt
                 {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
                 {discAmt > 0 && <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>}
                 {extraAmt > 0 && <div className="oc-row disc"><span>Extra-Rabatt ({extraPct}%)</span><span>− {eur(extraBrutto)}</span></div>}
-                {expAmt > 0 && <div className="oc-row exp"><span>Expresslieferung (+{EXPRESS_PCT} %)</span><span>+ {eur(expAmt)}</span></div>}
+                {expAmt > 0 && <div className="oc-row exp"><span>Expresslieferung (+{EXPRESS_PCT}%)</span><span>+ {eur(expAmt)}</span></div>}
                 <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
                 <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
               </div>
@@ -1353,7 +1353,7 @@ const final = final0 + expAmt
             <div className="ld-p">Wir bereiten deinen Checkout vor</div>
             <div className="ld-steps">
               {[
-                express ? `Expresslieferung übernommen (${sm.enabled ? selW : offer.width} × ${selH} cm)` : `Größe übernommen (${selW} × ${selH} cm)`,
+                (sm.enabled && selW !== sm.W0) ? `Größe übernommen (${selW} × ${selH} cm)` : (express ? 'Expresslieferung übernommen' : 'Standardversand übernommen'),
                 `Preis berechnet (${eur(final)})`,
                 step >= 3 ? 'Checkout erstellt' : 'Checkout wird erstellt …',
                 'Weiterleitung zum Checkout',
