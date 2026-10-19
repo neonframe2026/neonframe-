@@ -110,6 +110,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .ptag em{font:500 10.5px var(--mono);font-style:normal;color:var(--accent);display:flex;align-items:center;justify-content:center;gap:5px}
 .ptag .badge{position:absolute;top:-8px;right:-8px;margin:0}
 .ptag.off,.dlabel.off,.hlabel.off{opacity:0;pointer-events:none}
+.dlabel.behind{opacity:0;pointer-events:none}
 .hlabel{transition:opacity .25s}
 .hlabel{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#3f7bff,#2459e6);border:0;border-radius:99px;padding:7px 15px;box-shadow:0 8px 22px rgba(47,107,255,.35);white-space:nowrap;font-size:12px;pointer-events:none}
 .hlabel b{color:#fff;font-weight:600}
@@ -900,6 +901,10 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(openP) closeCard(); els
 
 /* ================= Loop ================= */
 const v=new THREE.Vector3(), tmp=new THREE.Vector3(), clock=new THREE.Clock();
+function overlapsHead(el){ const P=(x,y,z)=>{ const v=new THREE.Vector3(x,y,z).project(cam); return [(v.x+1)/2*W,(1-v.y)/2*H]; };
+  const [hx,yb]=P(0,1.8,0), [,yt]=P(0,8.4,0), [xl]=P(-2.3,5,0), [xr]=P(2.3,5,0); const hw=Math.abs(xr-xl)/2+20;
+  const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect(), L=r.left-s.left, T=r.top-s.top;
+  return L<hx+hw && L+r.width>hx-hw && T<yb && T+r.height>yt; }
 function place(el,pos){ v.copy(pos).project(cam); const x=(v.x+1)/2*W, y=(1-v.y)/2*H;
   const off = x<-200||x>W+200||y<-100||y>H+100; el.style.transform=`translate(${x}px,${y}px) translate(-50%,-100%)`; return !off; }
 function frame(){
@@ -923,7 +928,8 @@ function frame(){
     rm.walls.forEach(w=>{ const goalO=w.n.dot(cd)>.12?0:1; w.o+=(goalO-w.o)*(reduce?1:.14); const o=w.o; w.m.opacity=o; w.tm.opacity=o; w.m.depthWrite=o>.95; w.objs.forEach(x=>{ x.visible=o>.03; if(x!==w.objs[0]&&x!==w.objs[1]&&x.material){ x.material.transparent=true; x.material.opacity=o; } }); });
     const hy=0; rm.g.position.y+=(hy-rm.g.position.y)*(reduce?1:.15); });
   DEPTS.forEach(d=>{ const r=rooms[d.id]; r.pulse.position.lerpVectors(r.from,r.to,reduce?.5:((t*.3+r.ph)%1));
-    place(d._lbl, tmp.copy(r.g.position).add(new THREE.Vector3(-1.5,3.6,-3.6))); d._lbl.classList.toggle('off',!!openP||(!!focused&&d.id!==focused)); });
+    place(d._lbl, tmp.copy(r.g.position).add(new THREE.Vector3(-1.5,3.6,-3.6))); d._lbl.classList.toggle('off',!!openP||(!!focused&&d.id!==focused));
+    const behind=!focused && r.g.position.distanceTo(cam.position)>cam.position.distanceTo(target) && overlapsHead(d._lbl); d._lbl.classList.toggle('behind',behind); });
   place(hubLbl, new THREE.Vector3(0,8.2,0)); hubLbl.classList.toggle('off',!!focused);
   const showTags = dist<30;
   persons.forEach(p=>{
