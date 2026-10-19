@@ -406,7 +406,8 @@ const globe = new THREE.Group(); globe.position.y=4.6; hub.add(globe);
   }
   const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos.subarray(0,n*3),3)); geo.setAttribute('color',new THREE.BufferAttribute(col.subarray(0,n*3),3));
   const head=new THREE.Points(geo,new THREE.PointsMaterial({size:.03,vertexColors:true,transparent:true,opacity:.85,depthWrite:false,depthTest:false}));
-  head.renderOrder=999; head.scale.setScalar(2.4); head.position.y=.6; head.rotation.y=Math.PI/4; globe.add(head); globe.userData.head=head;
+  head.renderOrder=999; head.scale.setScalar(2.4);
+  const back=new THREE.Points(geo,new THREE.PointsMaterial({size:.11,color:0xf4f6f9,depthWrite:false,depthTest:false})); back.renderOrder=998; back.scale.setScalar(2.4); back.position.y=.6; back.rotation.y=Math.PI/4; globe.add(back); head.position.y=.6; head.rotation.y=Math.PI/4; globe.add(head); globe.userData.head=head;
 }
 
 
