@@ -274,7 +274,7 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
 
       {/* Bearbeiten: Desktop rechts, Handy unten */}
       {!small && (
-        <div style={{ position: 'fixed', right: 0, top: 58, bottom: 0, width: SIDE, background: '#111318', borderLeft: '1px solid #2a2d36', zIndex: 999, overflowY: 'auto', padding: 18, color: '#f1f2f5', fontSize: 13, boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', right: 0, top: 58, bottom: 0, width: SIDE, background: '#111318', borderLeft: '1px solid #2a2d36', zIndex: 999, overflowY: 'auto', overflowX: 'hidden', padding: 18, color: '#f1f2f5', fontSize: 13, boxSizing: 'border-box' }}>
           {panel || <div style={{ color: '#8a8f9c' }}>Lädt...</div>}
         </div>
       )}
