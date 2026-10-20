@@ -62,13 +62,13 @@ export async function POST(req) {
     if (!KEY() || url.searchParams.get('key') !== KEY()) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
     const b = await req.json()
     const kind = /mode=logo/i.test(b.seite || '') ? 'logo' : 'text'
-    // Logo-Anfrage: screenshotBase64 ist das Original-Logo vom Kunden. Text-Anfrage: gerenderte Vorschau.
-    const logo_url = kind === 'logo' ? await upload(b.screenshotBase64, b.screenshotFilename, b.screenshotMime, 'logo') : null
-    const preview_url = await upload(b.cleanScreenshotBase64 || (kind === 'text' ? b.screenshotBase64 : ''), b.cleanScreenshotFilename, b.cleanScreenshotMime, 'vorschau')
+    // Nur diese eine Datei geht an TNC: screenshotBase64 (= "neon-vorschau.png" in deiner Mail, bei Logo das Original-Logo)
+    const logo_url = await upload(b.screenshotBase64, b.screenshotFilename, b.screenshotMime, 'datei')
+    const preview_url = await upload(b.cleanScreenshotBase64, b.cleanScreenshotFilename, b.cleanScreenshotMime, 'vorschau').catch(() => null)
     const wall_url = await upload(b.wandfotoBase64, b.wandfotoFilename, b.wandfotoMime, 'wand').catch(() => null)
     const keep = ['wunschtext', 'schriftart', 'neonfarbname', 'breite', 'rueckwandform', 'rueckwandfarbe', 'verwendungszweck', 'projektnotizen', 'whatsapp', 'seite', 'zeitpunkt']
     const data = Object.fromEntries(keep.map(k => [k, b[k] ?? '']))
-    data.fileName = kind === 'logo' ? (b.screenshotFilename || 'logo.png') : (b.cleanScreenshotFilename || 'vorschau.png')
+    data.fileName = b.screenshotFilename || 'neon-vorschau.png'
     const { error } = await sb().from('einkauf').insert([{ kind, status: 'open', name: (b.name || '').trim(), email: (b.email || '').trim(), phone: (b.telefon || '').trim(), data, logo_url, preview_url, wall_url }])
     if (error) throw new Error(error.message)
     return Response.json({ success: true })
@@ -110,7 +110,7 @@ export async function PATCH(req) {
     const v = view(r)
     const colors = (Array.isArray(fields.colors) ? fields.colors : String(fields.colors || v.customerColors).split(',')).map(s => String(s).trim()).filter(Boolean)
     if (!colors.length) return Response.json({ error: 'Bitte mindestens eine Farbe wählen' }, { status: 400 })
-    const fileUrl = r.kind === 'logo' ? r.logo_url : r.preview_url
+    const fileUrl = r.logo_url // genau 1 Datei, TNC kann noch keine mehreren
     if (!fileUrl) return Response.json({ error: 'Keine Datei vorhanden' }, { status: 400 })
     const fr = await fetch(fileUrl, { cache: 'no-store' })
     if (!fr.ok) throw new Error('Datei konnte nicht geladen werden')
