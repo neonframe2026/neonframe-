@@ -60,7 +60,8 @@ export async function POST(req) {
   try {
     const url = new URL(req.url)
     if (!KEY() || url.searchParams.get('key') !== KEY()) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
-    const b = await req.json()
+    const ct = req.headers.get('content-type') || ''
+    const b = ct.includes('json') ? await req.json() : Object.fromEntries((await req.formData()).entries())
     const kind = /mode=logo/i.test(b.seite || '') ? 'logo' : 'text'
     // Nur diese eine Datei geht an TNC: screenshotBase64 (= "neon-vorschau.png" in deiner Mail, bei Logo das Original-Logo)
     const logo_url = await upload(b.screenshotBase64, b.screenshotFilename, b.screenshotMime, 'datei')
