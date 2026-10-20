@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendPush } from '../../../lib/push'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -122,6 +123,22 @@ export async function GET(req) {
 
     if (sp.get('run')) {
       if (process.env.FOLLOWUP_KEY && sp.get('key') !== process.env.FOLLOWUP_KEY) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
+      // Push aufs Handy, sobald etwas zur Freigabe bereit liegt (rund um die Uhr, jede Mail nur einmal)
+      const ready = items.filter(i => i.manual && i.due <= Date.now())
+      if (ready.length) {
+        const { data: pushed } = await db().from('agent_tasks').select('tnc_id').eq('type', 'push_sent').in('tnc_id', ready.map(i => i.id))
+        const done = new Set((pushed || []).map(p => p.tnc_id))
+        const fresh = ready.filter(i => !done.has(i.id))
+        if (fresh.length) {
+          const names = fresh.map(i => i.o.project || 'ohne Projekt')
+          await sendPush({
+            title: fresh.length === 1 ? `Emma: ${KIND[fresh[0].kind]} zur Freigabe` : `Emma: ${fresh.length} Mails zur Freigabe`,
+            body: `${names.slice(0, 3).join(', ')}${names.length > 3 ? ' und weitere' : ''} ${fresh.length === 1 ? 'wartet' : 'warten'} auf deinen Klick.`,
+            tag: 'emma',
+          }).catch(() => {})
+          await db().from('agent_tasks').insert(fresh.map(i => ({ type: 'push_sent', tnc_id: i.id, status: 'log', done_at: new Date().toISOString() })))
+        }
+      }
       if (!inWindow(Date.now())) return Response.json({ success: true, sent: 0, info: 'Außerhalb 8:10 bis 20:00 Uhr, keine Mails' })
       const done = [], failed = []
       for (const it of items.filter(i => !i.manual && i.at <= Date.now()).slice(0, 10)) {
