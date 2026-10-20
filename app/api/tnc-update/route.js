@@ -60,6 +60,7 @@ export async function GET(req) {
         id: offer.id, custom_id: offer.custom_id, project: offer.project, customer_email: offer.customer_email, status: offer.status,
         width: offer.width, height: offer.height, colors: offer.colors, backplate: offer.backplate, usage: offer.usage,
         final: offer.final_price, images: [offer.preview_image, offer.preview_image_2, offer.preview_image_3].filter(Boolean),
+        customer_note: offer.customer_note || '', offer,
       },
       after: next,
     })
@@ -90,8 +91,8 @@ export async function POST(req) {
     const base = Math.round((dType === 'pct' ? next.final / vat / (1 - dVal / 100) : next.final / vat + dVal) * 10000) / 10000
     const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
 
-    const img1 = await copyImage(next.realistic_image, o.id, 1)
-    const img2 = await copyImage(next.design_image, o.id, 2)
+    const img1 = ed.img1 || await copyImage(next.realistic_image, o.id, 1)
+    const img2 = ed.img2 || await copyImage(next.design_image, o.id, 2)
     const imgs = [img1, img2].filter(Boolean)
 
     const updated = {
@@ -102,6 +103,7 @@ export async function POST(req) {
       ...(imgs[0] ? { preview_image: imgs[0] } : {}),
       ...(imgs[1] ? { preview_image_2: imgs[1] } : {}),
       ...(ed.checkout_image ? { checkout_image: ed.checkout_image } : imgs.length ? { checkout_image: null } : {}),
+      ...(typeof ed.customer_note === 'string' ? { customer_note: ed.customer_note.trim() || null } : {}),
     }
 
     let ids = {}
