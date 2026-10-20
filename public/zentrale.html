@@ -1170,7 +1170,7 @@ function frame(){ frame.n=(frame.n||0)+1;
 // Start: erst von oben, dann sanft runter in die Übersicht (so leicht gedreht, dass alle Abteilungen zu sehen sind)
 distGoal=overDist(); phiGoal=overPhi(); thetaGoal=START_TH; goal.set(0,1.5,0); target.copy(goal);
 phi=reduce?phiGoal:.06; theta=reduce?START_TH:START_TH-1.1; dist=reduce?distGoal:distGoal*1.45;
-requestAnimationFrame(()=>requestAnimationFrame(()=>flyTo(2000))); // Flug startet erst, wenn das Bild schon da ist
+requestAnimationFrame(()=>requestAnimationFrame(()=>flyTo(2200))); // Flug startet erst, wenn das Bild schon da ist
 updateBadges(); syncCam(); frame();
 if(document.fonts) document.fonts.ready.then(()=>[logoTex,...DEPTS.flatMap(d=>[d._tex,d._scr,d._sign].filter(Boolean))].forEach(t=>t.userData.redraw()));
 </script>
