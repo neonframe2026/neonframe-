@@ -1874,7 +1874,7 @@ useEffect(() => { if (authed) loadOffers() }, [authed, tab])
     }
         const due = offers.filter(mIsRed).length
     const base = !authed ? 'Login - NeonFrame Admin' : (titles[tab] || titles.home)
-    document.title = authed && due > 0 ? `(${due}) ${base}` : base
+    document.title = base
   }, [tab, authed, offers])
 
   if (!authed) return <AdminLogin onAuthed={() => setAuthed(true)} />
