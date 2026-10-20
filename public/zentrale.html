@@ -430,7 +430,8 @@ const scene = new THREE.Scene(); scene.background = new THREE.Color(DARK?0x0b0f1
 scene.fog = new THREE.Fog(DARK?0x0b0f17:0xeef1f6, 90, 190);
 const cam = new THREE.PerspectiveCamera(38,1,0.1,500);
 const OFFSET = new THREE.Vector3();
-let theta=Math.PI/4, phi=1.02, thetaGoal=theta, phiGoal=phi, dist=120, distGoal=60;
+const START_TH=Math.PI/4+.1;
+let theta=START_TH, phi=1.02, thetaGoal=theta, phiGoal=phi, dist=120, distGoal=60;
 const target = new THREE.Vector3(), goal = new THREE.Vector3();
 let goalZoom = 1, baseH = 20; // (alt, ungenutzt)
 
@@ -822,12 +823,12 @@ function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('ari
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
 function overDist(){ return isMob()?fitDist(38,40)*.9:fitDist(50,40)*.78; }
-function overPhi(){ return isMob()?1.3:1.35; }
+function overPhi(){ return isMob()?1.18:1.35; }
 function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
 function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
 function roomZoom(){ return 1; }
 function focusRoom(id){ clearTimeout(cardT); openP=null; card.hidden=true; cardT=setTimeout(()=>{ if(focused===id&&!openP) renderRoom(id); }, reduce?0:450); focused=id; goal.copy(rooms[id].g.position).add(new THREE.Vector3(0,.6,0)); distGoal=roomDist(); thetaGoal=nearTheta(Math.PI/4); phiGoal=1.0; cardShift(distGoal); flyTo(1150); setNav(); DEPTS.forEach(d=>d._lbl.classList.toggle('dim',d.id!==id)); }
-function overview(){ focused=null; goal.set(0,1.5,0); distGoal=overDist(); phiGoal=overPhi(); flyTo(1500); setNav(); DEPTS.forEach(d=>d._lbl.classList.remove('dim')); closeCard(); }
+function overview(){ focused=null; goal.set(0,1.5,0); thetaGoal=nearTheta(START_TH); distGoal=overDist(); phiGoal=overPhi(); flyTo(1500); setNav(); DEPTS.forEach(d=>d._lbl.classList.remove('dim')); closeCard(); }
 
 /* ================= Karte ================= */
 const card=document.getElementById('card');
@@ -1166,7 +1167,10 @@ function frame(){ frame.n=(frame.n||0)+1;
   renderer.render(scene,cam);
   requestAnimationFrame(frame);
 }
-distGoal=overDist(); phi=phiGoal=overPhi(); dist=distGoal*1.9; goal.set(0,1.5,0); target.copy(goal);
+// Start: erst von oben, dann sanft runter in die Übersicht (so leicht gedreht, dass alle Abteilungen zu sehen sind)
+distGoal=overDist(); phiGoal=overPhi(); thetaGoal=START_TH; goal.set(0,1.5,0); target.copy(goal);
+phi=reduce?phiGoal:.06; theta=reduce?START_TH:START_TH-1.1; dist=reduce?distGoal:distGoal*1.45;
+requestAnimationFrame(()=>requestAnimationFrame(()=>flyTo(3200))); // Flug startet erst, wenn das Bild schon da ist
 updateBadges(); syncCam(); frame();
 if(document.fonts) document.fonts.ready.then(()=>[logoTex,...DEPTS.flatMap(d=>[d._tex,d._scr,d._sign].filter(Boolean))].forEach(t=>t.userData.redraw()));
 </script>
