@@ -101,11 +101,12 @@ export default function SettingsPage({ onBack }) {
   .nfs .tf{display:flex;gap:8px;flex-wrap:wrap}.nfs .tf input{flex:1 1 240px;width:auto}
   .nfs ol{margin:0;padding-left:18px;color:var(--m);font-size:13px;line-height:1.7}.nfs ol b{color:var(--f)}
   .nfs .ma{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}.nfs .ghost{height:40px;border-radius:10px;border:1px solid var(--l);background:none;color:var(--f);padding:0 14px;cursor:pointer;font-family:inherit}
-  .nfs .rsel{border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;color:var(--m);border:1px solid var(--l);cursor:pointer;outline:none;max-width:100%}
+  .nfs .rsel{-webkit-appearance:none;appearance:none;border-radius:99px;padding:4px 26px 4px 11px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;color:var(--m);border:1px solid var(--l);cursor:pointer;outline:none;max-width:100%;width:auto}
+  .nfs .rsel{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b97ad' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important}
   .nfs .rsel.a{color:#2f80ed;border-color:rgba(58,168,255,.45);background:rgba(58,168,255,.1)}.nfs.dark .rsel.a{color:#7fc4ff}
   .nfs .rsel option{color:#0f1726}
   .nfs .nm{min-width:0}.nfs .nm b,.nfs .nm small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  @media(max-width:700px){.nfs .row{grid-template-columns:40px minmax(0,1fr) auto 32px;gap:10px;padding:12px 14px}.nfs .c4{display:none}.nfs .row.h .c3{visibility:hidden}.nfs .rsel{padding:4px 6px;font-size:11.5px}.nfs .two{grid-template-columns:1fr}}`
+  @media(max-width:700px){.nfs .row{grid-template-columns:40px minmax(0,1fr) auto 32px;gap:10px;padding:12px 14px}.nfs .c4{display:none}.nfs .row.h .c3{visibility:hidden}.nfs .rsel{padding:4px 22px 4px 9px;font-size:11.5px;background-position:right 8px center!important}.nfs .two{grid-template-columns:1fr}}`
 
   return (
     <div className={'nfs' + (dark ? ' dark' : '')}>
