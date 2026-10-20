@@ -283,6 +283,53 @@ html.dark .tt .moon{opacity:1;transform:none}
   .dlabel{padding:3px 8px 3px 4px!important;gap:5px!important}.dlabel .ic{width:20px!important;height:20px!important;font-size:11px!important}.dlabel b{font-size:11.5px!important}
   .card{bottom:10px}
 }
+html.staff #testBtn,html.staff #mTest,html.staff .hsep{display:none!important}
+
+/* Abteilungs-Icons: Neon-Glow */
+.dlabel .ic,.dlabel.planned .ic,html.dark .dlabel.planned .ic,.chead .av.dic{background:linear-gradient(145deg,color-mix(in srgb,var(--c) 70%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 60%,#000))!important;color:#fff!important;box-shadow:0 0 12px color-mix(in srgb,var(--c) 45%,transparent)}
+.dlabel .ic svg,.chead .av.dic svg{width:62%;height:62%;display:block;filter:drop-shadow(0 0 2.5px rgba(255,255,255,.7))}
+.chead .av.dic{display:grid;place-items:center}
+/* Anna (Einkauf) */
+.ekconn{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;font-size:12.5px}
+.ekconn i{width:8px;height:8px;border-radius:50%;flex:none}.ekconn small{display:block;color:var(--muted)}
+.ekconn.on{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3)}.ekconn.on i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.ekconn.off{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3)}.ekconn.off i{background:#ef4444}
+.ekit{border:1px solid var(--line-2);background:var(--surface);border-radius:14px;padding:12px;display:grid;gap:10px;min-width:0}
+.ektop{display:flex;gap:10px;align-items:center}.ektop b{font-size:15px;display:block}.ektop small{color:var(--muted);font-size:12px}
+.ektyp{margin-left:auto;font:700 11px var(--body);padding:3px 9px;border-radius:99px;background:rgba(58,168,255,.1);color:#2f8be6;border:1px solid rgba(58,168,255,.35);flex:none}
+.ektyp.t{background:rgba(168,85,247,.1);color:#9b5de5;border-color:rgba(168,85,247,.4)}
+html.dark .ektyp{color:#7fe0ff}html.dark .ektyp.t{color:#d1a8ff}
+.ekcust{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px dashed var(--line-2);border-radius:9px;padding:7px 10px;overflow-wrap:anywhere}.ekcust b{color:var(--fg);font-weight:600}
+.ektnc{border:1px solid rgba(232,177,48,.45);border-radius:11px;overflow:hidden}
+.ektnc h4{margin:0;padding:8px 11px;font:600 12px var(--body);color:#c98a00;background:rgba(255,192,74,.08);border-bottom:1px solid rgba(232,177,48,.3);display:flex;justify-content:space-between;gap:8px}
+html.dark .ektnc h4{color:#ffc04a}.ektnc h4 small{color:var(--muted);font-weight:500}
+.ekrow{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;padding:7px 11px;font-size:12.5px;border-top:1px solid var(--line);align-items:center}
+.ekrow:first-of-type{border-top:0}.ekrow>span:first-child{color:var(--muted)}.ekrow.hl{background:rgba(255,192,74,.06)}
+.ekfile{display:flex;gap:8px;align-items:center;min-width:0}
+.ekth{position:relative;flex:none;width:54px;height:54px;border-radius:8px;border:1px solid var(--line-2);background:#000;overflow:visible;cursor:zoom-in;padding:0}
+.ekth img{width:100%;height:100%;object-fit:contain;border-radius:8px;display:block}
+.ekth em{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;border-radius:50%;background:#3ad7ff;color:#04121c;font:700 12px var(--body);font-style:normal;display:grid;place-items:center}
+.ekfile small{color:var(--muted);font-size:11.5px;min-width:0;overflow-wrap:anywhere}.ekfile u{color:#2f8be6;cursor:pointer}
+html.dark .ekfile u{color:#7fe0ff}
+.eksug{display:inline-block;font:600 10.5px var(--body);color:#c98a00;border:1px solid rgba(232,177,48,.5);border-radius:99px;padding:1px 8px;margin-bottom:6px}
+html.dark .eksug{color:#ffc04a}
+.ekpick{display:flex;flex-wrap:wrap;gap:5px}
+.ekpick button{font-size:11.5px;padding:3px 9px 3px 6px;border-radius:99px;border:1px solid var(--line-2);background:var(--surface-2);display:inline-flex;align-items:center;gap:5px}
+.ekpick button i{width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.ekpick button.on{border-color:#e8b130;background:rgba(255,192,74,.14);font-weight:700}
+.ekin{width:100%;padding:7px 9px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--fg);font:inherit;font-size:12.5px;min-width:0}
+textarea.ekin{min-height:54px;resize:vertical;line-height:1.45}
+.ekb.gold{background:linear-gradient(135deg,#ffc94a,#f59e0b);border-color:transparent;color:#1a1100;font-weight:700}
+.ekb.gold:disabled{opacity:.55}
+.ekerr{font-size:12px;color:#ef4444;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3);border-radius:9px;padding:7px 10px}
+.ekmini{display:flex;align-items:center;gap:10px;border:1px solid var(--line-2);background:var(--surface);border-radius:12px;padding:10px 12px;font-size:12.5px;min-width:0}
+.ekmini>div{min-width:0;flex:1}.ekmini small{color:var(--muted);display:block;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eklb{position:fixed;inset:0;background:rgba(3,6,12,.86);display:grid;place-items:center;z-index:200;padding:14px}
+.eklb .bx{background:var(--surface);border:1px solid var(--line-2);border-radius:16px;padding:14px;width:min(760px,100%);max-height:100%;overflow:auto;display:grid;gap:10px}
+.eklb .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}.eklb .hd b{overflow-wrap:anywhere}
+.eklb img{width:100%;max-height:70vh;object-fit:contain;border-radius:10px;background:#000;display:block}
+.eklb .ft{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.eklb a.b{text-decoration:none;color:inherit}
 </style>
 </head>
 <body>
@@ -324,22 +371,22 @@ html.dark .tt .moon{opacity:1;transform:none}
 <script>
 /* ================= Daten (Beispiel) ================= */
 const DEPTS = [
- {id:'angebote', name:'Angebote', icon:'€', color:'#3aa8ff', tags:['TNC-Angebote','Größentabelle','Kundenpreise','Shopify-Checkout'],
+ {id:'angebote', name:'Angebote', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M15 8h4v4"/></svg>`, color:'#3aa8ff', tags:['TNC-Angebote','Größentabelle','Kundenpreise','Shopify-Checkout'],
   kpis:[['Angebote / Woche','18'],['Annahme','34 %'],['Offen','3']],
   people:[{name:'Lisa Fischer',role:'Angebots-Managerin',agent:'Angebots-Agent',f:1},{name:'Tom Becker',role:'Änderungen',agent:'Änderungs-Agent',f:0}]},
- {id:'service', name:'Kundenservice', icon:'✉', color:'#3ad7ff', tags:['Anfragen','Antwortentwürfe','Lieferstatus'],
+ {id:'service', name:'Kundenservice', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h3zM3 15a2 2 0 0 0 2 2h1v-5H3z"/><path d="M18 17a4 4 0 0 1-4 4h-2"/></svg>`, color:'#3ad7ff', tags:['Anfragen','Antwortentwürfe','Lieferstatus'],
   kpis:[['Anfragen heute','14'],['Antwortzeit','12 min'],['Entwürfe','9']],
   people:[{name:'Sarah Klein',role:'Service-Leitung',agent:'Antwort-Agent',f:1},{name:'Jonas Wolf',role:'Support',agent:'Lieferstatus-Agent',f:0}]},
- {id:'creative', name:'Creative Studio', icon:'✦', color:'#ff8a5c', tags:['Hooks & Angles','Briefings','Meta Ads'],
+ {id:'creative', name:'Creative Studio', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>`, color:'#ff8a5c', tags:['Hooks & Angles','Briefings','Meta Ads'],
   kpis:[['Creatives / Woche','24'],['Hook-Rate','31 %'],['Gewinner','1 von 6']],
   people:[{name:'Mia Hoffmann',role:'Creative Strategist',agent:'Briefing-Agent',f:1},{name:'Noah Schmitt',role:'Motion Designer',agent:'Ads-Agent',f:0}]},
- {id:'vorschau', name:'3D-Vorschau', icon:'◈', color:'#8f7bff', tags:['Logo freistellen','Neon-Effekt','Wand-Mockup'],
+ {id:'vorschau', name:'3D-Vorschau', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/></svg>`, color:'#8f7bff', tags:['Logo freistellen','Neon-Effekt','Wand-Mockup'],
   kpis:[['Vorschauen heute','7'],['Ø Zeit','4 min'],['In Arbeit','2']],
   people:[{name:'Lea Wagner',role:'Designerin',agent:'Vorschau-Agent',f:1},{name:'Max Richter',role:'Grafiker',agent:'Mockup-Agent',f:0}]},
- {id:'einkauf', name:'Einkauf', icon:'⇄', color:'#ffc04a', tags:['Hersteller','Preisvergleich','Muster'],
+ {id:'einkauf', name:'Einkauf', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 10.5A2 2 0 0 1 15.5 20h-7a2 2 0 0 1-2-1.5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`, color:'#ffc04a', tags:['TNC-Anfragen','Logos & Farben','TNC-Portal'],
   kpis:[['Hersteller','2'],['Ersparnis','18 %'],['Muster','Dez']],
-  people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Lieferanten-Agent',f:1},{name:'David Braun',role:'Bestand',agent:'Preisvergleich-Agent',f:0}]},
- {id:'followup', name:'Follow-up & CRM', icon:'↻', color:'#34e39b', tags:['Erinnerungen','Rabatt-Mails','Bewertungen'],
+  people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Einkaufs-Agent',f:1}]},
+ {id:'followup', name:'Follow-up & CRM', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M12 7v5l3 2"/></svg>`, color:'#34e39b', tags:['Erinnerungen','Rabatt-Mails','Bewertungen'],
   kpis:[['Offene Angebote','11'],['Mails fällig','3'],['Bewertungen','5']],
   people:[{name:'Emma Koch',role:'CRM-Managerin',agent:'Follow-up-Agent',f:1}]}
 ];
@@ -351,11 +398,12 @@ let DATA = { orders: [], due: [], tasks: [], stats: { total: 0, open: 0, week: 0
 const offerTasks = () => DATA.tasks.filter(t => t.type === 'offer'), updTasks = () => DATA.tasks.filter(t => t.type === 'update');
 const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `vor ${Math.max(1, m)} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : `vor ${Math.round(m / 1440)} Tagen` };
 const tlist = (rows, label) => rows.length ? `<div class="items">${rows.map(t => `<div class="item"><div class="itop"><span class="inum">${esc(t.tnc)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.email || 'ohne E-Mail')} · ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-open="${t.id}">${label}</button><button class="b ghost" data-dismiss="${t.id}">Erledigt</button></div></div>`).join('')}</div>` : '<p class="isub">Nichts offen.</p>';
-const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0];
+const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0];
 // Was die Agenten wirklich tun (live = läuft schon)
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
   'Änderungs-Agent': { live: true, tasks: ['Erkennt Änderungs-Mails von Kenzo', 'Legt die Änderung bei Tom bereit, mit Vorher und Nachher', 'Aktualisiert Angebot und Shopify mit einem Klick', 'Informiert den Kunden per Mail'] },
+  'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Schlägt bei Logos passende Farben vor', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
 const isActive = (p) => !!AGENT_INFO[p.agent];
@@ -812,10 +860,9 @@ function roomActions(d){
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
   card.classList.add('room');
-  card.innerHTML=`<div class="chead"><span class="av" style="background:${d.color};border-radius:12px">${d.icon}</span>
+  card.innerHTML=`<div class="chead"><span class="av dic" style="--c:${d.color};border-radius:12px">${d.icon}</span>
      <div><div class="eyebrow"><i style="background:var(--ok)"></i>Abteilung</div><h2>${d.name}</h2></div>
      <button class="x" id="rx" aria-label="Zur Übersicht">×</button></div>
-   <div class="ract">${roomActions(d)}</div>
    <div><p class="lbl">Dein Team</p>${d.active.length?'':'<p class="isub">Noch keine Mitarbeiter. Diese Abteilung ist in Planung.</p>'}<div class="team">${d.active.map((p,k)=>`<button class="trow" data-k="${k}" style="--c:${d.color}"><span class="av" style="background:${d.color}">${ini(p.name)}</span><span><b>${p.name}</b><small>${p.role}</small><br><em>● ${p.agent}</em></span>${p===EMMA&&DATA.due.length?`<span class="badge">${DATA.due.length}</span>`:''}</button>`).join('')}</div></div>`;
   card.hidden=false;
   card.querySelector('#rx').onclick=overview;
@@ -834,7 +881,7 @@ function renderUser(u){ if(!u) return; const ini2=(u.name||u.email||'?').split(/
   ['uav','uav2'].forEach(id=>document.getElementById(id).textContent=ini2);
   document.getElementById('uname').textContent=(u.name||u.email||'').split(' ')[0]; document.getElementById('uname2').textContent=u.name||u.email||'';
   document.getElementById('umail').textContent=u.email||''; const adm=u.role==='admin';
-  document.getElementById('urole').textContent=adm?'Administrator':'Mitarbeiter'; document.getElementById('setBtn').hidden=!adm; }
+  document.getElementById('urole').textContent=adm?'Administrator':'Mitarbeiter'; document.getElementById('setBtn').hidden=!adm; document.documentElement.classList.toggle('staff',!adm); }
 // Testmodus (nur in diesem Browser): alle Mails jederzeit manuell sendbar, Zeitsperren aus
 (()=>{ let on=false; try{ on=localStorage.getItem('nf_test_mode')==='1' }catch(e){}
   const bs=[document.getElementById('testBtn'),document.getElementById('testBtn2')];
@@ -843,12 +890,95 @@ function renderUser(u){ if(!u) return; const ini2=(u.name||u.email||'?').split(/
     try{ localStorage.setItem('nf_test_mode',on?'0':'1') }catch(e){} window.top.location.reload(); };
   document.getElementById('testBtn').onclick=tog; document.getElementById('mTest').onclick=tog; })();
 const okbar=document.getElementById('okbar');
+/* ================= Anna (Einkauf) ================= */
+const TNC_COLORS=[['White','#ffffff'],['Warm White','#ffe7b8'],['Soft Orange','#ffb37a'],['Orange','#f97316'],['Red','#ef4444'],['Purple','#a855f7'],['Peachy Pink','#fb7185'],['Soft Pink','#f9a8d4'],['Pink','#ec4899'],['Light Green','#86efac'],['Green','#22c55e'],['Yellow','#facc15'],['Lake Blue','#2ee6d6'],['Ice Blue','#7dd3fc'],['Blue','#2f3dff']];
+const APPS=['Innen','Draussen (IP65 wasserdicht)'], PLATES=['Rückwand ausschneiden','Quadratische Rückenplatte','Ohne Rückenplatte'];
+const ekOpen=()=>((DATA.ek&&DATA.ek.open)||[]);
+const EK={}; let ekShow=null;
+const hex2=(h)=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function ekState(r){ if(!EK[r.id]){ const cc=String(r.customerColors||'').split(/,\s*/).map(x=>x.trim()).filter(Boolean).map(x=>(TNC_COLORS.find(c=>c[0].toLowerCase()===x.toLowerCase())||[])[0]).filter(Boolean);
+  EK[r.id]={ colors:new Set(r.kind==='text'?cc:[]), sug:r.kind==='logo', note:'', edit:false, busy:false, err:r.error||'', ...r.tncDefaults }; if(r.kind==='logo') ekSuggest(r); } return EK[r.id]; }
+// Farben aus dem Logo erkennen und passende TNC-Farben vorschlagen
+function ekSuggest(r){ const st=EK[r.id]; const img=new Image(); img.crossOrigin='anonymous';
+  img.onload=()=>{ try{ const c=document.createElement('canvas'); const k=Math.min(1,96/Math.max(img.width,img.height)); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
+    const px=g.getImageData(0,0,c.width,c.height).data; const corner=[0,(c.width-1)*4,(c.height-1)*c.width*4,(c.height*c.width-1)*4].map(i=>[px[i],px[i+1],px[i+2],px[i+3]]);
+    const lightBg=corner.filter(q=>q[3]>200&&q[0]>225&&q[1]>225&&q[2]>225).length>=3;
+    const cnt={}; let tot=0;
+    for(let i=0;i<px.length;i+=4){ const a=px[i+3]; if(a<128) continue; const R=px[i],G=px[i+1],B=px[i+2]; const mx=Math.max(R,G,B), mn=Math.min(R,G,B);
+      if(mx<60) continue; if(lightBg&&mn>220) continue; if(mx-mn<35&&mx<170) continue;
+      let best=null,bd=1e9; for(const [n,h] of TNC_COLORS){ const [r2,g2,b2]=hex2(h); const dd=(R-r2)**2*.9+(G-g2)**2*1.2+(B-b2)**2*.8; if(dd<bd){bd=dd;best=n;} }
+      cnt[best]=(cnt[best]||0)+1; tot++; }
+    const pick=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).filter(([n,v],i)=>i===0||v/tot>.12).slice(0,3).map(x=>x[0]);
+    if(!st.touched){ st.colors=new Set(pick.length?pick:['White']); if(openP===ANNA) renderCard(); }
+  }catch(e){ if(!st.touched&&!st.colors.size){ st.colors=new Set(['White']); if(openP===ANNA) renderCard(); } } };
+  img.onerror=()=>{ if(!st.touched&&!st.colors.size){ st.colors=new Set(['White']); if(openP===ANNA) renderCard(); } };
+  img.src=r.logo; }
+function annaHTML(){
+  const E=DATA.ek; if(!E) return '<p class="isub">Wird geladen …</p>';
+  const c=E.connection||{}; const on=c.has&&c.ok!==false;
+  const conn=on?`<div class="ekconn on"><i></i><div><b>Mit TNC-Portal verbunden</b><small>Login gültig, wird automatisch verlängert</small></div></div>`
+    :`<div class="ekconn off"><i></i><div><b>${c.has?'TNC-Login abgelaufen':'Noch nicht mit TNC verbunden'}</b><small>Bitte in den Einstellungen unter „TNC-Verbindung“ hinterlegen</small></div></div>`;
+  const open=ekOpen(); if(open.length&&(!ekShow||!open.some(r=>r.id===ekShow))) ekShow=open[0].id;
+  const items=open.map(r=>r.id===ekShow?ekFull(r,on):ekMini(r)).join('');
+  const sent=(E.sent||[]).length?`<div class="sent">${E.sent.map(r=>`<div class="item" style="grid-template-columns:20px 1fr auto;display:grid;align-items:center;gap:9px;padding:8px 10px"><span class="fic ok">✓</span><span><b>${esc(r.tncDefaults.project)}</b><small class="isub" style="display:block;font-family:var(--mono)">TNC ${esc(r.tnc)}</small></span><time class="isub">${esc(ago(r.sent_at))}</time></div>`).join('')}</div>`:'<p class="isub">Noch nichts gesendet.</p>';
+  return `${conn}
+   <div><div class="preph"><p class="lbl">Wartet auf Freigabe</p>${open.length?`<span class="tag-ready" style="color:#c98a00;border-color:rgba(232,177,48,.5)">${open.length} bereit</span>`:''}</div>
+   ${open.length?`<div class="items">${items}</div>`:'<p class="isub">Keine neuen Anfragen. Neue Konfigurator-Anfragen erscheinen hier automatisch.</p>'}</div>
+   <div><p class="lbl">Zuletzt an TNC gesendet</p>${sent}</div>`;
+}
+function ekMini(r){ const st=ekState(r); return `<div class="ekmini"><span class="ektyp${r.kind==='text'?' t':''}" style="margin:0">${r.kind==='logo'?'Logo':'Text'}</span><div><b>${esc(st.project)}</b><small>${r.kind==='text'?esc('„'+r.text+'“ · '+(r.font||'')):esc(r.width||'')} · ${esc(ago(r.at))}</small></div><button class="b" data-ekshow="${r.id}">Ansehen</button></div>`; }
+function ekFull(r,on){ const st=ekState(r);
+  const row=(l,v,hl)=>`<div class="ekrow${hl?' hl':''}"><span>${l}</span><span>${v}</span></div>`;
+  const sel=(k,opts)=>`<select class="ekin" data-ekf="${k}">${opts.map(o=>`<option${o===st[k]?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  const inp=(k)=>`<input class="ekin" data-ekf="${k}" value="${esc(st[k])}">`;
+  const cols=[...st.colors];
+  const pick=`<div class="ekpick">${TNC_COLORS.map(([n,h])=>`<button type="button" class="${st.colors.has(n)?'on':''}" data-ekc="${esc(n)}"><i style="background:${h}"></i>${esc(n)}${st.colors.has(n)?' ✓':''}</button>`).join('')}</div>`;
+  const info=[r.kind==='text'&&r.text?`Text: „${esc(r.text)}“`:'', r.kind==='text'&&r.font?`Schrift: ${esc(r.font)}`:'', r.backplateColor&&!/transparent/i.test(r.backplateColor)?`Rückwandfarbe laut Kunde: ${esc(r.backplateColor)}`:'', r.notes?`Projektnotiz vom Kunden: ${esc(r.notes)}`:''].filter(Boolean);
+  return `<div class="ekit">
+   <div class="ektop"><div style="min-width:0"><b>${esc(st.project)}</b><small>${esc(ago(r.at))} aus dem Konfigurator</small></div><span class="ektyp${r.kind==='text'?' t':''}">${r.kind==='logo'?'Logo':'Text'}</span></div>
+   <div class="ekcust">Kunde (bleibt bei dir, geht nicht an TNC): <b>${esc(r.name||'')}</b>${r.email?' · '+esc(r.email):''}${r.phone?' · '+esc(r.phone):''}${info.length?'<br>'+info.join('<br>'):''}</div>
+   <div class="ektnc"><h4>So geht die Anfrage an TNC raus <small>alles prüfen, dann senden</small></h4>
+    ${row('Projektname',st.edit?inp('project'):`<b>${esc(st.project)}</b>`)}
+    ${row('Art',r.kind==='logo'?'Logo':'Text')}
+    ${r.kind==='text'?row('Neon-Text',esc(r.text||'–')):''}
+    ${row('Datei',r.logo?`<span class="ekfile"><button class="ekth" type="button" data-eklb="${r.id}"><img src="${esc(r.logo)}" alt=""><em>⤢</em></button><small><u data-eklb="${r.id}">${esc(r.fileName||'neon-vorschau.png')}</u><br>antippen zum Vergrößern · wird mitgesendet</small></span>`:'<span class="isub">Keine Datei</span>')}
+    ${row('Farben',`${st.sug&&!st.touched?'<span class="eksug">Von Anna aus dem Logo vorgeschlagen</span>':''}${pick}`,true)}
+    ${row('Größe',st.edit?inp('size'):`${esc(st.size||'Kleinstmögliche Größe')} ${r.width?'<span class="isub">(vom Kunden)</span>':''}`)}
+    ${row('Anwendung',st.edit?sel('application',APPS):esc(st.application))}
+    ${row('Rückwand',st.edit?sel('backplate',PLATES):esc(st.backplate))}
+    ${row('Notiz an TNC',`<textarea class="ekin" data-ekf="note" placeholder="Optional, z. B. Hinweise für TNC">${esc(st.note)}</textarea>`)}
+    ${row('Lieferadresse','NeonFrame, aus deinem TNC-Konto')}
+   </div>
+   ${st.err?`<div class="ekerr">${esc(st.err)}</div>`:''}
+   <div class="iacts"><button class="b ekb gold" data-eksend="${r.id}" ${(!on||st.busy||!cols.length)?'disabled':''}>${st.busy?'Wird gesendet …':'An TNC senden'}</button><button class="b" data-ekedit="${r.id}">${st.edit?'Fertig':'Bearbeiten'}</button><button class="b ghost" data-ekdel="${r.id}">Verwerfen</button></div>
+   ${!on?'<div class="isub">Senden geht, sobald die TNC-Verbindung steht.</div>':!cols.length?'<div class="isub">Bitte mindestens eine Farbe wählen.</div>':''}
+  </div>`; }
+function ekLightbox(r){ const w=document.createElement('div'); w.className='eklb';
+  w.innerHTML=`<div class="bx"><div class="hd"><b>${esc(r.fileName||'neon-vorschau.png')}</b><button class="b" data-x>✕ Schließen</button></div><img src="${esc(r.logo)}" alt=""><div class="ft"><a class="b" href="${esc(r.logo)}" download target="_blank" rel="noopener">Herunterladen</a><a class="b" href="${esc(r.logo)}" target="_blank" rel="noopener">In neuem Tab öffnen</a></div></div>`;
+  w.onclick=e=>{ if(e.target===w||e.target.closest('[data-x]')) w.remove(); }; document.body.appendChild(w); }
+function annaBind(){
+  const find=id=>ekOpen().find(x=>x.id===id);
+  card.querySelectorAll('[data-ekshow]').forEach(b=>b.onclick=()=>{ ekShow=b.dataset.ekshow; renderCard(); });
+  card.querySelectorAll('[data-eklb]').forEach(b=>b.onclick=()=>{ const r=find(b.dataset.eklb); if(r) ekLightbox(r); });
+  card.querySelectorAll('[data-ekc]').forEach(b=>b.onclick=()=>{ const st=EK[ekShow]; if(!st) return; st.touched=true; const n=b.dataset.ekc; st.colors.has(n)?st.colors.delete(n):st.colors.add(n); const y=card.scrollTop; renderCard(); card.scrollTop=y; });
+  card.querySelectorAll('[data-ekf]').forEach(el=>el.oninput=()=>{ const st=EK[ekShow]; if(st) st[el.dataset.ekf]=el.value; });
+  card.querySelectorAll('[data-ekedit]').forEach(b=>b.onclick=()=>{ const st=EK[b.dataset.ekedit]; st.edit=!st.edit; const y=card.scrollTop; renderCard(); card.scrollTop=y; });
+  card.querySelectorAll('[data-ekdel]').forEach(b=>b.onclick=()=>{ if(!confirm('Diese Anfrage verwerfen? Sie wird nicht an TNC gesendet.')) return; post({ type:'nf-ek', action:'discard', id:b.dataset.ekdel }); DATA.ek.open=ekOpen().filter(x=>x.id!==b.dataset.ekdel); updateBadges(); renderCard(); });
+  card.querySelectorAll('[data-eksend]').forEach(b=>b.onclick=()=>{ const id=b.dataset.eksend, st=EK[id]; if(!st||!st.colors.size) return;
+    if(!confirm(`Anfrage „${st.project}“ jetzt an TNC senden?`)) return;
+    st.busy=true; st.err=''; renderCard();
+    post({ type:'nf-ek', action:'send', id, fields:{ colors:[...st.colors], note:st.note, size:st.size, application:st.application, backplate:st.backplate, project:st.project } }); });
+}
+// Ergebnis vom Senden (kommt von der Admin-Seite)
+window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-ek-res') return; const st=EK[m.id]; if(st){ st.busy=false; st.err=m.error||''; }
+  if(m.ok){ showToast(`An TNC gesendet · TNC ${m.tnc}`,'Anna Schulz · Einkaufs-Agent',ANNA,'AS'); } if(openP===ANNA) renderCard(); });
 function renderCard(){
   if(!openP) return;
   const p=openP, d=p.dept, first=p.name.split(' ')[0];
   const info = AGENT_INFO[p.agent];
   let extra = '';
   if (p===LISA) extra = `<div><div class="preph"><p class="lbl">Wartet auf Freigabe</p>${offerTasks().length?`<span class="tag-ready">${offerTasks().length} bereit</span>`:''}</div>${tlist(offerTasks(), 'Öffnen & freigeben')}</div><div><p class="lbl">Neueste Angebote</p>${olist(DATA.orders.slice(0,5))}</div><div class="iacts"><button class="b pri" data-nav="create">+ Angebot erstellen</button><button class="b" data-nav="manage">Alle Angebote</button></div>`;
+  if (p===ANNA) extra = annaHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
     const ap=F2.approve.length?`<div class="items">${F2.approve.map(t=>`<div class="item"><div class="itop"><span class="inum">${esc(t.nr)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.label)} · fällig ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-fu="${t.id}">${t.kind==='rabatt'?'Rabatt senden':'Jetzt senden'}</button><button class="b ghost" data-fuskip="${t.id}">Überspringen</button></div></div>`).join('')}</div>${F2.approve.length>1?`<button class="b wide" data-fuall="1">Alle ${F2.approve.length} freigeben</button>`:''}`:'<p class="isub">Nichts zum Freigeben.</p>';
@@ -876,17 +1006,18 @@ function renderCard(){
   card.querySelectorAll('[data-fuskip]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'skip', id: b.dataset.fuskip }));
   card.querySelectorAll('[data-fuall]').forEach(b=>b.onclick=()=>{ if(!confirm(`Alle ${(DATA.fu?.approve||[]).length} Mails jetzt senden?`)) return; fuBtn(b,{ type: 'nf-fu', action: 'all' }); });
   card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>post({ type: 'nf-open', id: b.dataset.open }));
+  if (p===ANNA) annaBind();
   card.querySelectorAll('[data-dismiss]').forEach(b=>b.onclick=()=>{ post({ type: 'nf-dismiss', id: b.dataset.dismiss }); DATA.tasks = DATA.tasks.filter(t => t.id !== b.dataset.dismiss); updateBadges(); renderCard(); });
 }
 
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, all=n+a+u;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, all=n+a+u+e;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
   setB(DEPTS[5]._lbl, n); setB(EMMA._tag, n);
-  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u);
+  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e);
   okbar.hidden = !n;
   okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
   if (typeof onResize === 'function') requestAnimationFrame(onResize);
@@ -897,6 +1028,7 @@ function renderDrop(){
   const rows=[
     ...offerTasks().map(t=>({p:LISA,c:DEPTS[0].color,i:'LF',t:`Neues Angebot · ${t.name}`,s:'Lisa Fischer · Angebots-Agent'})),
     ...updTasks().map(t=>({p:TOM,c:DEPTS[0].color,i:'TB',t:`Änderung · ${t.name}`,s:'Tom Becker · Änderungs-Agent'})),
+    ...ekOpen().map(t=>({p:ANNA,c:DEPTS[4].color,i:'AS',t:`TNC-Anfrage · ${t.name||'Kunde'}`,s:'Anna Schulz · Einkaufs-Agent'})),
     ...DATA.due.map(o=>({p:EMMA,c:DEPTS[5].color,i:'EK',t:`${o.nr} · ${o.name}`,s:o.status})),
   ];
   drop.innerHTML=`<h4>Wartet auf dich</h4>`+(rows.length?rows.map((r,k)=>`<button data-k="${k}"><span class="av" style="background:${r.c}">${r.i}</span><span><b>${esc(r.t)}</b><small>${esc(r.s)}</small></span></button>`).join(''):`<div class="empty">Alles erledigt. Nichts offen.</div>`);
@@ -922,11 +1054,14 @@ function showToast(title,sub,who,ini2){
 }
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
-  const before = new Set(DATA.tasks.map(t => t.id));
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, stats: e.data.stats || DATA.stats };
+  const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null;
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, stats: e.data.stats || DATA.stats };
+  const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
+  if (ekNew.length) showToast(`${ekNew.length} ${ekNew.length===1?'neue Anfrage':'neue Anfragen'} für TNC`, 'Anna Schulz · Einkaufs-Agent', ANNA, 'AS');
   const fresh = DATA.tasks.filter(t => !before.has(t.id));
   renderStats(); updateBadges();
-  if (openP) renderCard(); else if (focused && !card.hidden) renderRoom(focused);
+  const typing = card.contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if (openP) { if (!typing) renderCard(); } else if (focused && !card.hidden) renderRoom(focused);
   const nt = toastShown ? fresh : DATA.tasks;
   if (nt.length) { toastShown = true; const o = nt.filter(t=>t.type==='offer').length, u = nt.length - o;
     showToast(o ? `${o} ${o===1?'neues Angebot':'neue Angebote'} zum Freigeben` : `${u} ${u===1?'Änderung':'Änderungen'} von Kenzo`, o ? 'Lisa Fischer · Angebots-Agent' : 'Tom Becker · Änderungs-Agent', o ? LISA : TOM, 'LF'); }
