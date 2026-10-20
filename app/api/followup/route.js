@@ -78,6 +78,9 @@ async function load() {
   if (error) throw new Error(error.message)
   const { data: logs } = await sb.from('agent_tasks').select('*').in('type', ['fu_sent', 'fu_skip']).order('created_at', { ascending: false }).limit(300)
   const skipped = new Set((logs || []).filter(l => l.type === 'fu_skip').map(l => l.tnc_id))
+  // Von dir freigegeben, aber nachts geklickt -> geht automatisch am nächsten Morgen um 8:10 raus
+  const { data: sch } = await sb.from('agent_tasks').select('*').eq('type', 'fu_sched').eq('status', 'open')
+  const planned = new Map((sch || []).map(x => [x.tnc_id, x]))
   const now = Date.now()
   const items = []
   for (const o of offers || []) {
@@ -86,6 +89,8 @@ async function load() {
     const id = `${o.id}:${s.kind}`
     if (skipped.has(id)) continue
     if (s.due < now - MAX_OLD_DAYS * 24 * H) continue
+    const p = planned.get(id)
+    if (p) { items.push({ o, id, ...s, manual: false, approved: true, at: sendAt(t(p.created_at)) }); continue }
     const manual = s.kind === 'rabatt' || s.due < START
     items.push({ o, id, ...s, manual, at: sendAt(Math.max(s.due, START)) })
   }
@@ -111,9 +116,16 @@ async function send(o, kind) {
     await post('review-request', { customerEmail: o.customer_email, customerName: o.project, offerId: o.id })
     await db().from('offers').update({ review_email_sent_at: new Date().toISOString() }).eq('id', o.id)
   }
+  await db().from('agent_tasks').update({ status: 'done', done_at: new Date().toISOString() }).eq('type', 'fu_sched').eq('tnc_id', `${o.id}:${kind}`).eq('status', 'open')
   await db().from('agent_tasks').insert([{ type: 'fu_sent', tnc_id: `${o.id}:${kind}`, project: o.project || '', email: KIND[kind], status: 'log', done_at: new Date().toISOString() }])
 }
 
+// Letzte Mail, die der Kunde von uns bekommen hat
+function lastMail(o) {
+  const c = [['Angebot', o.created_at], ['Erinnerung', o.recontacted_at], ['Rabatt-Mail', o.extra_discount_at], ['Rabatt-Erinnerung', o.discount_reminder_sent_at]]
+    .filter(([, d]) => d).sort((a, b) => t(b[1]) - t(a[1]))[0]
+  return c ? `${c[0]} ${when(t(c[1]))}` : ''
+}
 const nr = (o) => String(o.offer_num || o.custom_id || String(o.id).slice(0, 8))
 
 export async function GET(req) {
@@ -149,12 +161,13 @@ export async function GET(req) {
 
     const now = Date.now()
     return Response.json({
-      approve: items.filter(i => i.manual && i.due <= now).map(i => ({ id: i.id, kind: i.kind, nr: nr(i.o), name: i.o.project || 'ohne Projekt', label: KIND[i.kind] + (i.kind === 'rabatt' ? ' mit Extra-Rabatt' : ' (vor dem Start fällig)'), at: new Date(i.due).toISOString() })),
+      approve: items.filter(i => i.manual && i.due <= now).map(i => ({ id: i.id, kind: i.kind, nr: nr(i.o), name: i.o.project || 'ohne Projekt', label: KIND[i.kind] + (i.kind === 'rabatt' ? ' mit Extra-Rabatt' : ' (vor dem Start fällig)'), at: new Date(i.due).toISOString(), last: lastMail(i.o) })),
+      night: !inWindow(Date.now()), morning: when(sendAt(Date.now())),
       // Automatische Mails + Rabatt-Mails, die bald zur Freigabe kommen (nächste 36 Std.)
       next: items.filter(i => (!i.manual || i.due > now) && Math.min(i.at, i.due) <= now + 36 * H)
         .map(i => i.manual
           ? { at: i.due, kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: when(i.due), note: 'dann zur Freigabe bei dir' }
-          : { at: Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
+          : { at: Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
         .sort((a, b) => a.at - b.at).slice(0, 12)
         .map(({ at, ...r }) => ({ ...r, when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
       sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
@@ -177,6 +190,12 @@ export async function POST(req) {
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
     const s = step(o)
     if (!s || s.kind !== kind) return Response.json({ error: 'Diese Mail ist nicht mehr fällig' }, { status: 400 })
+    // Nachts nicht stören: zwischen 20:00 und 8:10 Uhr wird die Mail für 8:10 Uhr eingeplant
+    if (!inWindow(Date.now())) {
+      const { data: ex } = await db().from('agent_tasks').select('id').eq('type', 'fu_sched').eq('tnc_id', id).eq('status', 'open').limit(1)
+      if (!ex?.length) await db().from('agent_tasks').insert([{ type: 'fu_sched', tnc_id: id, project: o.project || '', email: KIND[kind], status: 'open' }])
+      return Response.json({ success: true, scheduled: when(sendAt(Date.now())) })
+    }
     await send(o, kind)
     return Response.json({ success: true })
   } catch (err) {
