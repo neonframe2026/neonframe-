@@ -898,7 +898,7 @@ const ekOpen=()=>((DATA.ek&&DATA.ek.open)||[]);
 const EK={}; let ekShow=null;
 const hex2=(h)=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 function ekState(r){ if(!EK[r.id]){ const cc=String(r.customerColors||'').split(/,\s*/).map(x=>x.trim()).filter(Boolean).map(x=>(TNC_COLORS.find(c=>c[0].toLowerCase()===x.toLowerCase())||[])[0]).filter(Boolean);
-  EK[r.id]={ colors:new Set(r.kind==='text'?cc:[]), sug:r.kind==='logo', note:'', edit:false, busy:false, err:r.error||'', ...r.tncDefaults }; if(r.kind==='logo') ekSuggest(r); } return EK[r.id]; }
+  EK[r.id]={ colors:new Set(r.kind==='text'?cc:[]), sug:false, note:'', edit:false, busy:false, err:r.error||'', ...r.tncDefaults }; } return EK[r.id]; }
 // Farben aus dem Logo erkennen und passende TNC-Farben vorschlagen
 function ekSuggest(r){ const st=EK[r.id]; const img=new Image(); img.crossOrigin='anonymous';
   img.onload=()=>{ try{ const c=document.createElement('canvas'); const k=Math.min(1,96/Math.max(img.width,img.height)); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
