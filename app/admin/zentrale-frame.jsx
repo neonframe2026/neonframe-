@@ -21,6 +21,39 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   const [fu, setFu] = useState(null)
   const fuRef = useRef(null)
   // Anna (Einkauf): Anfragen aus dem Konfigurator
+  // Push-Nachrichten aufs Handy (installierte App oder Browser mit Push)
+  const [push, setPush] = useState('hidden')
+  const authHdr = async () => { const { data } = await authClient().auth.getSession(); return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data?.session?.access_token || '') } }
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') return
+    try { if (localStorage.getItem('nf_push_hide') === '1') return } catch {}
+    navigator.serviceWorker.register('/sw.js').then(async (reg) => {
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) { fetch('/api/push', { method: 'POST', headers: await authHdr(), body: JSON.stringify({ sub }) }).catch(() => {}); setPush('on') }
+      else if (Notification.permission !== 'denied') setPush('offer')
+    }).catch(() => {})
+  }, [])
+  const enablePush = async () => {
+    setPush('busy')
+    try {
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') { setPush('offer'); alert('Benachrichtigungen wurden nicht erlaubt.'); return }
+      const { key } = await (await fetch('/api/push')).json()
+      if (!key) throw new Error('Push ist noch nicht eingerichtet (Schlüssel fehlen in Vercel)')
+      const raw = atob(key.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - key.length % 4) % 4))
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(raw, c => c.charCodeAt(0)) })
+      const h = await authHdr()
+      const j = await (await fetch('/api/push', { method: 'POST', headers: h, body: JSON.stringify({ sub }) })).json()
+      if (j.error) throw new Error(j.error)
+      await fetch('/api/push', { method: 'POST', headers: h, body: JSON.stringify({ test: true }) })
+      setPush('on')
+    } catch (e) { alert('Fehler: ' + e.message); setPush('offer') }
+  }
+  const hidePush = () => { try { localStorage.setItem('nf_push_hide', '1') } catch {} ; setPush('hidden') }
+  const [small, setSmall] = useState(false)
+  useEffect(() => { setSmall(window.innerWidth < 700) }, [])
+
   const [ek, setEk] = useState(null)
   const ekRef = useRef(null)
   const ekApi = async (method, body) => {
@@ -111,6 +144,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   useEffect(() => { send() }, [offers, tasks, fu, user, ek])
 
   return (
+    <>
     <iframe
       ref={ref}
       src="/zentrale.html"
@@ -118,5 +152,14 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       onLoad={send}
       style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 0, background: '#050a17' }}
     />
+    {(push === 'offer' || push === 'busy') && (
+      <div style={{ position: 'fixed', left: 12, bottom: small ? 70 : 18, zIndex: 20, display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(8,16,36,.94)', border: '1px solid #2f5a9e', borderRadius: 999, padding: 4, boxShadow: '0 6px 24px rgba(0,0,0,.5)', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif' }}>
+        <button onClick={enablePush} disabled={push === 'busy'} style={{ background: 'linear-gradient(145deg,#7fe0ff,#3aa8ff 45%,#1f5fd6)', color: '#fff', border: 0, borderRadius: 999, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          {push === 'busy' ? 'Wird aktiviert...' : '🔔 Push-Nachrichten aktivieren'}
+        </button>
+        <button onClick={hidePush} aria-label="Ausblenden" style={{ background: 'transparent', color: '#8fa3c7', border: 0, fontSize: 18, padding: '0 8px', cursor: 'pointer' }}>×</button>
+      </div>
+    )}
+    </>
   )
 }
