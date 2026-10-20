@@ -1,4 +1,5 @@
 import { sb, refresh, status, createQuotation, normalizeCookie } from '../../../lib/tnc'
+import { sendPush } from '../../../lib/push'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -72,6 +73,7 @@ export async function POST(req) {
     data.fileName = b.screenshotFilename || 'neon-vorschau.png'
     const { error } = await sb().from('einkauf').insert([{ kind, status: 'open', name: (b.name || '').trim(), email: (b.email || '').trim(), phone: (b.telefon || '').trim(), data, logo_url, preview_url, wall_url }])
     if (error) throw new Error(error.message)
+    await sendPush({ title: 'Anna: Neue TNC-Anfrage', body: `${(b.name || 'Kunde').trim().split(/\s+/)[0]} · ${kind === 'logo' ? 'Logo' : 'Text'} · bereit zum Senden an TNC.`, tag: 'ek' }).catch(() => {})
     return Response.json({ success: true })
   } catch (e) { return fail(e) }
 }
