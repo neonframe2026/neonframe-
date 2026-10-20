@@ -54,6 +54,10 @@ export default function SettingsPage({ onBack }) {
     if (!confirm(`${u.name || u.email} wirklich löschen? Der Zugang ist dann sofort weg.`)) return
     try { await api('DELETE', null, '?id=' + encodeURIComponent(u.id)); load() } catch (e) { setErr(e.message) }
   }
+  async function setRole(u, role) {
+    if (!confirm(role === 'admin' ? `${u.name || u.email} zum Administrator machen? Dann sieht er auch die Einstellungen und kann Benutzer verwalten.` : `${u.name || u.email} wieder zum Mitarbeiter machen?`)) { load(); return }
+    try { await api('PATCH', { id: u.id, role }); load() } catch (e) { setErr(e.message) }
+  }
   const ini = (u) => (u.name || u.email).split(/[ @.]/).filter(Boolean).slice(0, 2).map(x => x[0].toUpperCase()).join('')
   const when = (d) => { if (!d) return ''; const t = new Date(d), n = new Date(); const day = Math.round((new Date(n.toDateString()) - new Date(t.toDateString())) / 864e5); return day === 0 ? 'heute' : day === 1 ? 'gestern' : t.toLocaleDateString('de-DE') }
 
@@ -97,7 +101,11 @@ export default function SettingsPage({ onBack }) {
   .nfs .tf{display:flex;gap:8px;flex-wrap:wrap}.nfs .tf input{flex:1 1 240px;width:auto}
   .nfs ol{margin:0;padding-left:18px;color:var(--m);font-size:13px;line-height:1.7}.nfs ol b{color:var(--f)}
   .nfs .ma{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}.nfs .ghost{height:40px;border-radius:10px;border:1px solid var(--l);background:none;color:var(--f);padding:0 14px;cursor:pointer;font-family:inherit}
-  @media(max-width:700px){.nfs .row{grid-template-columns:40px minmax(0,1fr) 44px}.nfs .c3,.nfs .c4{display:none}.nfs .two{grid-template-columns:1fr}}`
+  .nfs .rsel{border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;font-family:inherit;background:transparent;color:var(--m);border:1px solid var(--l);cursor:pointer;outline:none;max-width:100%}
+  .nfs .rsel.a{color:#2f80ed;border-color:rgba(58,168,255,.45);background:rgba(58,168,255,.1)}.nfs.dark .rsel.a{color:#7fc4ff}
+  .nfs .rsel option{color:#0f1726}
+  .nfs .nm{min-width:0}.nfs .nm b,.nfs .nm small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media(max-width:700px){.nfs .row{grid-template-columns:40px minmax(0,1fr) auto 32px;gap:10px;padding:12px 14px}.nfs .c4{display:none}.nfs .row.h .c3{visibility:hidden}.nfs .rsel{padding:4px 6px;font-size:11.5px}.nfs .two{grid-template-columns:1fr}}`
 
   return (
     <div className={'nfs' + (dark ? ' dark' : '')}>
@@ -117,7 +125,10 @@ export default function SettingsPage({ onBack }) {
             <div className="row" key={u.id}>
               <span className="av">{ini(u)}</span>
               <span className="nm"><b>{u.name || u.email}</b><small>{u.email}</small></span>
-              <span className="c3"><span className={'role ' + (u.role === 'admin' ? 'a' : 's')}>{u.role === 'admin' ? 'Administrator' : 'Mitarbeiter'}</span></span>
+              <span className="c3">{u.id === me ? <span className="role a">Administrator</span> : (
+                <select className={'rsel ' + (u.role === 'admin' ? 'a' : 's')} value={u.role} onChange={e => setRole(u, e.target.value)}>
+                  <option value="staff">Mitarbeiter</option><option value="admin">Administrator</option>
+                </select>)}</span>
               <span className={'c4 st' + (u.status === 'aktiv' ? '' : ' p')}><i></i>{u.status === 'aktiv' ? 'Aktiv · ' + when(u.last) : 'Einladung offen'}</span>
               <span className="act">{u.id === me ? <span className="muted">Du</span> : u.role === 'admin' ? null : <button className="del" title="Löschen" onClick={() => del(u)}>✕</button>}</span>
             </div>
