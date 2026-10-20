@@ -1065,7 +1065,7 @@ window.addEventListener('message', (e) => {
   if (openP) { if (!typing) renderCard(); } else if (focused && !card.hidden) renderRoom(focused);
   const nt = toastShown ? fresh : DATA.tasks;
   if (nt.length) { toastShown = true; const o = nt.filter(t=>t.type==='offer').length, u = nt.length - o;
-    showToast(o ? `${o} ${o===1?'neues Angebot':'neue Angebote'} zum Freigeben` : `${u} ${u===1?'Änderung':'Änderungen'} von Kenzo`, o ? 'Lisa Fischer · Angebots-Agent' : 'Tom Becker · Änderungs-Agent', o ? LISA : TOM, 'LF'); }
+    showToast(o ? `${o} ${o===1?'neues Angebot':'neue Angebote'} zum Freigeben` : `${u} ${u===1?'Änderung':'Änderungen'} von Kenzo`, o ? 'Lisa Fischer · Angebots-Agent' : 'Tom Becker · Änderungs-Agent', o ? LISA : TOM, o ? 'LF' : 'TB'); }
   else if (!toastShown && DATA.due.length) { toastShown = true; showToast(`${DATA.due.length} ${DATA.due.length===1?'Angebot wartet':'Angebote warten'} auf dich`, 'Emma Koch · Follow-up-Agent', EMMA, 'EK'); }
 });
 post({ type: 'nf-ready' });
