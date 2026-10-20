@@ -98,6 +98,35 @@ function ThemeVars() {
   return (
     <style>{`
       .nf-admin { --bg:#ffffff; --bg-alt:#f9fafb; --panel:#ffffff; --border:#e5e7eb; --text:#111111; --text-muted:#6b7280; --text-faint:#9ca3af; --input-bg:#f9fafb; --email-bg:#f0fbff; --email-border:#60c8f044; }
+      @media (max-width: 760px) {
+        .nf-admin .nf-top { padding: 0 10px !important; height: 56px !important; gap: 6px; }
+        .nf-admin .nf-top > div { gap: 4px !important; }
+        .nf-admin .nf-top img { height: 30px !important; }
+        .nf-admin .nf-top button { padding: 7px 10px !important; }
+        .nf-admin .nf-logout { display: none !important; }
+        .nf-admin .nf-g3 { grid-template-columns: minmax(0,1fr) !important; }
+        .nf-admin .nf-cmain { padding: 18px 12px 40px !important; }
+        .nf-admin .nf-cmain h1 { font-size: 24px !important; }
+        .nf-admin .nf-mwrap .nf-mlist { width: 100% !important; border-right: 0 !important; }
+        .nf-admin .nf-mwrap[data-open='1'] .nf-mlist { display: none !important; }
+        .nf-admin .nf-mwrap[data-open='0'] .nf-mdet { display: none !important; }
+        .nf-admin .nf-back { display: flex !important; }
+        .nf-admin .nf-mpad { padding: 14px 12px 40px !important; }
+        .nf-admin .nf-mpad .nf-mtitle { font-size: 24px !important; }
+        .nf-admin .nf-mpad .nf-msub { font-size: 20px !important; }
+        .nf-modal { padding: 0 !important; align-items: stretch !important; }
+        .nf-modal > div { max-width: none !important; max-height: none !important; height: 100% !important; border-radius: 0 !important; }
+        .nf-sizes { grid-template-columns: 1fr 1fr 1.3fr 22px !important; }
+        .nf-sizes > .nf-sz-h { display: none !important; }
+        .nf-sizes > .nf-sz-pay { grid-column: 1 / 4; margin-top: -2px; font-size: 13px !important; }
+        .nf-sizes input { padding: 9px 8px !important; }
+        .nf-sz-l { display: inline !important; color: var(--text-muted); font-weight: 500; }
+        .nf-seg { flex-wrap: wrap; }
+        .nf-seg > * { flex: 1 1 30% !important; padding: 8px 4px !important; }
+        .nf-admin input, .nf-admin select, .nf-admin textarea { font-size: 16px !important; min-width: 0; }
+      }
+      .nf-back { display: none; }
+      .nf-sz-l { display: none; }
       .nf-admin[data-theme='dark'] { --bg:#0f1115; --bg-alt:#16181d; --panel:#1a1c22; --border:#2b2e36; --text:#f3f4f6; --text-muted:#9ca3af; --text-faint:#71757f; --input-bg:#20222a; --email-bg:#132732; --email-border:#3a7ca844; }
     `}</style>
   )
@@ -196,11 +225,11 @@ function SizeTable({ rows, onChange, lblStyle, inStyle }) {
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.3fr 1fr 24px', gap: 8, alignItems: 'center' }}>
+      <div className="nf-sizes" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.3fr 1fr 24px', gap: 8, alignItems: 'center' }}>
         <span style={{ ...lblStyle, marginBottom: 0 }}>Breite (cm)</span>
         <span style={{ ...lblStyle, marginBottom: 0 }}>Höhe (cm)</span>
         <span style={{ ...lblStyle, marginBottom: 0 }}>Empf. VK (TNC)</span>
-        <span style={{ ...lblStyle, marginBottom: 0 }}>Kunde zahlt</span>
+        <span className="nf-sz-h" style={{ ...lblStyle, marginBottom: 0 }}>Kunde zahlt</span>
         <span />
         {rows.map((r, i) => (
           <SizeRow key={i} r={r} i={i} upd={upd} inStyle={inStyle} pay={num(r.vk) > 0 ? eur(num(r.vk) * 1.10) : '–'} onDel={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ w: '', h: '', vk: '' }])} />
@@ -217,7 +246,7 @@ function SizeRow({ r, i, upd, inStyle, pay, onDel }) {
       <input style={inStyle} type="number" value={r.w} onChange={e => upd(i, 'w', e.target.value)} placeholder="70" />
       <input style={inStyle} type="number" value={r.h} onChange={e => upd(i, 'h', e.target.value)} placeholder="70" />
       <input style={inStyle} type="text" inputMode="decimal" value={r.vk} onChange={e => upd(i, 'vk', e.target.value)} placeholder="430,65" />
-      <span style={{ color: '#22c55e', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' }}>{pay}</span>
+      <span className="nf-sz-pay" style={{ color: '#22c55e', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap' }}><span className="nf-sz-l">Kunde zahlt: </span>{pay}</span>
       <span onClick={onDel} style={{ cursor: 'pointer', opacity: 0.5, textAlign: 'center' }}>✕</span>
     </>
   )
@@ -318,10 +347,10 @@ function CheckoutImageField({ src, onChange, inputId, dark, cropSrc }) {
       <label htmlFor={inputId} style={{ width: 84, height: 84, borderRadius: 10, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
         {src ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 26 }}>🛒</span>}
       </label>
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>Checkout-Bild (1:1)</div>
         <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>Wird im Shopify-Checkout angezeigt. Quadratisch hochladen. Ohne Bild wird automatisch Bild 2 genommen.</div>
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>
           {src && <span onClick={() => onChange(null)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#ef4444', border: '1px solid #ef444466', borderRadius: 8, padding: '5px 10px' }}>Entfernen</span>}
                       {cropSrc && <span onClick={() => setCrop(true)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild 1 zuschneiden</span>}
@@ -465,7 +494,7 @@ function EditModal({ offer, onClose, onSaved }) {
   const lbl = { fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 5 }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div className="nf-modal" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: 'var(--panel)', color: 'var(--text)', borderRadius: 16, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
         <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
@@ -680,7 +709,7 @@ function HomePage({ offers, setTab, theme, toggleTheme, onLogout }) {
         <img src={NF_LOGO} alt="NeonFrame" style={{ height: 52, display: 'block' }} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
+          <button className="nf-logout" onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
         </div>
       </div>
 
@@ -935,12 +964,12 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, o.extra_disc_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
   return (
-    <div style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1400 }}>
+    <div className="nf-mpad" style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1400 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 30, fontWeight: 900 }}>#{mId(o)}</span>
-            <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-muted)' }}>{o.project}</span>
+            <span className="nf-mtitle" style={{ fontSize: 30, fontWeight: 900 }}>#{mId(o)}</span>
+            <span className="nf-msub" style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-muted)' }}>{o.project}</span>
             <MAktiv o={o} />
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
@@ -962,7 +991,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
+      <div className="nf-g3" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
         <MCard title="Vorschau"><MGallery o={o} /></MCard>
         <MCard title="Konfiguration">
           <div style={{ marginBottom: 12 }}>
@@ -1001,7 +1030,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
         </MCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
+      <div className="nf-g3" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
         <MCard title="Links">
           <MLinkRow label="Angebotslink" url={mLink(o)} on={o.published} offText="Angebot deaktiviert – Link nicht erreichbar" />
           <MLinkRow label="Checkout-Link (Shopify)" url={o.checkout_url} on={true} offText="Nicht vorhanden" />
@@ -1027,6 +1056,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
   const [st, setSt] = useState('')
   const [sel, setSel] = useState(null)
   const [editing, setEditing] = useState(null)
+  const [open, setOpen] = useState(false)
 
   const ql = q.toLowerCase()
   const list = offers.filter(o =>
@@ -1112,7 +1142,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
       <MCSS />
       {editing && <EditModal offer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); loadOffers() }} />}
 
-      <div style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid #1f2937', flexShrink: 0 }}>
+      <div className="nf-top" style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid #1f2937', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{ height: 40, cursor: 'pointer' }} />
           <button onClick={() => setTab('create')} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: 'transparent', color: '#9ca3af', cursor: 'pointer', fontFamily: 'inherit' }}>Erstellen</button>
@@ -1123,12 +1153,12 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
+          <button className="nf-logout" onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        <div style={{ width: 400, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--panel)', flexShrink: 0 }}>
+      <div className="nf-mwrap" data-open={open ? '1' : '0'} style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+        <div className="nf-mlist" style={{ width: 400, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--panel)', flexShrink: 0 }}>
           <div style={{ padding: 16, borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 800, fontSize: 18 }}>Alle Angebote <span style={{ fontSize: 13, color: 'var(--text-faint)', fontWeight: 500 }}>({offers.length})</span></span>
@@ -1147,7 +1177,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
               const act = o && x.id === o.id
               const img = mImgs(x)[0]
               return (
-                <div key={x.id} onClick={() => setSel(x.id)} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: act ? `${M_NEON}14` : 'transparent', boxShadow: act ? `inset 3px 0 0 ${M_NEON}` : 'none' }}>
+                <div key={x.id} onClick={() => { setSel(x.id); setOpen(true) }} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer', background: act ? `${M_NEON}14` : 'transparent', boxShadow: act ? `inset 3px 0 0 ${M_NEON}` : 'none' }}>
                   {img ? <img src={img} alt="" style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} /> : <div style={{ width: 48, height: 40, borderRadius: 8, background: 'var(--bg-alt)', flexShrink: 0 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -1167,7 +1197,8 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
           </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="nf-mdet" style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="nf-back" onClick={() => setOpen(false)} style={{ alignItems: 'center', gap: 8, padding: '12px 14px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: 14, cursor: 'pointer', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 5 }}>← Alle Angebote</div>
           {o ? (
             <MDetail
               o={o}
@@ -1219,7 +1250,7 @@ function CSeg({ label, value, opts, onChange }) {
   return (
     <div>
       <label style={cLbl}>{label}</label>
-      <div style={{ display: 'flex', gap: 4, background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
+      <div className="nf-seg" style={{ display: 'flex', gap: 4, background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 4 }}>
         {opts.map(o => {
           const v = typeof o === 'string' ? o : o.value
           const l = typeof o === 'string' ? o : o.label
@@ -1928,7 +1959,7 @@ if (tab === 'create') return (
         </div>
       )}
 
-      <div style={{background:'#0a0a0a',height:64,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',borderBottom:'1px solid #1f2937',position:'sticky',top:0,zIndex:50}}>
+      <div className="nf-top" style={{background:'#0a0a0a',height:64,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',borderBottom:'1px solid #1f2937',position:'sticky',top:0,zIndex:50}}>
         <div style={{display:'flex',alignItems:'center',gap:18}}>
           <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{height:40,cursor:'pointer'}} />
           <button style={{padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:700,border:`1px solid ${C_NEON}66`,background:`${C_NEON}1a`,color:C_NEON,cursor:'default',fontFamily:'inherit'}}>Erstellen</button>
@@ -1939,11 +1970,11 @@ if (tab === 'create') return (
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button onClick={() => setAuthed(false)} style={{background:'transparent',border:'1px solid #2b2e36',color:'#9ca3af',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Abmelden</button>
+          <button className="nf-logout" onClick={() => setAuthed(false)} style={{background:'transparent',border:'1px solid #2b2e36',color:'#9ca3af',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Abmelden</button>
         </div>
       </div>
 
-      <div style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px 60px',display:'flex',flexDirection:'column',gap:16}}>
+      <div className="nf-cmain" style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px 60px',display:'flex',flexDirection:'column',gap:16}}>
         <h1 style={{margin:0,fontSize:30,fontWeight:900}}>Neues Angebot</h1>
 
         <CCard t="Dateien">
@@ -2047,7 +2078,7 @@ if (tab === 'create') return (
           </div>
         </CCard>
 
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
+        <div className="nf-g3" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
           <CCard t="Preiskalkulation">
             <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
               <div><label style={cLbl}>Endpreis (brutto)</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" />{parseFloat(priceInputs.basePrice) > 0 && <div style={{fontSize:11,color:'var(--text-faint)',marginTop:5}}>Listenpreis (netto) automatisch: € {parseFloat(priceInputs.basePrice).toFixed(2)}</div>}</div>
