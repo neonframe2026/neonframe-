@@ -12,7 +12,7 @@ export async function POST(req) {
   try {
     const { offerId, width, express } = await req.json()
     const exp = !!express
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: o } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
 

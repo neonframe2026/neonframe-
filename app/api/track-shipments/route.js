@@ -22,7 +22,7 @@ export async function GET(request) {
   if (!process.env.CRON_SECRET || searchParams.get('key') !== process.env.CRON_SECRET) {
     return Response.json({ error: 'Nicht erlaubt' }, { status: 401 })
   }
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 
   // ---- Testversand ----
   const testId = searchParams.get('test')

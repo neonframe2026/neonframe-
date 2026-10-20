@@ -10,7 +10,7 @@ const FONT = "font-family:Arial,Helvetica,sans-serif;"
 async function loadOffer(offerId) {
   try {
     if (!offerId) return null
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data } = await supabase
       .from('offers')
       .select('preview_image, width, height, colors, usage, disc_type, disc_val, unsubscribed, status')

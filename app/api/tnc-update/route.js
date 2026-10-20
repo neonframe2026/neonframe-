@@ -12,7 +12,7 @@ export const maxDuration = 60
 
 const SITE = 'https://angebote.neonframe.de'
 const r2 = n => Math.round(n * 100) / 100
-const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 
 async function load(req, id) {
   const { data: list } = await db().from('offers').select('*').eq('offer_num', String(id)).order('created_at', { ascending: false }).limit(1)

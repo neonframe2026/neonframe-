@@ -27,7 +27,7 @@ export async function POST(request) {
     const token = String(draft.invoice_url || '').split('/invoices/')[1]?.split(/[/?#]/)[0]
     if (!token) return Response.json({ skipped: 'Kein Checkout-Link im Entwurf' })
 
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: offers, error } = await supabase
       .from('offers')
       .update({ status: 'confirmed', ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}) })

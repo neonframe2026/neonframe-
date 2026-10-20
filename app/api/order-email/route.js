@@ -11,7 +11,7 @@ export async function POST(req) {
     if (!offerId) return Response.json({ error: 'offerId fehlt' }, { status: 400 })
     if (!process.env.RESEND_API_KEY) return Response.json({ error: 'E-Mail nicht konfiguriert' }, { status: 500 })
 
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: o, error } = await supabase.from('offers').select('id, project, customer_email, order_email_sent_at').eq('id', offerId).maybeSingle()
     if (error || !o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
     if (!o.customer_email) return Response.json({ error: 'Keine E-Mail hinterlegt' }, { status: 400 })

@@ -21,7 +21,7 @@ const BOUGHT = ['confirmed', 'in_production', 'shipped', 'delivered']
 const H = 3600000
 const KIND = { erinnerung: 'Erinnerung', rabatt: 'Rabatt-Mail', rabatt_erinnerung: 'Rabatt-Erinnerung', bewertung: 'Bewertung' }
 
-const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 const t = (d) => (d ? new Date(d).getTime() : 0)
 
 // ---------- Uhrzeit Deutschland ----------

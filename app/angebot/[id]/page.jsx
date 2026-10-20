@@ -16,7 +16,7 @@ export async function generateMetadata() {
 async function getOffer(id) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+       (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   )
 let { data } = await supabase.from('offers').select('*').eq('custom_id', id).single()
   if (!data) {

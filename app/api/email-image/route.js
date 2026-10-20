@@ -95,7 +95,7 @@ export async function GET(request) {
     const type = searchParams.get('type') === 'discount' ? 'discount' : 'recontact'
     if (!id) return new Response('offer fehlt', { status: 400 })
 
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     // Zuerst über die interne ID suchen (die schicken die Mail-Routen), sonst über die Angebotsnummer
     let o = null
     if (/^\d+$/.test(id)) o = (await supabase.from('offers').select('*').eq('id', id).maybeSingle()).data

@@ -8,7 +8,7 @@ export const fetchCache = 'force-no-store'
 // POST  { type: 'offer' | 'update', tnc_id, project, email }  -> kommt von Make
 // GET                                                        -> offene Aufgaben für die Zentrale
 // PATCH ?id=...  { status: 'done' }                          -> Aufgabe von Hand erledigen
-const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 
 export async function POST(req) {
   try {

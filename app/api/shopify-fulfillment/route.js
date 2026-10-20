@@ -19,7 +19,7 @@ export async function POST(request) {
     const trackingNumber = f.tracking_number || f.tracking_numbers?.[0] || ''
     if (!trackingNumber) return Response.json({ skipped: 'Keine Sendungsnummer' })
 
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 
     // Angebot finden: über die Shopify-Bestellnummer, sonst über die E-Mail des Kunden
     let { data: o } = await supabase.from('offers').select('*').eq('shopify_order_id', String(f.order_id)).maybeSingle()

@@ -7,7 +7,7 @@ async function loadOfferExtras(offerLink) {
   try {
     const key = decodeURIComponent(String(offerLink || '').split('/angebot/')[1] || '').split(/[?#]/)[0]
     if (!key) return null
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const cols = 'id, preview_image, usage, disc_type, disc_val'
     let { data } = await supabase.from('offers').select(cols).eq('custom_id', key).maybeSingle()
     if (!data && /^\d+$/.test(key)) {

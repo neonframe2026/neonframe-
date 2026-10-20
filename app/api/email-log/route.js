@@ -11,7 +11,7 @@ export async function GET(req) {
   const type = searchParams.get('type')
   const page = (body) => new Response(`<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E-Mail</title></head><body style="margin:0;font-family:Arial,sans-serif;background:#111;color:#ddd;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px">${body}</body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } })
   if (!offerId || !type) return page('Angebot oder Mail-Typ fehlt.')
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY ||    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
   const { data, error } = await supabase.from('email_log').select('html, subject, recipient, sent_at').eq('offer_id', offerId).eq('type', type).order('sent_at', { ascending: false }).limit(1).maybeSingle()
   if (error) return page('Fehler: ' + error.message)
   if (!data) return page('Für diese Mail ist keine Kopie gespeichert.<br><br>Mails werden erst seit dem Update gespeichert –<br>ältere Mails kann man leider nicht anschauen.')
