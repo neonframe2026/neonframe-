@@ -6,6 +6,7 @@ export const fetchCache = 'force-no-store'
 // Benutzerverwaltung (nur für Administratoren)
 // GET              -> alle Benutzer
 // POST {first,last,email} -> Mitarbeiter einladen (Mail mit Link zum Passwort festlegen)
+// PATCH {id, role}  -> Rolle ändern (admin | staff)
 // DELETE ?id=...   -> Benutzer löschen (sich selbst und Admins nicht)
 const SITE = 'https://angebote.neonframe.de'
 const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
@@ -62,6 +63,20 @@ export async function DELETE(req) {
     const { data } = await admin().auth.admin.getUserById(id)
     if (data?.user?.app_metadata?.role === 'admin') return Response.json({ error: 'Administratoren können hier nicht gelöscht werden' }, { status: 400 })
     const { error } = await admin().auth.admin.deleteUser(id)
+    if (error) throw error
+    return Response.json({ success: true })
+  } catch (e) { return fail(e) }
+}
+
+export async function PATCH(req) {
+  try {
+    const me = await requireAdmin(req)
+    const { id, role } = await req.json()
+    if (!id || !['admin', 'staff'].includes(role)) return Response.json({ error: 'Ungültige Angaben' }, { status: 400 })
+    if (id === me.id) return Response.json({ error: 'Deine eigene Rolle kannst du nicht ändern' }, { status: 400 })
+    const { data } = await admin().auth.admin.getUserById(id)
+    if (!data?.user) return Response.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
+    const { error } = await admin().auth.admin.updateUserById(id, { app_metadata: { ...(data.user.app_metadata || {}), role } })
     if (error) throw error
     return Response.json({ success: true })
   } catch (e) { return fail(e) }
