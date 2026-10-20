@@ -93,7 +93,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       orders: offers.slice(0, 8).map(row),
       fu: fuRef.current || undefined,
       ek: ekRef.current || undefined,
-      due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : offers.filter(mIsRed).map(row),
+      due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
       stats: {
         total: offers.length,
         open: offers.filter(o => !mBought(o) && o.published).length,
