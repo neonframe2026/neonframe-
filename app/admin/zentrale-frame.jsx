@@ -20,14 +20,25 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   }, [])
   const [fu, setFu] = useState(null)
   const fuRef = useRef(null)
+  // Anna (Einkauf): Anfragen aus dem Konfigurator
+  const [ek, setEk] = useState(null)
+  const ekRef = useRef(null)
+  const ekApi = async (method, body) => {
+    const { data } = await authClient().auth.getSession()
+    const r = await fetch('/api/einkauf', { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data?.session?.access_token || '') }, body: body ? JSON.stringify(body) : undefined })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+    return j
+  }
+  const loadEk = () => ekApi('GET').then(j => { ekRef.current = j; setEk(j) }).catch(() => {})
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
   // Offene Aufgaben der Agenten laden (und jede Minute neu)
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu()
-    const t = setInterval(() => { load(); loadFu() }, 60000)
+    load(); loadFu(); loadEk()
+    const t = setInterval(() => { load(); loadFu(); loadEk() }, 60000)
     return () => { alive = false; clearInterval(t) }
   }, [])
 
@@ -47,6 +58,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       tasks: tasksRef.current.map(t => ({ id: t.id, type: t.type, tnc: t.tnc_id, name: t.project || 'ohne Projekt', email: t.email || '', at: t.created_at })),
       orders: offers.slice(0, 8).map(row),
       fu: fuRef.current || undefined,
+      ek: ekRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : offers.filter(mIsRed).map(row),
       stats: {
         total: offers.length,
@@ -81,6 +93,13 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
           loadFu()
         })()
       }
+      if (e.data?.type === 'nf-ek') {
+        const { action, id, fields } = e.data
+        ekApi('PATCH', { action, id, fields })
+          .then(j => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, ok: true, tnc: j.tnc || '' }, window.location.origin))
+          .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, ok: false, error: err.message }, window.location.origin))
+          .finally(loadEk)
+      }
       if (e.data?.type === 'nf-dismiss') fetch('/api/agent-tasks?id=' + encodeURIComponent(e.data.id), { method: 'PATCH' }).then(() => {
         tasksRef.current = tasksRef.current.filter(x => x.id !== e.data.id); setTasks(tasksRef.current)
       })
@@ -89,7 +108,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek])
 
   return (
     <iframe
