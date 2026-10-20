@@ -23,6 +23,27 @@ export default function SettingsPage({ onBack }) {
   const load = () => api('GET').then(j => { setList(j.users); setMe(j.me) }).catch(e => setErr(e.message))
   useEffect(() => { load() }, [])
 
+  // TNC-Verbindung (Login fürs TNC-Portal, für Anna im Einkauf)
+  const [tnc, setTnc] = useState(null)
+  const [tncVal, setTncVal] = useState('')
+  const [tncBusy, setTncBusy] = useState(false)
+  const [tncMsg, setTncMsg] = useState(null)
+  const ek = async (method, body) => {
+    const { data } = await authClient().auth.getSession()
+    const r = await fetch('/api/einkauf', { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data.session?.access_token || '') }, body: body ? JSON.stringify(body) : undefined })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+    return j
+  }
+  const loadTnc = () => ek('GET').then(j => setTnc(j.connection)).catch(() => setTnc({ has: false }))
+  useEffect(() => { loadTnc() }, [])
+  async function saveTnc(e) {
+    e.preventDefault(); setTncBusy(true); setTncMsg(null)
+    try { await ek('PUT', { cookie: tncVal }); setTncVal(''); setTncMsg({ ok: true, t: 'Verbunden. Anna kann jetzt Anfragen an TNC senden.' }); loadTnc() }
+    catch (e2) { setTncMsg({ ok: false, t: e2.message }) }
+    setTncBusy(false)
+  }
+
   async function invite(e) {
     e.preventDefault(); setBusy(true); setErr('')
     try { await api('POST', f); setOk(`Einladung an ${f.email} gesendet.`); setOpen(false); setF({ first: '', last: '', email: '' }); load() }
@@ -66,6 +87,15 @@ export default function SettingsPage({ onBack }) {
   .nfs input:focus{border-color:#3aa8ff}
   .nfs .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nfs .two>div{display:grid;gap:12px}
   .nfs .hint{font-size:12.5px;color:var(--m);line-height:1.5}
+  .nfs .tnc{padding:18px;display:grid;gap:12px}
+  .nfs .tnc h3{margin:0;font-size:17px}
+  .nfs .cs{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;font-size:13.5px}
+  .nfs .cs i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .nfs .cs.on{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3)}.nfs .cs.on i{background:#22c55e;box-shadow:0 0 8px #22c55e}
+  .nfs .cs.off{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3)}.nfs .cs.off i{background:#ef4444}
+  .nfs .cs small{display:block;color:var(--m);font-size:12px}
+  .nfs .tf{display:flex;gap:8px;flex-wrap:wrap}.nfs .tf input{flex:1 1 240px;width:auto}
+  .nfs ol{margin:0;padding-left:18px;color:var(--m);font-size:13px;line-height:1.7}.nfs ol b{color:var(--f)}
   .nfs .ma{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}.nfs .ghost{height:40px;border-radius:10px;border:1px solid var(--l);background:none;color:var(--f);padding:0 14px;cursor:pointer;font-family:inherit}
   @media(max-width:700px){.nfs .row{grid-template-columns:40px minmax(0,1fr) 44px}.nfs .c3,.nfs .c4{display:none}.nfs .two{grid-template-columns:1fr}}`
 
@@ -93,6 +123,24 @@ export default function SettingsPage({ onBack }) {
             </div>
           ))}
         </div>
+
+        <div className="t"><div><h2>TNC-Verbindung</h2><div className="sub">Damit Anna im Einkauf Anfragen direkt ins TNC-Portal senden kann</div></div></div>
+        <div className="card"><div className="tnc">
+          {tnc && (tnc.has && tnc.ok !== false
+            ? <div className="cs on"><i></i><div><b>Mit TNC-Portal verbunden</b><small>{tnc.checked_at ? 'Zuletzt geprüft ' + when(tnc.checked_at) + ', wird automatisch verlängert' : 'Wird automatisch verlängert'}</small></div></div>
+            : <div className="cs off"><i></i><div><b>{tnc.has ? 'Login abgelaufen' : 'Noch nicht verbunden'}</b><small>Bitte den Login unten einmal hinterlegen</small></div></div>)}
+          <ol>
+            <li>Öffne <b>reseller.theneoncompany.shop</b> und melde dich an.</li>
+            <li>Drück <b>F12</b>, dann oben <b>Anwendung</b> (Application) → links <b>Cookies</b> → <b>reseller.theneoncompany.shop</b>.</li>
+            <li>Klick auf <b>__Secure-next-auth.session-token</b> und kopier den <b>Wert</b> (Value).</li>
+            <li>Füg ihn hier ein und klick auf <b>Speichern</b>. Der Wert wird geschützt gespeichert und nirgends angezeigt.</li>
+          </ol>
+          <form className="tf" onSubmit={saveTnc}>
+            <input type="password" value={tncVal} onChange={e => setTncVal(e.target.value)} placeholder="Login-Wert einfügen" autoComplete="off" required />
+            <button className="btn" disabled={tncBusy}>{tncBusy ? 'Wird geprüft …' : 'Speichern'}</button>
+          </form>
+          {tncMsg && <div className={tncMsg.ok ? 'ok' : 'err'}>{tncMsg.t}</div>}
+        </div></div>
       </div>
       {open && (
         <div className="modal" onClick={() => !busy && setOpen(false)}>
