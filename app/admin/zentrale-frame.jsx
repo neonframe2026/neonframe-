@@ -26,6 +26,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   const authHdr = async () => { const { data } = await authClient().auth.getSession(); return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data?.session?.access_token || '') } }
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') return
+    if (!window.matchMedia('(pointer: coarse)').matches) return // nur am Handy
     try { if (localStorage.getItem('nf_push_hide') === '1') return } catch {}
     navigator.serviceWorker.register('/sw.js').then(async (reg) => {
       const sub = await reg.pushManager.getSubscription()
