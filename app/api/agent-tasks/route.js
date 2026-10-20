@@ -35,7 +35,7 @@ export async function POST(req) {
 
 export async function GET() {
   try {
-    const { data: tasks, error } = await db().from('agent_tasks').select('*').eq('status', 'open').order('created_at', { ascending: false })
+    const { data: tasks, error } = await db().from('agent_tasks').select('*').eq('status', 'open').in('type', ['offer', 'update']).order('created_at', { ascending: false })
     if (error) throw new Error(error.message)
     // Neues Angebot schon veröffentlicht? Dann automatisch erledigt
     const open = []
