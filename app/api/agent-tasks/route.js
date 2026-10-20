@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendPush } from '../../../lib/push'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -21,6 +22,11 @@ export async function POST(req) {
     const q = ex?.[0] ? db().from('agent_tasks').update(row).eq('id', ex[0].id) : db().from('agent_tasks').insert([row])
     const { error } = await q
     if (error) throw new Error(error.message)
+    // Neue Aufgabe -> Push aufs Handy
+    if (!ex?.[0]) await sendPush(type === 'update'
+      ? { title: 'Tom: Änderung von Kenzo', body: `Angebot ${tnc_id} wurde geändert. Vorher/Nachher ansehen.`, tag: 'update-' + tnc_id }
+      : { title: 'Lisa: Neues Angebot wartet', body: `${row.project || 'Ohne Projekt'} · TNC ${tnc_id} ist fertig. Tippen zum Freigeben.`, tag: 'offer-' + tnc_id }
+    ).catch(() => {})
     return Response.json({ success: true })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
