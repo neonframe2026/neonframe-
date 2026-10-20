@@ -403,7 +403,7 @@ const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].peopl
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
   'Änderungs-Agent': { live: true, tasks: ['Erkennt Änderungs-Mails von Kenzo', 'Legt die Änderung bei Tom bereit, mit Vorher und Nachher', 'Aktualisiert Angebot und Shopify mit einem Klick', 'Informiert den Kunden per Mail'] },
-  'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Schlägt bei Logos passende Farben vor', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
+  'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
 const isActive = (p) => !!AGENT_INFO[p.agent];
