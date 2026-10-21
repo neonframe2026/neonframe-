@@ -1,4 +1,5 @@
 import { sb, periods, loadData, stats, claude, context, PERSONA } from '../../../lib/strategie'
+import { sendPush } from '../../../lib/push'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -41,8 +42,35 @@ async function seed(db) {
   await db.from('strategie').insert(rows.map(r => ({ type: 'campaign', ...r })))
 }
 
+// Bericht schreiben und speichern (manuell oder automatisch Montag 8 Uhr)
+async function writeReport(db, k, auto) {
+      const P = periods(), p = P[k]
+      const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
+      const cmp = [`${p.label}: ${JSON.stringify(stats(D0, p.cur))}`, `${p.prevLabel}: ${JSON.stringify(stats(D0, p.prev))}`, p.ly ? `${p.lyLabel}: ${JSON.stringify(stats(D0, p.ly))}` : '', p.full ? `${p.fullLabel}: ${JSON.stringify(stats(D0, p.full))}` : ''].filter(Boolean).join('\n')
+      const out = await claude({
+        system: PERSONA.david + '\n\n' + await context(db),
+        messages: [{ role: 'user', content: `Schreib den ${k === 'week' ? 'Wochenbericht' : k === 'month' ? 'Monatsbericht' : 'Jahresbericht'} für ${p.label}. Vergleich:\n${cmp}\n\nAntworte NUR mit JSON: {"summary":"2 bis 3 Sätze: wie lief es, wichtigste Veränderung mit Zahl","good":["was gut lief, max 3, kurz"],"bad":["was schlecht lief oder auffällt, max 3, kurz"],"suggestions":[{"title":"konkrete Maßnahme, max 10 Wörter","why":"warum und erwartete Wirkung, 1 Satz","type":"ziel oder kampagne"}]} mit 3 bis 5 Vorschlägen, nach Wirkung sortiert. Wenn kaum Daten da sind, sag das ehrlich und schlag vor, was zuerst gemessen werden sollte.` }],
+        max: 1800, json: true,
+      })
+      await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { auto: !!auto, seen: !auto, summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 6) } }])
+}
+
 export async function GET(req) {
   try {
+    const sp = new URL(req.url).searchParams
+    if (sp.get('run')) {
+      // cron-job.org täglich 8:00: fehlende Berichte schreiben (Woche am Montag, Monat am 1., Jahr im Januar)
+      if (!process.env.FOLLOWUP_KEY || sp.get('key') !== process.env.FOLLOWUP_KEY) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
+      const db = sb(), P = periods(), done = []
+      const m = +new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Berlin' }).slice(5, 7)
+      for (const k of ['week', 'month', ...(m === 1 ? ['year'] : [])]) {
+        const { count } = await db.from('strategie').select('id', { count: 'exact', head: true }).eq('type', 'report').eq('key', P[k].key)
+        if (count) continue
+        await writeReport(db, k, true); done.push(k)
+      }
+      if (done.length) await sendPush({ title: 'David: ' + (done.includes('month') ? 'Monatsbericht ist fertig' : 'Wochenbericht ist fertig'), body: 'Zahlen und Vorschläge liegen in der Zentrale bereit.', tag: 'david' }).catch(() => {})
+      return Response.json({ success: true, done })
+    }
     await user(req)
     const db = sb()
     await seed(db)
@@ -78,16 +106,12 @@ export async function POST(req) {
     const b = await req.json()
     const db = sb()
     if (b.action === 'report') {
-      const k = ['week', 'month', 'year'].includes(b.period) ? b.period : 'week'
-      const P = periods(), p = P[k]
-      const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
-      const cmp = [`${p.label}: ${JSON.stringify(stats(D0, p.cur))}`, `${p.prevLabel}: ${JSON.stringify(stats(D0, p.prev))}`, p.ly ? `${p.lyLabel}: ${JSON.stringify(stats(D0, p.ly))}` : '', p.full ? `${p.fullLabel}: ${JSON.stringify(stats(D0, p.full))}` : ''].filter(Boolean).join('\n')
-      const out = await claude({
-        system: PERSONA.david + '\n\n' + await context(db),
-        messages: [{ role: 'user', content: `Schreib den ${k === 'week' ? 'Wochenbericht' : k === 'month' ? 'Monatsbericht' : 'Jahresbericht'} für ${p.label}. Vergleich:\n${cmp}\n\nAntworte NUR mit JSON: {"summary":"2 bis 3 Sätze: wie lief es, wichtigste Veränderung mit Zahl","good":["was gut lief, max 3, kurz"],"bad":["was schlecht lief oder auffällt, max 3, kurz"],"suggestions":[{"title":"konkrete Maßnahme, max 10 Wörter","why":"warum und erwartete Wirkung, 1 Satz","type":"ziel oder kampagne"}]} mit 3 bis 5 Vorschlägen, nach Wirkung sortiert. Wenn kaum Daten da sind, sag das ehrlich und schlag vor, was zuerst gemessen werden sollte.` }],
-        max: 1800, json: true,
-      })
-      await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 6) } }])
+      await writeReport(db, ['week', 'month', 'year'].includes(b.period) ? b.period : 'week')
+      return Response.json({ success: true })
+    }
+    if (b.action === 'seen') {
+      const { data: rows } = await db.from('strategie').select('id,data').eq('type', 'report').eq('key', String(b.key || ''))
+      for (const r of rows || []) if (!r.data?.seen) await db.from('strategie').update({ data: { ...r.data, seen: true } }).eq('id', r.id)
       return Response.json({ success: true })
     }
     if (b.action === 'chat') {
