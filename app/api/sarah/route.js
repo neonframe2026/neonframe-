@@ -1,4 +1,5 @@
 import { sb, run, undo, reply } from '../../../lib/sarah'
+import { addExample } from '../../../lib/wissen'
 import { sendPush } from '../../../lib/push'
 
 export const runtime = 'nodejs'
@@ -83,6 +84,7 @@ export async function POST(req) {
       const body = String(text || r.draft || '').trim()
       if (!body) return Response.json({ error: 'Antwort ist leer' }, { status: 400 })
       await reply(r, body)
+      await addExample({ question: `${r.subject}: ${(r.body || '').slice(0, 300)}`, before: r.draft, after: body }).catch(() => {})
       await db.from('inbox').update({ status: 'done', action: 'replied', draft: body, done_at: new Date().toISOString() }).eq('id', id)
       return Response.json({ success: true })
     }
