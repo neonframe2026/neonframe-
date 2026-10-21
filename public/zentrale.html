@@ -875,7 +875,7 @@ function roomActions(d){
   if(d.id==='einkauf') return `<div class="abox"><h3>Anfrage an Hersteller</h3><p>Kundenanfrage an TNC übertragen. In Planung.</p><button class="b wide" disabled style="opacity:.6">Kommt bald</button></div>`+ask;
   return ask;
 }
-const pCount=(p)=>p===EMMA?DATA.due.length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:0;
+const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:0;
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
   card.classList.add('room');
@@ -1094,7 +1094,9 @@ function renderCard(){
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
     const ap=F2.approve.length?`<div class="items">${F2.approve.map(t=>`<div class="item"><div class="itop"><span class="inum">${esc(t.nr)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.label)} · fällig ${ago(t.at)}</div>${t.last?`<div class="isub">✉ Letzte Mail: ${esc(t.last)}</div>`:''}</div></div><div class="iacts"><button class="b pri" data-fu="${t.id}">${F2.night?(t.kind==='rabatt'?'Rabatt ':'')+esc(F2.morning||'morgen 8:10')+' senden':(t.kind==='rabatt'?'Rabatt senden':'Jetzt senden')}</button><button class="b ghost" data-fuskip="${t.id}">Überspringen</button></div></div>`).join('')}</div>${F2.approve.length>1?`<button class="b wide" data-fuall="1">Alle ${F2.approve.length} freigeben${F2.night?' (gehen '+esc(F2.morning||'morgen 8:10')+' raus)':''}</button>`:''}${F2.night&&F2.approve.length?'<p class="isub">Es ist nach 20 Uhr. Freigegebene Mails gehen automatisch '+esc(F2.morning||'morgen 8:10')+' Uhr raus.</p>':''}`:'<p class="isub">Nichts zum Freigeben.</p>';
     const ln=(rows,ic)=>rows.length?`<ul class="fulog">${rows.map(r=>`<li><span class="fic ${ic}">${ic==='ok'?'✓':'⏱'}</span><span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${esc(r.when)}</time></li>`).join('')}</ul>`:'<p class="isub">Nichts geplant.</p>';
-    extra = `<div class="fuauto"><span class="dot"></span><div><b>Automatik an</b><small>Emma schickt Erinnerung, Rabatt-Erinnerung und Bewertung selbst, nur zwischen 8:10 und 20:00 Uhr. Rabatte nur mit deiner Freigabe.</small></div></div>
+    const WA=F2.wa||[];
+    const wa=WA.length?`<div><div class="preph"><p class="lbl">Per WhatsApp senden</p><span class="tag-ready" style="color:#25d366;border-color:rgba(37,211,102,.5)">${WA.length}</span></div><div class="items">${WA.map(w=>`<div class="item"><div class="itop"><span class="inum" style="background:#25d366">WA</span><div><div class="ititle">${esc(w.name)}</div><div class="isub">${esc(w.label)} · ${esc(w.when)}</div></div></div><div class="iacts"><a class="b pri" style="background:#25d366;border-color:#25d366;color:#fff;text-decoration:none" href="${esc(w.url)}" target="_blank" rel="noopener" data-wa="${w.id}">Per WhatsApp senden</a><button class="b ghost" data-waskip="${w.id}">Erledigt</button></div></div>`).join('')}</div><p class="isub">Öffnet WhatsApp mit fertigem Text, du tippst nur noch auf Senden.</p></div>`:'';
+    extra = wa+`<div class="fuauto"><span class="dot"></span><div><b>Automatik an</b><small>Emma schickt Erinnerung, Rabatt-Erinnerung und Bewertung selbst, nur zwischen 8:10 und 20:00 Uhr. Rabatte nur mit deiner Freigabe.</small></div></div>
     <div><div class="preph"><p class="lbl">Wartet auf deine Freigabe</p>${F2.approve.length?`<span class="tag-ready">${F2.approve.length}</span>`:''}</div>${ap}</div>
     <div><p class="lbl">Schickt Emma als Nächstes</p>${ln(F2.next,'wait')}</div>
     <div><p class="lbl">Zuletzt gesendet</p>${F2.sent.length?ln(F2.sent,'ok'):'<p class="isub">Noch nichts gesendet.</p>'}</div>
@@ -1116,6 +1118,9 @@ function renderCard(){
   card.querySelectorAll('[data-fu]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'send', id: b.dataset.fu }));
   card.querySelectorAll('[data-fuskip]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'skip', id: b.dataset.fuskip }));
   card.querySelectorAll('[data-fuall]').forEach(b=>b.onclick=()=>{ if(!confirm(`Alle ${(DATA.fu?.approve||[]).length} Mails jetzt senden?`)) return; fuBtn(b,{ type: 'nf-fu', action: 'all' }); });
+  const waDone=(id)=>{ post({ type: 'nf-fu', action: 'wa', id }); if(DATA.fu&&DATA.fu.wa) DATA.fu.wa=DATA.fu.wa.filter(x=>x.id!==id); setTimeout(()=>{ updateBadges(); renderCard(); },300); };
+  card.querySelectorAll('[data-wa]').forEach(a=>a.addEventListener('click',()=>waDone(a.dataset.wa)));
+  card.querySelectorAll('[data-waskip]').forEach(b=>b.onclick=()=>waDone(b.dataset.waskip));
   card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ const t=DATA.tasks.find(x=>x.id===b.dataset.open); if(!t) return;
     const url=t.type==='update'?`/admin?tncupdate=${encodeURIComponent(t.tnc)}`:`/admin?tnc=${encodeURIComponent(t.tnc)}&project=${encodeURIComponent(t.name==='ohne Projekt'?'':t.name)}&email=${encodeURIComponent(t.email||'')}`;
     window.open(url,'_blank'); });
@@ -1128,10 +1133,10 @@ function renderCard(){
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, all=n+a+u+e+s2+j2;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, all=n+a+u+e+s2+j2+w;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
-  setB(DEPTS[5]._lbl, n); setB(EMMA._tag, n);
+  setB(DEPTS[5]._lbl, n+w); setB(EMMA._tag, n+w);
   setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2);
   okbar.hidden = !n;
   okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
