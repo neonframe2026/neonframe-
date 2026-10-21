@@ -1077,8 +1077,9 @@ function stKpis(c,p,lbl){ if(!c) return '';
   const k=(v,l,key,inv)=>`<div class="k"><b>${v}</b><small>${l}</small>${d(key,inv)}</div>`;
   return `<div class="kp">${k(c.anfragen,'Anfragen','anfragen')}${k(c.angebote,'Angebote','angebote')}${k(c.gemeldet,'haben sich gemeldet','gemeldet')}${k(c.verkaeufe,'Verkäufe','verkaeufe')}${k(eur2(c.umsatz),'Umsatz','umsatz')}${k(c.conversion+'%','Kaufquote (Angebote → gekauft)','conversion')}${k(c.erinnerungen,'Erinnerungen','erinnerungen')}${k(c.rabatte,'Rabatt-Mails','rabatte')}</div>`; }
 const stMd=(t)=>esc(t).replace(/^#{1,4}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const stLen=(a)=>{ try{ return localStorage.getItem('nf_len_'+a)||'normal' }catch(e){ return 'normal' } };
 function stChat(agent,ph){ const S=DATA.st, M=(S.chat&&S.chat[agent])||[];
-  return `<div><div class="preph"><p class="lbl" style="margin:0">Chat mit ${agent==='david'?'David':'Clara'}</p>${M.length?`<button class="b ghost" style="margin-left:auto" data-stclear="${agent}">Neu anfangen</button>`:''}</div>
+  return `<div><div class="preph"><p class="lbl" style="margin:0">Chat mit ${agent==='david'?'David':'Clara'}</p><select class="ekin" data-stlen="${agent}" style="margin-left:auto;width:auto;padding:4px 8px;font-size:12px">${[['kurz','Sehr kurz'],['normal','Kurz'],['lang','Ausführlich']].map(([k,l])=>`<option value="${k}"${stLen(agent)===k?' selected':''}>${l}</option>`).join('')}</select>${M.length?`<button class="b ghost" data-stclear="${agent}">Neu anfangen</button>`:''}</div>
    <div class="stc" style="margin-top:8px" data-stscroll>${M.length?M.map(m=>`<div class="stm ${m.role==='ai'?'ai':'me'}">${stMd(m.text)}</div>`).join(''):`<p class="isub" style="margin:0">${ph}</p>`}${STP.busy[agent]?`<div class="stm ai">${agent==='david'?'David':'Clara'} denkt nach …</div>`:''}</div>
    <div class="stin" style="margin-top:8px"><textarea class="ekin" data-stin="${agent}" placeholder="Nachricht an ${agent==='david'?'David':'Clara'} …">${esc(STP.chat[agent])}</textarea><button class="b pri" data-stsend="${agent}" ${STP.busy[agent]?'disabled':''}>Senden</button></div></div>`; }
 function davidHTML(){
@@ -1123,8 +1124,9 @@ function stBind(){
   if(openP===DAVID){ const P=S.periods[STP.tab]; if(!P.report&&!STP.busy.rep&&!STP.asked[P.key]&&P.cur&&(P.cur.anfragen||P.cur.angebote||P.cur.verkaeufe)){ STP.asked[P.key]=1; STP.busy.rep=true; post({ type:'nf-st', action:'report', period:STP.tab }); setTimeout(()=>{ if(openP===DAVID) keep(()=>{}) },0); } }
   card.querySelectorAll('[data-streport]').forEach(b=>b.onclick=()=>keep(()=>{ STP.busy.rep=true; STP.asked[S.periods[b.dataset.streport].key]=1; post({ type:'nf-st', action:'report', period:b.dataset.streport }); }));
   card.querySelectorAll('[data-stin]').forEach(t=>{ t.oninput=()=>{ STP.chat[t.dataset.stin]=t.value }; t.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); card.querySelector(`[data-stsend="${t.dataset.stin}"]`)?.click(); } }; });
-  const send=(agent,text)=>{ if(!text.trim()||STP.busy[agent]) return; S.chat[agent]=[...(S.chat[agent]||[]),{role:'me',text}]; STP.chat[agent]=''; STP.busy[agent]=true; post({ type:'nf-st', action:'chat', agent, text }); };
+  const send=(agent,text)=>{ if(!text.trim()||STP.busy[agent]) return; S.chat[agent]=[...(S.chat[agent]||[]),{role:'me',text}]; STP.chat[agent]=''; STP.busy[agent]=true; post({ type:'nf-st', action:'chat', agent, text, len:stLen(agent) }); };
   card.querySelectorAll('[data-stsend]').forEach(b=>b.onclick=()=>keep(()=>send(b.dataset.stsend,STP.chat[b.dataset.stsend]||'')));
+  card.querySelectorAll('[data-stlen]').forEach(sel=>sel.onchange=()=>{ try{ localStorage.setItem('nf_len_'+sel.dataset.stlen,sel.value) }catch(e){} });
   card.querySelectorAll('[data-stclear]').forEach(b=>b.onclick=()=>{ if(!confirm('Chat löschen und neu anfangen?')) return; S.chat[b.dataset.stclear]=[]; post({ type:'nf-st', action:'chat_clear', agent:b.dataset.stclear }); keep(()=>{}); });
   card.querySelectorAll('[data-stgf]').forEach(b=>b.onclick=()=>keep(()=>{ STP.gf=!STP.gf }));
   card.querySelectorAll('[data-stg]').forEach(el=>el.oninput=el.onchange=()=>{ STP.g[el.dataset.stg]=el.value; if(el.dataset.stg==='metric') keep(()=>{}); });
