@@ -580,12 +580,14 @@ const globe = new THREE.Group(); globe.position.y=4.6; hub.add(globe);
 /* ================= Räume ================= */
 const pickables = [], rooms = {}, persons = [];
 const R = DEPTS.length>6 ? 20 : 16.5; const RS = R/16.5;
-const PICK = {angebote:0, service:1, creative:0, strategie:0, einkauf:0, followup:0, shoptest:0, ads:0};
+const PICK = {angebote:0, service:1, creative:0, strategie:0, einkauf:0, followup:0, shoptest:1, ads:1};
 const VAR = {
   angebote:[{f:'white',w:0xe3e7ee,n:'Clean Office',p:['arm:0x1b1e25','table','plant','plant2']},{f:'wood',w:0xe7e2da,n:'Wood Lounge',p:['sofa:0x1f2a44','rugO','shelf','plant']},{f:'grey',w:0xdfe4ec,n:'Sales Board',p:['board','stand','arm1:0x1b1e25','plant']}],
   service:[{f:'white',w:0xe2eaee,n:'Call Center',p:['booth','plant','plant2','pouf:0x3ad7ff']},{f:'beige',w:0xe9e4dc,n:'Cozy Support',p:['sofa:0xb9c2cf','rugO','pouf:0x6b7a93','plant']},{f:'grey',w:0xdfe6ea,n:'Help Desk',p:['counter','parcels','plant']}],
   creative:[{f:'white',w:0xeee6e1,n:'Studio',p:['easel','bean:0xff8a5c','bean2:0x1b1e25','plant']},{f:'wood',w:0xe9e2d8,n:'Workshop',p:['bigtable','shelfc','plant']},{f:'dark',w:0x3a3e48,n:'Dark Studio',p:['sofa:0x15171c','neonwall','plant']}],
-  strategie:[{f:'white',w:0xe6e3f1,n:'Render Lab',p:['podium','plant','arm1:0x1b1e25']},{f:'grey',w:0xe1e0ea,n:'Showroom',p:['frames','bench','plant2']},{f:'beige',w:0xe7e3ec,n:'VR Corner',p:['podium','rugC:0x8f7bff','bean:0x1b1e25']}],
+  strategie:[{f:'wood',w:0xe6e3f1,n:'War Room',p:['meet','calendar','shelfb','plant2']},{f:'grey',w:0xe1e0ea,n:'Ziele-Wand',p:['goals','sofa:0x3b2f6b','plant2']},{f:'beige',w:0xe7e3ec,n:'Denker-Ecke',p:['calendar','arm:0x1b1e25','shelf','plant']}],
+  shoptest:[{f:'white',w:0xf1e4ec,n:'Test-Labor',p:['devices','heatmap','plant']},{f:'wood',w:0xeee2e8,n:'Kunden-Ecke',p:['heatmap','arm:0x1b1e25','bags','plant2']},{f:'grey',w:0xe8e1e6,n:'Shop-Lounge',p:['sofa:0x6b2f52','bags','board','plant']}],
+  ads:[{f:'grey',w:0xe6ecdf,n:'Data-Wand',p:['chartwall','arm1:0x1b1e25','plant']},{f:'wood',w:0xe7eadf,n:'ROAS-Lounge',p:['tv:0x2a3a1f','chartwall','plant2']},{f:'white',w:0xe9ecE3,n:'Kampagnen-Board',p:['board','stand','bean:0xa3e635','plant']}],
   einkauf:[{f:'grey',w:0xe5e3dc,n:'Lager',p:['racks','pallet','plant']},{f:'white',w:0xe8e6df,n:'Muster-Raum',p:['meet','parcels']},{f:'wood',w:0xe9e3d6,n:'Büro Warm',p:['sofa:0xd9a43a','shelf','plant']}],
   followup:[{f:'white',w:0xe1ebe6,n:'Lounge',p:['sofa:0x2e8f63','plant','plant2','plantT']},{f:'grey',w:0xdfe6e3,n:'Kanban',p:['board','stand','plant']},{f:'beige',w:0xe6e9e2,n:'Phone Booth',p:['booth','arm:0x1b1e25','plant']}],
 };
@@ -638,6 +640,29 @@ function addProps(g,d,v,col){
   const meet=(x,z)=>{ const t=cyl(.75,.75,.06,M(0xffffff,.4),32); t.position.set(x,.86,z); g.add(t); const l=cyl(.08,.1,.5,M(0x1b1e25),10); l.position.set(x,.58,z); g.add(l);
     for(let k=0;k<4;k++){ const a=k/4*Math.PI*2+.4; const ch=buildChair(); ch.scale.setScalar(.95); ch.position.set(x+Math.cos(a)*1.15,0,z+Math.sin(a)*1.15); ch.rotation.y=-a-Math.PI/2; g.add(ch);} };
   const rugC=(c)=>{ const rg=new THREE.Mesh(new THREE.RingGeometry(1.1,1.5,48),M(c,.9)); rg.rotation.x=-Math.PI/2; rg.position.set(2.6,.33,2.1); g.add(rg); };
+  // Wand-Bildschirm (linke Wand) mit eigener Grafik
+  const wallScreen=(draw)=>{ const t=ctexHQ(640,380,(c,w,h)=>{ c.fillStyle='#0d1424'; c.fillRect(0,0,w,h); c.strokeStyle='rgba(255,255,255,.12)'; c.lineWidth=2; c.strokeRect(1,1,w-2,h-2); draw(c,w,h); });
+    const fr=box(.06,1.5,2.5,M(0x1b1e25,.4)); fr.position.set(-4.92,1.7,1.6); g.add(fr);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(2.36,1.38),new THREE.MeshBasicMaterial({map:t})); m.position.set(-4.88,1.7,1.6); m.rotation.y=Math.PI/2; g.add(m); return [fr,m]; };
+  const hex=(n)=>'#'+new THREE.Color(n).getHexString(), DC=hex(d.color);
+  const calendar=()=>wallScreen((c,w,h)=>{ c.fillStyle='#ffffff'; c.font='700 26px sans-serif'; c.fillText('Kampagnen-Kalender',24,44); const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+    days.forEach((dd,i)=>{ c.fillStyle='rgba(255,255,255,.5)'; c.font='600 16px sans-serif'; c.fillText(dd,30+i*84,82); });
+    for(let r=0;r<4;r++) for(let i=0;i<7;i++){ c.strokeStyle='rgba(255,255,255,.1)'; c.strokeRect(24+i*84,94+r*68,78,62); }
+    [[0,0,3,'#ff4fa3','Black Friday'],[1,3,2,DC,'Newsletter'],[2,1,4,'#34e39b','Ads Test'],[3,4,3,'#ffc04a','Weihnachten']].forEach(([r,i,n,col,txt])=>{ c.fillStyle=col; c.fillRect(28+i*84,120+r*68,n*84-12,26); c.fillStyle='#0d1424'; c.font='700 14px sans-serif'; c.fillText(txt,36+i*84,138+r*68); }); });
+  const goals=()=>wallScreen((c,w,h)=>{ c.fillStyle='#ffffff'; c.font='700 26px sans-serif'; c.fillText('Ziele Q4',24,44);
+    [['Umsatz',.72,'#34e39b'],['Anfragen',.55,DC],['Bewertungen',.86,'#ffc04a'],['Conversion',.38,'#ff4fa3']].forEach(([l,v,col],i)=>{ const y=86+i*68; c.fillStyle='rgba(255,255,255,.75)'; c.font='600 18px sans-serif'; c.fillText(l,24,y);
+      c.fillStyle='rgba(255,255,255,.1)'; c.fillRect(24,y+12,560,18); c.fillStyle=col; c.fillRect(24,y+12,560*v,18); c.fillStyle='#ffffff'; c.font='700 16px sans-serif'; c.fillText(Math.round(v*100)+'%',592-40,y); }); });
+  const heatmap=()=>wallScreen((c,w,h)=>{ c.fillStyle='#ffffff'; c.fillRect(40,30,560,320); c.fillStyle='#e3e7ee'; c.fillRect(40,30,560,40); c.fillStyle='#cfd5df'; c.fillRect(70,100,240,150); c.fillRect(340,100,230,22); c.fillRect(340,136,180,14); c.fillRect(340,160,200,14); c.fillStyle='#2f6bff'; c.fillRect(340,200,150,40);
+    [[190,175,90,.55],[415,220,70,.75],[460,130,60,.4],[150,300,70,.3]].forEach(([x,y,r,a])=>{ const gg=c.createRadialGradient(x,y,2,x,y,r); gg.addColorStop(0,`rgba(255,40,0,${a})`); gg.addColorStop(.45,`rgba(255,200,0,${a*.7})`); gg.addColorStop(1,'rgba(0,120,255,0)'); c.fillStyle=gg; c.beginPath(); c.arc(x,y,r,0,7); c.fill(); }); });
+  const chartwall=()=>wallScreen((c,w,h)=>{ c.fillStyle='#ffffff'; c.font='700 26px sans-serif'; c.fillText('ROAS & Kosten',24,44);
+    for(let i=0;i<8;i++){ const v=[.35,.5,.42,.62,.58,.75,.68,.9][i]; c.fillStyle='rgba(163,230,53,.85)'; c.fillRect(40+i*68,340-v*250,44,v*250); }
+    c.strokeStyle='#ff4fa3'; c.lineWidth=4; c.beginPath(); [.6,.55,.62,.5,.46,.4,.42,.33].forEach((v,i)=>{ const x=62+i*68, y=340-v*250; i?c.lineTo(x,y):c.moveTo(x,y); }); c.stroke(); });
+  const devices=(x,z)=>{ const t=box(2,.07,.9,M(0xffffff,.4)); t.position.set(x,.86,z); g.add(t); [[-.85,-.35],[.85,-.35],[-.85,.35],[.85,.35]].forEach(([a,b])=>{const l=box(.06,.52,.06,M(0x1b1e25));l.position.set(x+a,.56,z+b);g.add(l);});
+    const scr=(w2,h2,dx,dz,ry,col)=>{ const fr=box(w2,h2,.04,M(0x1b1e25,.4)); fr.position.set(x+dx,.9+h2/2,z+dz); fr.rotation.y=ry; g.add(fr); const p=new THREE.Mesh(new THREE.PlaneGeometry(w2*.9,h2*.88),new THREE.MeshBasicMaterial({color:col})); p.position.set(x+dx+Math.sin(ry)*.025,.9+h2/2,z+dz+Math.cos(ry)*.025); p.rotation.y=ry; g.add(p); };
+    scr(.8,.5,-.45,-.1,.3,0x2f6bff); scr(.36,.48,.3,0,-.2,col.getHex()); scr(.16,.3,.75,.15,-.4,0xffffff); };
+  const bags=(x,z)=>{ [[0,0,0xff4fa3],[.42,.12,0x1b1e25],[.2,-.32,col.getHex()]].forEach(([a,b,cc],i)=>{ const bg=box(.36,.46,.18,M(cc,.7)); bg.position.set(x+a,.56,z+b); bg.rotation.y=i*.5; g.add(bg); const h2=new THREE.Mesh(new THREE.TorusGeometry(.09,.012,6,20,Math.PI),M(0xffffff)); h2.position.set(x+a,.8,z+b); h2.rotation.y=i*.5; g.add(h2); }); };
+  const tv=(x,z)=>{ const st=box(1.6,.5,.45,M(0x1b1e25,.6)); st.position.set(x,.56,z); g.add(st); const t=ctexHQ(400,230,(c,w,h)=>{ c.fillStyle='#0d1424'; c.fillRect(0,0,w,h); c.fillStyle='#a3e635'; c.font='800 70px sans-serif'; c.fillText('4,2x',30,110); c.fillStyle='rgba(255,255,255,.7)'; c.font='600 26px sans-serif'; c.fillText('ROAS diese Woche',30,160); });
+    const fr=box(1.5,.9,.05,M(0x0b0d12,.4)); fr.position.set(x,1.35,z-.05); g.add(fr); const m=new THREE.Mesh(new THREE.PlaneGeometry(1.42,.82),new THREE.MeshBasicMaterial({map:t})); m.position.set(x,1.35,z-.02); g.add(m); };
   const onWall=[];
   v.p.forEach(spec=>{ const [k,cs]=spec.split(':'); const c=cs?parseInt(cs):0;
     if(k==='arm'){ arm(1.4,1.7,Math.PI/2.2,c); arm(4.0,2.7,-Math.PI/1.6,c); ctab(2.7,2.1); }
@@ -668,6 +693,15 @@ function addProps(g,d,v,col){
     else if(k==='pallet') pallet(2.6,2.6);
     else if(k==='meet') meet(1.6,2.2);
     else if(k==='rugC') rugC(c);
+    else if(k==='calendar') onWall.push(...calendar());
+    else if(k==='goals') onWall.push(...goals());
+    else if(k==='heatmap') onWall.push(...heatmap());
+    else if(k==='chartwall') onWall.push(...chartwall());
+    else if(k==='devices') devices(2.3,2.2);
+    else if(k==='bags') bags(3.9,3.1);
+    else if(k==='tv') { tv(2.7,1.2); sofa(2.7,3.3,Math.PI,c||0x1f2a44); }
+    else if(k==='rug') rugO(2.6,2.4);
+    else if(k==='shelfb') shelf(3.3,-3.55,0,true);
   });
   return onWall;
 }
@@ -865,13 +899,15 @@ nav.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.id?focusRoom(b
 function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.id||null)===focused))); }
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
-function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78*.96; }
+function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78*1.04; }
 function overPhi(){ return isMob()?1.18:1.05; }
 function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
 function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
 function roomZoom(){ return 1; }
 function focusRoom(id){ clearTimeout(cardT); openP=null; card.hidden=true; cardT=setTimeout(()=>{ if(focused===id&&!openP) renderRoom(id); }, reduce?0:450); focused=id; goal.copy(rooms[id].g.position).add(new THREE.Vector3(0,.6,0)); distGoal=roomDist(); thetaGoal=nearTheta(Math.PI/4); phiGoal=1.0; cardShift(distGoal); flyTo(1150); setNav(); DEPTS.forEach(d=>d._lbl.classList.toggle('dim',d.id!==id)); }
-function overview(){ focused=null; goal.set(0,1.5,0); thetaGoal=nearTheta(START_TH); distGoal=overDist(); phiGoal=overPhi(); flyTo(1500); setNav(); DEPTS.forEach(d=>d._lbl.classList.remove('dim')); closeCard(); }
+// Übersicht etwas nach oben schieben (Ziel Richtung Kamera)
+function overGoal(){ const k=isMob()?0:4.2*RS; goal.set(Math.sin(START_TH)*k,1.5,Math.cos(START_TH)*k); }
+function overview(){ focused=null; overGoal(); thetaGoal=nearTheta(START_TH); distGoal=overDist(); phiGoal=overPhi(); flyTo(1500); setNav(); DEPTS.forEach(d=>d._lbl.classList.remove('dim')); closeCard(); }
 
 /* ================= Karte ================= */
 const card=document.getElementById('card');
@@ -1428,7 +1464,7 @@ function frame(){ frame.n=(frame.n||0)+1;
   requestAnimationFrame(frame);
 }
 // Start: erst von oben, dann sanft runter in die Übersicht (so leicht gedreht, dass alle Abteilungen zu sehen sind)
-distGoal=overDist(); phiGoal=overPhi(); thetaGoal=START_TH; goal.set(0,1.5,0); target.copy(goal);
+distGoal=overDist(); phiGoal=overPhi(); thetaGoal=START_TH; overGoal(); target.copy(goal);
 phi=reduce?phiGoal:.06; theta=reduce?START_TH:START_TH-1.1; dist=reduce?distGoal:distGoal*1.45;
 requestAnimationFrame(()=>requestAnimationFrame(()=>flyTo(2200))); // Flug startet erst, wenn das Bild schon da ist
 updateBadges(); syncCam(); frame();
