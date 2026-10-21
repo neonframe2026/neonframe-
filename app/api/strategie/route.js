@@ -1,135 +1,135 @@
-import { createClient } from '@supabase/supabase-js'
-import { knowledgeText } from './wissen'
+import { sb, periods, loadData, stats, claude, context, PERSONA } from '../../../lib/strategie'
 
-// Strategie & Planung: Kennzahlen aus Angeboten, Anfragen und Nachrichten + KI (David & Clara)
-export const sb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
-const BOUGHT = ['confirmed', 'in_production', 'shipped', 'delivered']
-const H = 3600000, D = 24 * H
-const t = (d) => (d ? new Date(d).getTime() : 0)
-const num = (v) => { const n = parseFloat(String(v ?? '').replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')); return isFinite(n) ? n : 0 }
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const maxDuration = 60
 
-// ---------- Zeit (deutsche Zeit) ----------
-function parts(ms) { const s = new Date(ms).toLocaleString('sv-SE', { timeZone: 'Europe/Berlin' }); return { y: +s.slice(0, 4), m: +s.slice(5, 7), d: +s.slice(8, 10) } }
-function berlinMidnight(y, m, d) { // 0:00 Uhr deutscher Zeit -> ms
-  const guess = Date.UTC(y, m - 1, d); const s = new Date(guess).toLocaleString('sv-SE', { timeZone: 'Europe/Berlin' })
-  const off = Date.parse(s.replace(' ', 'T') + 'Z') - guess; return guess - off
+// Strategie & Planung (angemeldet)
+// GET                                   -> Kennzahlen (Woche/Monat/Jahr), Berichte, Ziele, Chats, Kampagnen
+// POST { action:'report', period }      -> David schreibt den Bericht (week | month | year)
+// POST { action:'chat', agent, text }   -> mit David oder Clara schreiben
+// POST { action:'goal', title, metric, target } / { action:'goal_done', id } / { action:'delete', id }
+// POST { action:'campaign_from_chat' }  -> Clara legt aus dem Chat eine Kampagne an
+// POST { action:'step', id, i }         -> Schritt einer Kampagne abhaken
+// POST { action:'campaign_status', id, status }
+const fail = (e) => Response.json({ error: e.message }, { status: e.status || 500 })
+async function user(req) {
+  const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+  if (!token) throw Object.assign(new Error('Nicht angemeldet'), { status: 401 })
+  const { data, error } = await sb().auth.getUser(token)
+  if (error || !data?.user) throw Object.assign(new Error('Nicht angemeldet'), { status: 401 })
+  return data.user
 }
-const fmt = (ms) => new Date(ms).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
-const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
-export function periods(now = Date.now()) {
-  const p = parts(now)
-  const today = berlinMidnight(p.y, p.m, p.d)
-  const wd = (new Date(today + 12 * H).getUTCDay() + 6) % 7 // 0 = Montag
-  const wk = today - wd * D // Montag dieser Woche (ungefähr, Sommerzeit egal für Zählung)
-  const weekStart = (ms) => { const q = parts(ms); return berlinMidnight(q.y, q.m, q.d) }
-  const w0 = weekStart(wk), w1 = weekStart(wk - 7 * D + 2 * H), w2 = weekStart(wk - 14 * D + 2 * H)
-  const m0 = berlinMidnight(p.y, p.m, 1)
-  const pm = p.m === 1 ? { y: p.y - 1, m: 12 } : { y: p.y, m: p.m - 1 }
-  const ppm = pm.m === 1 ? { y: pm.y - 1, m: 12 } : { y: pm.y, m: pm.m - 1 }
-  const m1 = berlinMidnight(pm.y, pm.m, 1), m2 = berlinMidnight(ppm.y, ppm.m, 1)
-  const ly = berlinMidnight(pm.y - 1, pm.m, 1), lyEnd = berlinMidnight(pm.m === 12 ? pm.y : pm.y - 1, pm.m === 12 ? 1 : pm.m + 1, 1)
-  const y0 = berlinMidnight(p.y, 1, 1), y1 = berlinMidnight(p.y - 1, 1, 1)
-  const kw = (ms) => { const dt = new Date(ms + 12 * H); const th = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate() + 3 - ((dt.getUTCDay() + 6) % 7))); const f = new Date(Date.UTC(th.getUTCFullYear(), 0, 4)); return 1 + Math.round(((th - f) / D - 3 + ((f.getUTCDay() + 6) % 7)) / 7) }
-  return {
-    week: { key: 'week-' + fmt(w1), label: `KW ${kw(w1)} (${fmt(w1).slice(0, 6)} bis ${fmt(w0 - D).slice(0, 6)})`, cur: [w1, w0], prev: [w2, w1], prevLabel: `KW ${kw(w2)}`, now: [w0, now], nowLabel: 'diese Woche bisher' },
-    month: { key: `month-${pm.y}-${pm.m}`, label: `${MON[pm.m - 1]} ${pm.y}`, cur: [m1, m0], prev: [m2, m1], prevLabel: `${MON[ppm.m - 1]} ${ppm.y}`, ly: [ly, lyEnd], lyLabel: `${MON[pm.m - 1]} ${pm.y - 1}`, now: [m0, now], nowLabel: `${MON[p.m - 1]} bisher` },
-    year: { key: `year-${p.y}-${p.m}`, label: `${p.y} bis heute`, cur: [y0, now], prev: [y1, y1 + (now - y0)], prevLabel: `${p.y - 1} gleicher Zeitraum`, full: [y1, y0], fullLabel: `${p.y - 1} gesamt`, now: [y0, now], nowLabel: `${p.y} bisher` },
-    monthKey: `${p.y}-${String(p.m).padStart(2, '0')}`, monthName: MON[p.m - 1], monthRange: [m0, now],
-  }
-}
+const METRICS = { umsatz: 'Umsatz (€)', verkaeufe: 'Verkäufe', angebote: 'Angebote', anfragen: 'Anfragen', conversion: 'Conversion (%)', frei: 'Eigenes Ziel' }
 
-// ---------- Rohdaten einmal laden ----------
-export async function loadData(db, since) {
-  const iso = new Date(since).toISOString()
-  const [{ data: offers }, { data: ek }, { data: inbox }, { data: msgs }] = await Promise.all([
-    db.from('offers').select('id,created_at,status,final_price,customer_email,recontacted_at,extra_discount_at,discount_reminder_sent_at,order_email_sent_at,review_email_sent_at').gte('created_at', new Date(since - 120 * D).toISOString()).limit(5000),
-    db.from('einkauf').select('created_at,kind,email,status').gte('created_at', iso).limit(5000),
-    db.from('inbox').select('created_at,kind,action').gte('created_at', iso).limit(5000),
-    db.from('social_msgs').select('thread_id,dir,at').eq('dir', 'in').gte('at', iso).limit(10000),
-  ])
-  return { offers: offers || [], ek: ek || [], inbox: inbox || [], msgs: msgs || [] }
+// Kampagnen-Kalender beim ersten Öffnen mit den wichtigsten Terminen füllen
+async function seed(db) {
+  const { count } = await db.from('strategie').select('id', { count: 'exact', head: true }).eq('type', 'campaign')
+  if (count) return
+  const y = new Date().getFullYear()
+  const bf = (yy) => { const d = new Date(Date.UTC(yy, 10, 1)); const th = (4 - d.getUTCDay() + 7) % 7; return new Date(Date.UTC(yy, 10, 1 + th + 21 + 1)) } // Freitag nach dem 4. Donnerstag
+  const mother = (yy) => { const d = new Date(Date.UTC(yy, 4, 1)); return new Date(Date.UTC(yy, 4, 1 + ((7 - d.getUTCDay()) % 7) + 7)) }
+  const iso = (d) => d.toISOString().slice(0, 10)
+  const B = bf(y)
+  const rows = [
+    { title: 'Black Friday', data: { start: iso(new Date(B - 3 * 864e5)), end: iso(new Date(+B + 3 * 864e5)), offer: '50% Rabatt', color: '#ff4fa3', status: 'planung', steps: [] } },
+    { title: 'Weihnachten', data: { start: `${y}-12-01`, end: `${y}-12-14`, offer: 'Bestellschluss für Lieferung bis Heiligabend beachten', color: '#ffc04a', status: 'idee', steps: [] } },
+    { title: 'Valentinstag', data: { start: `${y + 1}-01-25`, end: `${y + 1}-02-14`, offer: '', color: '#ef4444', status: 'idee', steps: [] } },
+    { title: 'Muttertag', data: { start: iso(new Date(mother(y + 1) - 21 * 864e5)), end: iso(mother(y + 1)), offer: '', color: '#34e39b', status: 'idee', steps: [] } },
+  ]
+  await db.from('strategie').insert(rows.map(r => ({ type: 'campaign', ...r })))
 }
 
-// ---------- Kennzahlen für einen Zeitraum ----------
-export function stats(D0, [a, b]) {
-  const inR = (d) => { const x = t(d); return x >= a && x < b }
-  const ek = D0.ek.filter(r => inR(r.created_at))
-  const offers = D0.offers.filter(o => inR(o.created_at))
-  const bought = D0.offers.filter(o => BOUGHT.includes(o.status) && inR(o.order_email_sent_at || o.created_at))
-  const umsatz = bought.reduce((s, o) => s + num(o.final_price), 0)
-  const fragen = D0.inbox.filter(r => r.kind === 'kundenfrage' && inR(r.created_at)).length
-  const chats = new Set(D0.msgs.filter(m => inR(m.at)).map(m => m.thread_id)).size
-  // Zeit von Anfrage bis Angebot (gleiche E-Mail, Anfrage max. 7 Tage vorher)
-  const req = D0.ek.map(r => ({ e: String(r.email || '').toLowerCase(), t: t(r.created_at) })).filter(r => r.e)
-  const waits = offers.map(o => { const e = String(o.customer_email || '').toLowerCase(); const ot = t(o.created_at); const r = req.filter(x => x.e === e && x.t <= ot && ot - x.t < 7 * D).sort((p, q) => q.t - p.t)[0]; return r ? (ot - r.t) / H : null }).filter(x => x != null).sort((p, q) => p - q)
-  const wait = waits.length ? waits[Math.floor(waits.length / 2)] : null
-  return {
-    anfragen: ek.length, logo: ek.filter(r => r.kind === 'logo').length, text: ek.filter(r => r.kind !== 'logo').length,
-    angebote: offers.length, verkaeufe: bought.length, umsatz: Math.round(umsatz),
-    warenkorb: bought.length ? Math.round(umsatz / bought.length) : 0,
-    conversion: offers.length ? Math.round(bought.length / offers.length * 100) : 0,
-    erinnerungen: D0.offers.filter(o => inR(o.recontacted_at)).length,
-    rabatte: D0.offers.filter(o => inR(o.extra_discount_at)).length,
-    gemeldet: fragen + chats, mails: fragen, chats,
-    offen: offers.filter(o => !BOUGHT.includes(o.status)).length,
-    wartezeit: wait == null ? null : Math.round(wait * 10) / 10,
-  }
+export async function GET(req) {
+  try {
+    await user(req)
+    const db = sb()
+    await seed(db)
+    const P = periods()
+    const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
+    const S = (r) => (r ? stats(D0, r) : null)
+    const { data: rows } = await db.from('strategie').select('*').order('created_at', { ascending: true }).limit(2000)
+    const R = rows || []
+    const month = S(P.monthRange)
+    const goals = R.filter(r => r.type === 'goal' && r.data?.month === P.monthKey).map(r => {
+      const m = r.data.metric, target = +r.data.target || 0
+      const val = m === 'frei' ? (r.data.done ? 1 : 0) : (month?.[m] || 0)
+      return { id: r.id, title: r.title, metric: m, target, value: val, done: !!r.data.done, pct: m === 'frei' ? (r.data.done ? 100 : 0) : target ? Math.min(100, Math.round(val / target * 100)) : 0 }
+    })
+    const per = {}
+    for (const k of ['week', 'month', 'year']) {
+      const p = P[k]
+      const rep = R.filter(r => r.type === 'report' && r.key === p.key).pop()
+      per[k] = { key: p.key, label: p.label, prevLabel: p.prevLabel, nowLabel: p.nowLabel, lyLabel: p.lyLabel || '', fullLabel: p.fullLabel || '', cur: S(p.cur), prev: S(p.prev), ly: S(p.ly), full: S(p.full), now: S(p.now), report: rep ? { ...rep.data, at: rep.created_at } : null }
+    }
+    const chat = (a) => R.filter(r => r.type === 'chat' && r.key === a).slice(-40).map(r => ({ role: r.data?.role, text: r.content, at: r.created_at }))
+    return Response.json({
+      periods: per, monthName: P.monthName, metrics: METRICS, goals,
+      chat: { david: chat('david'), clara: chat('clara') },
+      campaigns: R.filter(r => r.type === 'campaign').map(r => ({ id: r.id, title: r.title, ...r.data })).sort((a, b) => String(a.start).localeCompare(String(b.start))),
+    })
+  } catch (e) { return fail(e) }
 }
 
-// ---------- KI ----------
-const BASE = `NeonFrame (neonframe.de): Phillip Nägele verkauft individuelle LED-Neonschilder (Text oder Logo) nur in Deutschland, Einzelunternehmen, Onlineshop auf Shopify.
-Ablauf: Kunde fragt im Konfigurator an, bekommt werktags in ca. 6 Std. ein Angebot mit 3D-Vorschau per Mail, danach automatisch Erinnerung nach 12 Std., Rabatt-Mail (Extra-Rabatt) 12 Std. später, Rabatt-Erinnerung vor Ablauf. Kauf über Shopify-Checkout.
-Lieferung Standard 2 bis 3 Wochen, Express 7 bis 10 Werktage (+30%). Versand gratis. Keine Rückgabe (personalisiert). Ads laufen auf Meta (Instagram, Facebook).
-Team aus KI-Agenten in der Zentrale: Lisa (Angebote), Sarah (Mail-Postfach), Jonas (Instagram/Facebook), Mia (Ad-Prompts), Noah (Bilder/Videos), Anna (Einkauf), Emma (Follow-up-Mails), David (Berichte & Ziele), Clara (Kampagnen).
-Regeln: Antworte auf Deutsch, per du, direkt und konkret wie ein Top-Berater. Keine Gedankenstriche (– oder —). Prozent ohne Leerzeichen ("+30%"). Hersteller oder Lieferanten nie nennen. Nichts erfinden: Zahlen nur aus den Daten unten, sonst sagen, dass die Zahl fehlt.`
-
-export const PERSONA = {
-  david: `Du bist David Lehmann, Senior E-Commerce-Analyst und Growth-Stratege mit 15 Jahren Erfahrung in DTC-Shops (Shopify, Meta Ads, CRO, Pricing, Retention). Du liest Zahlen wie ein CFO und denkst wie ein Gründer: Was bringt am meisten Umsatz mit dem wenigsten Aufwand? Du nennst Ursachen, priorisierst (Wirkung x Aufwand) und machst konkrete, umsetzbare Vorschläge mit Zahlenziel. Du bist zuständig für Wochen-, Monats- und Jahresberichte und die Ziele.`,
-  clara: `Du bist Clara Vogel, Head of Campaigns mit 12 Jahren Erfahrung in Performance-Marketing und Saison-Kampagnen für Onlineshops (Black Friday, Weihnachten, Valentinstag, Muttertag, Vatertag, Ostern, Hochzeit, Geburtstag, Business-Kunden). Du planst Kampagnen von der Idee bis zur Umsetzung: Angebot und Mechanik (Rabatt, Bundle, Deadline, Gratis-Extra), Zeitplan, Ads (Hooks, Formate, Budget-Verteilung), Mails, Shop-Anpassungen, Lieferfristen (Bestellschluss für pünktliche Lieferung!). Du achtest auf Marge und schlägst clevere Alternativen zu plumpen Rabatten vor. Du bist zuständig für den Kampagnen-Kalender.`,
-}
-
-export async function claude({ system, messages, max = 1500, json }) {
-  const key = process.env.ANTHROPIC_API_KEY
-  if (!key) throw new Error('ANTHROPIC_API_KEY fehlt in Vercel')
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-sonnet-5-5', max_tokens: max, system, messages }),
-  })
-  const j = await r.json()
-  if (!r.ok) throw new Error('KI: ' + (j?.error?.message || r.status))
-  const txt = (j.content || []).map(c => c.text || '').join('').trim()
-  if (!json) return txt
-  const a = txt.indexOf('{'), b = txt.lastIndexOf('}')
-  if (a < 0 || b < a) throw new Error('KI hat kein gültiges Ergebnis geliefert, bitte nochmal versuchen')
-  return JSON.parse(txt.slice(a, b + 1))
-}
-
-export async function context(db, extra = '') {
-  const P = periods()
-  const D0 = await loadData(db, P.year.prev[0] - 40 * D)
-  const S = (r) => JSON.stringify(stats(D0, r))
-  const { data: rows } = await db.from('strategie').select('type,title,content,data,created_at').in('type', ['goal', 'campaign']).order('created_at', { ascending: true })
-  const goals = (rows || []).filter(r => r.type === 'goal').map(r => `- ${r.title} (${r.data?.month || ''})`).join('\n')
-  const camps = (rows || []).filter(r => r.type === 'campaign').map(r => `- ${r.title}: ${r.data?.start || ''} bis ${r.data?.end || ''}, ${r.data?.offer || ''}, Status ${r.data?.status || 'idee'}, Schritte: ${(r.data?.steps || []).map(s => `${s.t}${s.done ? ' (erledigt)' : ''}`).join('; ')}`).join('\n')
-  const wissen = (await knowledgeText().catch(() => '')).slice(0, 5000)
-  return `${BASE}
-
-Heute: ${fmt(Date.now())}
-Kennzahlen (anfragen = Konfigurator-Anfragen seit Start der Erfassung, gemeldet = Kundenfragen per Mail + Chats, wartezeit = Std. bis Angebot, umsatz in Euro brutto):
-${P.week.label}: ${S(P.week.cur)}
-${P.week.prevLabel}: ${S(P.week.prev)}
-${P.week.nowLabel}: ${S(P.week.now)}
-${P.month.label}: ${S(P.month.cur)}
-${P.month.prevLabel}: ${S(P.month.prev)}
-${P.month.nowLabel}: ${S(P.month.now)}
-${P.year.label}: ${S(P.year.cur)}
-${P.year.prevLabel}: ${S(P.year.prev)}
-Ziele:
-${goals || '(noch keine)'}
-Kampagnen:
-${camps || '(noch keine)'}
-${extra}
-Wissen aus Phillips Unterlagen:
-${wissen}`
+export async function POST(req) {
+  try {
+    await user(req)
+    const b = await req.json()
+    const db = sb()
+    if (b.action === 'report') {
+      const k = ['week', 'month', 'year'].includes(b.period) ? b.period : 'week'
+      const P = periods(), p = P[k]
+      const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
+      const cmp = [`${p.label}: ${JSON.stringify(stats(D0, p.cur))}`, `${p.prevLabel}: ${JSON.stringify(stats(D0, p.prev))}`, p.ly ? `${p.lyLabel}: ${JSON.stringify(stats(D0, p.ly))}` : '', p.full ? `${p.fullLabel}: ${JSON.stringify(stats(D0, p.full))}` : ''].filter(Boolean).join('\n')
+      const out = await claude({
+        system: PERSONA.david + '\n\n' + await context(db),
+        messages: [{ role: 'user', content: `Schreib den ${k === 'week' ? 'Wochenbericht' : k === 'month' ? 'Monatsbericht' : 'Jahresbericht'} für ${p.label}. Vergleich:\n${cmp}\n\nAntworte NUR mit JSON: {"summary":"2 bis 3 Sätze: wie lief es, wichtigste Veränderung mit Zahl","good":["was gut lief, max 3, kurz"],"bad":["was schlecht lief oder auffällt, max 3, kurz"],"suggestions":[{"title":"konkrete Maßnahme, max 10 Wörter","why":"warum und erwartete Wirkung, 1 Satz","type":"ziel oder kampagne"}]} mit 3 bis 5 Vorschlägen, nach Wirkung sortiert. Wenn kaum Daten da sind, sag das ehrlich und schlag vor, was zuerst gemessen werden sollte.` }],
+        max: 1800, json: true,
+      })
+      await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 6) } }])
+      return Response.json({ success: true })
+    }
+    if (b.action === 'chat') {
+      const agent = b.agent === 'clara' ? 'clara' : 'david'
+      const text = String(b.text || '').trim().slice(0, 4000)
+      if (!text) return Response.json({ error: 'Nachricht ist leer' }, { status: 400 })
+      const { data: hist } = await db.from('strategie').select('content,data').eq('type', 'chat').eq('key', agent).order('created_at', { ascending: false }).limit(20)
+      const msgs = (hist || []).reverse().map(r => ({ role: r.data?.role === 'ai' ? 'assistant' : 'user', content: r.content }))
+      msgs.push({ role: 'user', content: text })
+      while (msgs.length && msgs[0].role !== 'user') msgs.shift()
+      const reply = await claude({ system: PERSONA[agent] + '\n\nAntworte wie im Chat: klar gegliedert, so kurz wie möglich, so ausführlich wie nötig. Bei Plänen nummerierte Schritte mit Datum. Stell eine Rückfrage, wenn dir etwas Wichtiges fehlt.\n\n' + await context(db), messages: msgs, max: 1800 })
+      await db.from('strategie').insert([{ type: 'chat', key: agent, content: text, data: { role: 'me' } }, { type: 'chat', key: agent, content: reply, data: { role: 'ai' } }])
+      return Response.json({ success: true, reply })
+    }
+    if (b.action === 'chat_clear') {
+      await db.from('strategie').delete().eq('type', 'chat').eq('key', b.agent === 'clara' ? 'clara' : 'david')
+      return Response.json({ success: true })
+    }
+    if (b.action === 'goal') {
+      const metric = METRICS[b.metric] ? b.metric : 'frei'
+      const P = periods()
+      const title = String(b.title || '').trim() || `${METRICS[metric]}: ${b.target}`
+      await db.from('strategie').insert([{ type: 'goal', title: title.slice(0, 120), data: { metric, target: +b.target || 0, month: P.monthKey, done: false } }])
+      return Response.json({ success: true })
+    }
+    if (b.action === 'campaign_from_chat') {
+      const { data: hist } = await db.from('strategie').select('content,data').eq('type', 'chat').eq('key', 'clara').order('created_at', { ascending: false }).limit(12)
+      const chat = (hist || []).reverse().map(r => `${r.data?.role === 'ai' ? 'Clara' : 'Phillip'}: ${r.content}`).join('\n\n')
+      if (!chat) return Response.json({ error: 'Erst mit Clara über die Kampagne schreiben' }, { status: 400 })
+      const out = await claude({ system: PERSONA.clara + '\n\n' + await context(db), messages: [{ role: 'user', content: `Mach aus diesem Chat eine Kampagne für den Kalender:\n\n${chat}\n\nAntworte NUR mit JSON: {"title":"Name","start":"YYYY-MM-DD","end":"YYYY-MM-DD","offer":"Angebot kurz","color":"#hex passend","steps":[{"t":"Schritt kurz","due":"YYYY-MM-DD","who":"mia|emma|shop|du"}]}` }], max: 1500, json: true })
+      const data = { start: out.start || '', end: out.end || '', offer: out.offer || '', color: /^#[0-9a-f]{6}$/i.test(out.color || '') ? out.color : '#8f7bff', status: 'planung', steps: (out.steps || []).slice(0, 15).map(s => ({ t: String(s.t || ''), due: s.due || '', who: s.who || 'du', done: false })) }
+      const { data: ex } = await db.from('strategie').select('id').eq('type', 'campaign').ilike('title', String(out.title || '').trim()).limit(1)
+      if (ex?.[0]) await db.from('strategie').update({ data }).eq('id', ex[0].id)
+      else await db.from('strategie').insert([{ type: 'campaign', title: String(out.title || 'Neue Kampagne').slice(0, 80), data }])
+      return Response.json({ success: true, title: out.title })
+    }
+    const { data: r } = await db.from('strategie').select('*').eq('id', b.id).maybeSingle()
+    if (!r) return Response.json({ error: 'Nicht gefunden' }, { status: 404 })
+    if (b.action === 'goal_done') { await db.from('strategie').update({ data: { ...r.data, done: !r.data?.done } }).eq('id', r.id); return Response.json({ success: true }) }
+    if (b.action === 'step') { const steps = [...(r.data?.steps || [])]; if (steps[b.i]) steps[b.i] = { ...steps[b.i], done: !steps[b.i].done }; await db.from('strategie').update({ data: { ...r.data, steps } }).eq('id', r.id); return Response.json({ success: true }) }
+    if (b.action === 'campaign_status') { await db.from('strategie').update({ data: { ...r.data, status: ['idee', 'planung', 'laeuft', 'fertig'].includes(b.status) ? b.status : 'idee' } }).eq('id', r.id); return Response.json({ success: true }) }
+    if (b.action === 'delete') { await db.from('strategie').delete().eq('id', r.id); return Response.json({ success: true }) }
+    return Response.json({ error: 'Unbekannte Aktion' }, { status: 400 })
+  } catch (e) { return fail(e) }
 }
