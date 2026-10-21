@@ -58,9 +58,10 @@ export async function POST(req) {
     if (!auth) {
       // Webhook von Meta
       const raw = await req.text()
-      if (!validSignature(raw, req.headers.get('x-hub-signature-256'))) return new Response('Ungültige Signatur', { status: 401 })
+      if (!validSignature(raw, req.headers.get('x-hub-signature-256'))) { console.log('Jonas: ungültige Signatur, META_APP_SECRET prüfen'); return new Response('Ungültige Signatur', { status: 401 }) }
       let body = {}; try { body = JSON.parse(raw) } catch {}
-      const out = await handleWebhook(body)
+      console.log('Jonas: Webhook', body.object, JSON.stringify(body).slice(0, 500))
+      const out = await handleWebhook(body).catch(e => { console.log('Jonas: Fehler', e.message); return { drafts: 0 } })
       if (out.drafts) await sendPush({ title: 'Jonas: Nachricht wartet', body: out.drafts === 1 ? 'Neue Nachricht auf Instagram oder Facebook, Entwurf ist fertig.' : `${out.drafts} neue Nachrichten, Entwürfe sind fertig.`, tag: 'jonas' }).catch(() => {})
       return new Response('EVENT_RECEIVED', { status: 200 })
     }
