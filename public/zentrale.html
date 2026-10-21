@@ -1142,7 +1142,7 @@ window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-st-re
   if(m.action==='report') STP.busy.rep=false;
   if(m.action==='chat'){ STP.busy.david=STP.busy.clara=false; if(m.ok&&DATA.st&&m.reply){ const a=openP===CLARA?'clara':'david'; } }
   if(m.action==='campaign_from_chat'){ STP.busy.camp=false; }
-  STP.err=m.ok?'':(m.error||'Fehler'); if(!m.ok&&m.action!=='campaign_from_chat') alert('Fehler: '+(m.error||''));
+  if(m.action==='campaign_from_chat') STP.err=m.ok?'':(m.error||'Fehler'); else if(!m.ok) alert('Fehler: '+(m.error||''));
   if(openP===DAVID||openP===CLARA){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Creative Studio: Mia (Prompts) + Noah (Bild & Video) ================= */
 const ELEVEN_URL='https://elevenlabs.io/app/image-video';
