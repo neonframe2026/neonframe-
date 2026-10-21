@@ -314,6 +314,13 @@ html.staff #testBtn,html.staff #mTest,html.staff .hsep{display:none!important}
 .jb.out{background:rgba(120,135,165,.16);justify-self:end;border-bottom-right-radius:5px;color:var(--muted)}
 .jb.draft{justify-self:end;border:1.5px dashed #dd2a7b;background:rgba(225,48,108,.06);border-bottom-right-radius:5px;min-width:60%}.jb.draft em{display:block;font-style:normal;font-weight:700;font-size:11px;color:#c13584;margin-bottom:3px}
 .jb.draft textarea{min-height:120px;margin-top:2px}
+.crf{display:grid;gap:8px}.crf .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.crf label{font-size:11px;color:var(--muted);display:grid;gap:3px}.crf textarea{min-height:64px}
+.pc{border:1px solid var(--line-2);background:var(--surface-2);border-radius:12px;padding:10px 12px;display:grid;gap:7px;min-width:0}
+.pt{display:flex;gap:8px;align-items:center;min-width:0}.pt b{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tg{margin-left:auto;font:600 10.5px var(--body);padding:2px 8px;border-radius:99px;color:#ff8a5c;border:1px solid rgba(255,138,92,.45);white-space:nowrap;flex:none}.tg.o{color:#c98a00;border-color:rgba(255,192,74,.5)}html.dark .tg.o{color:#ffc04a}
+.pc p{margin:0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.pc p.cl{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.th{border:1px solid var(--line-2);border-radius:12px;overflow:hidden;background:var(--surface-2);min-width:0}
+.th .md{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#000;cursor:zoom-in}.th small{display:block;padding:5px 8px 0;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ta{display:flex;gap:6px;padding:6px}.ta .b{flex:1;text-align:center;padding:5px;text-decoration:none;color:inherit}
 .shlog .u{color:#2bb8d8;font-size:11.5px;font-weight:600}.shlog em{color:var(--muted);font-size:11px;font-style:normal}
 /* Anna (Einkauf) */
 .ekconn{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;font-size:12.5px}
@@ -430,13 +437,15 @@ let DATA = { orders: [], due: [], tasks: [], stats: { total: 0, open: 0, week: 0
 const offerTasks = () => DATA.tasks.filter(t => t.type === 'offer'), updTasks = () => DATA.tasks.filter(t => t.type === 'update');
 const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `vor ${Math.max(1, m)} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : `vor ${Math.round(m / 1440)} Tagen` };
 const tlist = (rows, label) => rows.length ? `<div class="items">${rows.map(t => `<div class="item"><div class="itop"><span class="inum">${esc(t.tnc)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.email || 'ohne E-Mail')} · ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-open="${t.id}">${label}</button><button class="b ghost" data-dismiss="${t.id}">Erledigt</button></div></div>`).join('')}</div>` : '<p class="isub">Nichts offen.</p>';
-const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0], JONAS = DEPTS[1].people[1];
+const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0], JONAS = DEPTS[1].people[1], MIA = DEPTS[2].people[0], NOAH = DEPTS[2].people[1];
 // Was die Agenten wirklich tun (live = läuft schon)
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
   'Änderungs-Agent': { live: true, tasks: ['Erkennt Änderungs-Mails von Kenzo', 'Legt die Änderung bei Tom bereit, mit Vorher und Nachher', 'Aktualisiert Angebot und Shopify mit einem Klick', 'Informiert den Kunden per Mail'] },
   'Posteingangs-Agent': { live: true, tasks: ['Prüft info@neonframe.de alle 5 Minuten', 'Spam und Werbung in den Papierkorb', 'Persönliche Mails in „Phillip Nägele“', 'Rechnungen in „Rechnungen“', 'Schreibt Antworten auf Kundenfragen, du gibst frei', 'Mails von TNC und Kenzo fasst sie nie an'] },
   'Chat-Agent': { live: true, tasks: ['Liest neue Nachrichten auf Instagram und im Facebook Messenger', 'Schreibt kurze, lockere Antworten, du gibst frei', 'Kennt das Wissen aus dem Wissensbereich', 'Lernt aus deinen Änderungen', 'Antwortest du selbst in der App, hakt er den Chat ab'] },
+  'Prompt-Agent': { live: true, tasks: ['Schreibt Prompts für Bilder und Videos auf Englisch', 'Ganze Serien auf einmal, z. B. 10 Black-Friday-Creatives', 'Text im Bild bleibt Deutsch', 'Leitet Prompts an Noah weiter'] },
+  'Bild- & Video-Agent': { live: true, tasks: ['Sammelt die Prompts von Mia', 'Kopiert den Prompt und öffnet ElevenLabs', 'Speichert fertige Bilder und Videos', 'Alles zum Download an einem Ort'] },
   'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
@@ -892,7 +901,7 @@ function roomActions(d){
   if(d.id==='einkauf') return `<div class="abox"><h3>Anfrage an Hersteller</h3><p>Kundenanfrage an TNC übertragen. In Planung.</p><button class="b wide" disabled style="opacity:.6">Kommt bald</button></div>`+ask;
   return ask;
 }
-const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:0;
+const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:p===NOAH?crQueue().length:0;
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
   card.classList.add('room');
@@ -1012,6 +1021,69 @@ function fuNextBind(){
     b.disabled=true; b.textContent='Wird gespeichert …'; post({ type:'nf-fu', action:'plan', ids:l, at }); const msg=`${FUP.d.split('-').reverse().join('.')} · ${FUP.t} Uhr`; FUP.open=null; FUP.sel.clear(); FUP.plan=false; FUP.multi=false;
      });
 }
+/* ================= Creative Studio: Mia (Prompts) + Noah (Bild & Video) ================= */
+const ELEVEN_URL='https://elevenlabs.io/app/image-video';
+const crQueue=()=>((DATA.cr&&DATA.cr.queue)||[]);
+const CR={brief:'',kind:'image',format:'4:5',count:'5',busy:false,err:'',showP:3,showD:6,open:{},rw:{}};
+const KL={image:'Bild',video:'Video'};
+function miaHTML(){
+  const C=DATA.cr; if(!C) return '<p class="isub">Wird geladen …</p>';
+  const sel=(k,opts)=>`<select class="ekin" data-crf="${k}">${opts.map(([v,l])=>`<option value="${v}"${CR[k]===v?' selected':''}>${l}</option>`).join('')}</select>`;
+  const form=`<div class="abox crf"><p class="lbl" style="margin:0">Was brauchst du?</p><textarea class="ekin" data-crf="brief" placeholder="z. B. 10 Black-Friday-Creatives für Meta Ads, verschiedene Räume, mit Rabatt-Hinweis">${esc(CR.brief)}</textarea>
+    <div class="opts"><label>Art${sel('kind',[['image','Bild'],['video','Video']])}</label><label>Format${sel('format',[['4:5','4:5 Feed'],['1:1','1:1'],['9:16','9:16 Story'],['16:9','16:9']])}</label><label>Anzahl${sel('count',[1,3,5,10,15,20].map(n=>[String(n),String(n)]))}</label></div>
+    ${CR.err?`<div class="ekerr">${esc(CR.err)}</div>`:''}
+    <button class="b pri wide" data-crwrite ${CR.busy?'disabled':''}>${CR.busy?'Mia schreibt … (ca. 20 Sek.)':'Prompts schreiben'}</button></div>`;
+  const P=C.prompts||[];
+  const list=P.slice(0,CR.showP).map(r=>`<div class="pc"><div class="pt"><b>${esc(r.title)}</b><span class="tg">${KL[r.kind]||'Bild'} · ${esc(r.format)}</span></div><p class="${CR.open[r.id]?'':'cl'}" data-crx="${r.id}">${esc(r.prompt)}</p>
+    <div class="iacts"><button class="b pri" data-crfw="${r.id}">An Noah weiterleiten</button><button class="b" data-crcp="${r.id}">Kopieren</button><button class="b ghost" data-crrw="${r.id}" ${CR.rw[r.id]?'disabled':''}>${CR.rw[r.id]?'Schreibt …':'Neu schreiben'}</button><button class="b ghost" data-crdel="${r.id}" title="Löschen">✕</button></div></div>`).join('');
+  const more=P.length>CR.showP?`<button class="b wide" data-crmore="P">Weitere ${P.length-CR.showP} anzeigen ▾</button>`:'';
+  return `${form}<div><div class="preph"><p class="lbl" style="margin:0">${P.length?`Prompts · ${esc(P[0].series)}${new Set(P.map(x=>x.series)).size>1?' und weitere':''}`:'Prompts'}</p>${P.length>1?`<button class="b ghost" style="margin-left:auto" data-crall>Alle ${P.length} an Noah</button>`:''}</div>
+    ${P.length?`<div class="items" style="margin-top:8px">${list}${more}</div>`:'<p class="isub">Noch keine Prompts. Beschreib oben, was du brauchst.</p>'}</div>`;
+}
+function noahHTML(){
+  const C=DATA.cr; if(!C) return '<p class="isub">Wird geladen …</p>';
+  const Q=crQueue(), D=C.done||[];
+  const q=Q.map(r=>`<div class="pc"><div class="pt"><b>${esc(r.title)}</b><span class="tg o">${KL[r.kind]||'Bild'} · ${esc(r.format)}</span></div><p class="${CR.open[r.id]?'':'cl'}" data-crx="${r.id}">${esc(r.prompt)}</p>
+    <div class="iacts"><button class="b pri" data-crgo="${r.id}">Kopieren & ElevenLabs öffnen</button><label class="b" style="cursor:pointer">${CR.rw[r.id]?'Lädt hoch …':'Ergebnis hochladen'}<input type="file" accept="image/*,video/*" data-crup="${r.id}" hidden></label><button class="b ghost" data-crdel="${r.id}" title="Löschen">✕</button></div></div>`).join('');
+  const isV=(r)=>/^video/.test(r.mime)||/\.(mp4|mov|webm)(\?|$)/i.test(r.url);
+  const g=D.slice(0,CR.showD).map(r=>`<div class="th">${isV(r)?`<video class="md" src="${esc(r.url)}" muted loop playsinline preload="metadata" data-crlb="${r.id}"></video>`:`<img class="md" src="${esc(r.url)}" alt="" loading="lazy" data-crlb="${r.id}">`}<small>${esc(r.title)}</small>
+    <div class="ta"><a class="b" href="${esc(r.url)}" download target="_blank" rel="noopener" title="Herunterladen">⬇</a><button class="b" data-crredo="${r.id}" title="Neu erstellen">↻ Neu</button></div></div>`).join('');
+  return `<div class="fuauto"><span class="dot" style="background:#ffc04a;box-shadow:0 0 8px #ffc04a"></span><div><b>Halbautomatisch</b><small>Prompt kopieren, in ElevenLabs erstellen, Ergebnis hier hochladen. Mit ElevenLabs Pro läuft das später automatisch.</small></div></div>
+   ${CR.err?`<div class="ekerr">${esc(CR.err)}</div>`:''}
+   <div><div class="preph"><p class="lbl" style="margin:0">Zu erstellen</p>${Q.length?`<span class="tag-ready" style="color:#ff8a5c;border-color:rgba(255,138,92,.5)">${Q.length}</span>`:''}</div>${Q.length?`<div class="items" style="margin-top:8px">${q}</div>`:'<p class="isub">Nichts zu erstellen. Mia leitet Prompts hierher weiter.</p>'}</div>
+   <div><p class="lbl">Fertig</p>${D.length?`<div class="gal">${g}</div>${D.length>CR.showD?`<button class="b wide" data-crmore="D" style="margin-top:8px">Weitere ${D.length-CR.showD} anzeigen ▾</button>`:''}<button class="b wide" data-crdlall style="margin-top:8px">Alle ${Math.min(D.length,CR.showD)} herunterladen</button>`:'<p class="isub">Noch keine fertigen Bilder oder Videos.</p>'}</div>`;
+}
+function crLightbox(r){ const w=document.createElement('div'); w.className='eklb'; const v=/^video/.test(r.mime);
+  w.innerHTML=`<div class="bx"><div class="hd"><b>${esc(r.title)}</b><button class="b" data-x>✕ Schließen</button></div>${v?`<video src="${esc(r.url)}" controls autoplay style="width:100%;max-height:70vh;border-radius:10px;background:#000"></video>`:`<img src="${esc(r.url)}" alt="">`}<p class="isub" style="margin:0">${esc(r.prompt)}</p><div class="ft"><a class="b" href="${esc(r.url)}" download target="_blank" rel="noopener">Herunterladen</a></div></div>`;
+  w.onclick=e=>{ if(e.target===w||e.target.closest('[data-x]')) w.remove(); }; document.body.appendChild(w); }
+function crBind(){
+  const keep=(fn)=>{ const y=card.scrollTop; fn(); renderCard(); card.scrollTop=y; };
+  const all=()=>[...((DATA.cr&&DATA.cr.prompts)||[]),...crQueue(),...((DATA.cr&&DATA.cr.done)||[])];
+  const find=id=>all().find(x=>x.id===id);
+  const copy=(t)=>{ try{ navigator.clipboard.writeText(t) }catch(e){} const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); };
+  card.querySelectorAll('[data-crf]').forEach(el=>el.oninput=el.onchange=()=>{ CR[el.dataset.crf]=el.value });
+  card.querySelectorAll('[data-crwrite]').forEach(b=>b.onclick=()=>{ if(!CR.brief.trim()){ keep(()=>{ CR.err='Bitte beschreiben, was du brauchst' }); return; } keep(()=>{ CR.busy=true; CR.err=''; }); post({ type:'nf-cr', action:'write', brief:CR.brief, kind:CR.kind, format:CR.format, count:CR.count }); });
+  card.querySelectorAll('[data-crx]').forEach(p=>p.onclick=()=>keep(()=>{ CR.open[p.dataset.crx]=!CR.open[p.dataset.crx] }));
+  card.querySelectorAll('[data-crmore]').forEach(b=>b.onclick=()=>keep(()=>{ if(b.dataset.crmore==='P') CR.showP+=10; else CR.showD+=10; }));
+  card.querySelectorAll('[data-crcp]').forEach(b=>b.onclick=()=>{ const r=find(b.dataset.crcp); if(!r) return; copy(r.prompt); b.textContent='Kopiert ✓'; setTimeout(()=>{ b.textContent='Kopieren' },1500); });
+  const moveToQueue=(ids)=>{ if(!DATA.cr) return; const mv=DATA.cr.prompts.filter(x=>ids.includes(x.id)); DATA.cr.prompts=DATA.cr.prompts.filter(x=>!ids.includes(x.id)); DATA.cr.queue=[...DATA.cr.queue,...mv.map(x=>({...x,status:'queued'}))]; updateBadges(); };
+  card.querySelectorAll('[data-crfw]').forEach(b=>b.onclick=()=>keep(()=>{ const id=b.dataset.crfw; post({ type:'nf-cr', action:'forward', ids:[id], id }); moveToQueue([id]); }));
+  card.querySelectorAll('[data-crall]').forEach(b=>b.onclick=()=>{ const ids=((DATA.cr&&DATA.cr.prompts)||[]).map(x=>x.id); if(!ids.length||!confirm(`Alle ${ids.length} Prompts an Noah weiterleiten?`)) return; keep(()=>{ post({ type:'nf-cr', action:'forward', ids, id:ids[0] }); moveToQueue(ids); }); });
+  card.querySelectorAll('[data-crrw]').forEach(b=>b.onclick=()=>keep(()=>{ CR.rw[b.dataset.crrw]=true; post({ type:'nf-cr', action:'rewrite', id:b.dataset.crrw }); }));
+  card.querySelectorAll('[data-crdel]').forEach(b=>b.onclick=()=>{ if(!confirm('Diesen Prompt löschen?')) return; const id=b.dataset.crdel; post({ type:'nf-cr', action:'delete', id }); if(DATA.cr){ DATA.cr.prompts=DATA.cr.prompts.filter(x=>x.id!==id); DATA.cr.queue=DATA.cr.queue.filter(x=>x.id!==id); } updateBadges(); keep(()=>{}); });
+  card.querySelectorAll('[data-crgo]').forEach(b=>b.onclick=()=>{ const r=find(b.dataset.crgo); if(!r) return; copy(r.prompt); window.open(ELEVEN_URL,'_blank'); b.textContent='Kopiert ✓ ElevenLabs offen'; setTimeout(()=>{ b.textContent='Kopieren & ElevenLabs öffnen' },2500); });
+  card.querySelectorAll('[data-crup]').forEach(inp=>inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; if(f.size>50*1024*1024){ alert('Datei ist zu groß (max. 50 MB)'); return; } keep(()=>{ CR.rw[inp.dataset.crup]=true; CR.err=''; }); post({ type:'nf-cr', action:'upload', id:inp.dataset.crup, file:f }); });
+  card.querySelectorAll('[data-crredo]').forEach(b=>b.onclick=()=>{ if(!confirm('Dieses Creative neu erstellen? Es kommt zurück zu „Zu erstellen“.')) return; post({ type:'nf-cr', action:'redo', id:b.dataset.crredo }); });
+  card.querySelectorAll('[data-crlb]').forEach(el=>el.onclick=()=>{ const r=find(el.dataset.crlb); if(r) crLightbox(r); });
+  card.querySelectorAll('[data-crdlall]').forEach(b=>b.onclick=async()=>{ const D=((DATA.cr&&DATA.cr.done)||[]).slice(0,CR.showD); b.disabled=true;
+    for(const [i,r] of D.entries()){ try{ const bl=await (await fetch(r.url)).blob(); const a=document.createElement('a'); a.href=URL.createObjectURL(bl); a.download=(r.title||'creative').replace(/[^\wäöüÄÖÜß -]/g,'')+'-'+(i+1)+'.'+((r.url.split('?')[0].split('.').pop())||'png'); document.body.appendChild(a); a.click(); a.remove(); await new Promise(z=>setTimeout(z,350)); }catch(e){} }
+    b.disabled=false; });
+}
+window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-cr-res') return;
+  if(m.action==='write'){ CR.busy=false; CR.err=m.ok?'':(m.error||'Fehler'); if(m.ok){ CR.brief=''; CR.showP=3; } }
+  else if(m.action==='rewrite'||m.action==='upload'){ delete CR.rw[m.id]; CR.err=m.ok?'':(m.error||'Fehler'); }
+  else if(!m.ok) CR.err=m.error||'Fehler';
+  if(openP===MIA||openP===NOAH){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Jonas (Instagram & Facebook) ================= */
 const joOpen=()=>((DATA.jo&&DATA.jo.open)||[]);
 const JO={}; let joShow=null, joAll=false;
@@ -1147,6 +1219,8 @@ function renderCard(){
   if (p===ANNA) extra = annaHTML();
   if (p===SARAH) extra = sarahHTML();
   if (p===JONAS) extra = jonasHTML();
+  if (p===MIA) extra = miaHTML();
+  if (p===NOAH) extra = noahHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
     const ap=F2.approve.length?`<div class="items">${F2.approve.map(t=>`<div class="item"><div class="itop"><span class="inum">${esc(t.nr)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.label)} · fällig ${ago(t.at)}</div>${t.last?`<div class="isub">✉ Letzte Mail: ${esc(t.last)}</div>`:''}</div></div><div class="iacts"><button class="b pri" data-fu="${t.id}">${F2.night?(t.kind==='rabatt'?'Rabatt ':'')+esc(F2.morning||'morgen 8:10')+' senden':(t.kind==='rabatt'?'Rabatt senden':'Jetzt senden')}</button><button class="b ghost" data-fuskip="${t.id}">Überspringen</button></div></div>`).join('')}</div>${F2.approve.length>1?`<button class="b wide" data-fuall="1">Alle ${F2.approve.length} freigeben${F2.night?' (gehen '+esc(F2.morning||'morgen 8:10')+' raus)':''}</button>`:''}${F2.night&&F2.approve.length?'<p class="isub">Es ist nach 20 Uhr. Freigegebene Mails gehen automatisch '+esc(F2.morning||'morgen 8:10')+' Uhr raus.</p>':''}`:'<p class="isub">Nichts zum Freigeben.</p>';
@@ -1185,17 +1259,18 @@ function renderCard(){
   if (p===ANNA) annaBind();
   if (p===SARAH) sarahBind();
   if (p===JONAS) jonasBind();
+  if (p===MIA||p===NOAH) crBind();
   card.querySelectorAll('[data-dismiss]').forEach(b=>b.onclick=()=>{ post({ type: 'nf-dismiss', id: b.dataset.dismiss }); DATA.tasks = DATA.tasks.filter(t => t.id !== b.dataset.dismiss); updateBadges(); renderCard(); });
 }
 
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, all=n+a+u+e+s2+j2+w;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, q=crQueue().length, all=n+a+u+e+s2+j2+w;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
   setB(DEPTS[5]._lbl, n+w); setB(EMMA._tag, n+w);
-  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2);
+  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2); setB(DEPTS[2]._lbl, q); setB(NOAH._tag, q);
   okbar.hidden = !n;
   okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
   if (typeof onResize === 'function') requestAnimationFrame(onResize);
@@ -1235,7 +1310,7 @@ function showToast(title,sub,who,ini2){
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
   const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null, joBefore = DATA.jo ? new Set(joOpen().map(r => r.id)) : null;
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, stats: e.data.stats || DATA.stats };
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, stats: e.data.stats || DATA.stats };
   const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
   const shNew = shBefore ? shOpen().filter(r => !shBefore.has(r.id)) : [];
   const joNew = joBefore ? joOpen().filter(r => !joBefore.has(r.id)) : [];
