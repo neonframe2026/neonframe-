@@ -98,7 +98,8 @@ export async function POST(req) {
       const msgs = (hist || []).reverse().map(r => ({ role: r.data?.role === 'ai' ? 'assistant' : 'user', content: r.content }))
       msgs.push({ role: 'user', content: text })
       while (msgs.length && msgs[0].role !== 'user') msgs.shift()
-      const reply = await claude({ system: PERSONA[agent] + '\n\nAntworte wie im Chat: klar gegliedert, so kurz wie möglich, höchstens ca. 250 Wörter (außer Phillip will ausdrücklich einen kompletten Plan). Lieber kurz antworten und anbieten, Details zu ergänzen. Bei Plänen nummerierte Schritte mit Datum. Stell eine Rückfrage, wenn dir etwas Wichtiges fehlt.\n\n' + await context(db), messages: msgs, max: 1800 })
+      const LEN = { kurz: 'SEHR KURZ: höchstens 80 Wörter, nur das Wichtigste, keine Überschriften.', normal: 'Kurz: höchstens ca. 250 Wörter.', lang: 'Ausführlich: so detailliert wie nötig, mit Plan und Zahlen.' }[b.len] || 'Kurz: höchstens ca. 250 Wörter.'
+      const reply = await claude({ system: PERSONA[agent] + `\n\nAntwortlänge: ${LEN} Halte dich STRENG daran. Wenn Phillip im Chat sagt, wie du antworten sollst (kürzer, länger, ohne Listen usw.), gilt das ab sofort für alle weiteren Antworten, bis er es ändert. Lieber kurz antworten und anbieten, Details zu ergänzen. Bei Plänen nummerierte Schritte mit Datum. Stell eine Rückfrage, wenn dir etwas Wichtiges fehlt.\n\n` + await context(db), messages: msgs, max: 1800 })
       await db.from('strategie').insert([{ type: 'chat', key: agent, content: text, data: { role: 'me' } }, { type: 'chat', key: agent, content: reply, data: { role: 'ai' } }])
       return Response.json({ success: true, reply })
     }
