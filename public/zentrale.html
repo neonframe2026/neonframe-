@@ -958,8 +958,8 @@ function sarahBind(){
   card.querySelectorAll('[data-shundo]').forEach(b=>b.onclick=()=>{ b.disabled=true; b.textContent='…'; post({ type:'nf-sh', action:'undo', id:b.dataset.shundo }); });
 }
 window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-sh-res') return; const s=SH[m.id];
-  if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.sh.open=shOpen().filter(x=>x.id!==m.id); updateBadges(); showToast('Antwort gesendet','Sarah Krüger · Posteingangs-Agent',SARAH,'SK'); } }
-  else if(m.action==='undo'){ if(m.ok){ (DATA.sh.history||[]).forEach(h=>{ if(h.id===m.id) h.undone=true }); showToast('Mail zurück im Posteingang','Sarah Krüger · Posteingangs-Agent',SARAH,'SK'); } else alert('Rückgängig ging nicht: '+(m.error||'Fehler')); }
+  if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.sh.open=shOpen().filter(x=>x.id!==m.id); updateBadges();  } }
+  else if(m.action==='undo'){ if(m.ok){ (DATA.sh.history||[]).forEach(h=>{ if(h.id===m.id) h.undone=true });  } else alert('Rückgängig ging nicht: '+(m.error||'Fehler')); }
   if(openP===SARAH){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Emma: Mails einzeln oder gesammelt senden / planen ================= */
 const FUP={open:null,plan:false,multi:false,sel:new Set(),d:'',t:'',show:5};
@@ -999,7 +999,7 @@ function fuNextBind(){
   card.querySelectorAll('[data-fusave]').forEach(b=>b.onclick=()=>{ const l=ids(), at=fuISO(FUP.d,FUP.t); if(!l.length) return; if(!at){ alert('Bitte Datum und Uhrzeit wählen'); return; }
     if(new Date(at)<Date.now()-60000 && !confirm('Der Termin liegt in der Vergangenheit. Dann geht die Mail beim nächsten Durchlauf raus. Trotzdem speichern?')) return;
     b.disabled=true; b.textContent='Wird gespeichert …'; post({ type:'nf-fu', action:'plan', ids:l, at }); const msg=`${FUP.d.split('-').reverse().join('.')} · ${FUP.t} Uhr`; FUP.open=null; FUP.sel.clear(); FUP.plan=false; FUP.multi=false;
-    showToast(l.length===1?'Mail geplant':`${l.length} Mails geplant`, msg, EMMA, 'EK'); });
+     });
 }
 /* ================= Jonas (Instagram & Facebook) ================= */
 const joOpen=()=>((DATA.jo&&DATA.jo.open)||[]);
@@ -1043,7 +1043,7 @@ function jonasBind(){
   card.querySelectorAll('[data-joskip]').forEach(b=>b.onclick=()=>{ if(!confirm('Selbst antworten? Der Entwurf wird verworfen.')) return; post({ type:'nf-jo', action:'skip', id:b.dataset.joskip }); DATA.jo.open=joOpen().filter(x=>x.id!==b.dataset.joskip); updateBadges(); renderCard(); });
 }
 window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-jo-res') return; const s=JO[m.id];
-  if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.jo.open=joOpen().filter(x=>x.id!==m.id); updateBadges(); showToast('Antwort gesendet','Jonas Schröder · Chat-Agent',JONAS,'JS'); } }
+  if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.jo.open=joOpen().filter(x=>x.id!==m.id); updateBadges();  } }
   if(openP===JONAS){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Anna (Einkauf) ================= */
 const TNC_COLORS=[['White','#ffffff'],['Warm White','#ffe7b8'],['Soft Orange','#ffb37a'],['Orange','#f97316'],['Red','#ef4444'],['Purple','#a855f7'],['Peachy Pink','#fb7185'],['Soft Pink','#f9a8d4'],['Pink','#ec4899'],['Light Green','#86efac'],['Green','#22c55e'],['Yellow','#facc15'],['Lake Blue','#2ee6d6'],['Ice Blue','#7dd3fc'],['Blue','#2f3dff']];
@@ -1126,7 +1126,7 @@ function annaBind(){
 }
 // Ergebnis vom Senden (kommt von der Admin-Seite)
 window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-ek-res') return; const st=EK[m.id]; if(st){ st.busy=false; st.err=m.error||''; }
-  if(m.ok){ showToast(`An TNC gesendet · TNC ${m.tnc}`,'Anna Schulz · Einkaufs-Agent',ANNA,'AS'); } if(openP===ANNA) renderCard(); });
+   if(openP===ANNA) renderCard(); });
 function renderCard(){
   if(!openP) return;
   const p=openP, d=p.dept, first=p.name.split(' ')[0];
