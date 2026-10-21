@@ -1076,9 +1076,10 @@ function stKpis(c,p,lbl){ if(!c) return '';
   const d=(k,inv)=>{ if(!p) return ''; const a=c[k]||0,b=p[k]||0; if(!b&&!a) return '<em>±0</em>'; if(!b) return `<em class="up">neu</em>`; const x=Math.round((a-b)/b*100); if(!x) return `<em>±0 zu ${esc(lbl)}</em>`; return `<em class="${(x>=0)!==!!inv?'up':'dn'}">${x>0?'+':''}${x}% zu ${esc(lbl)}</em>`; };
   const k=(v,l,key,inv)=>`<div class="k"><b>${v}</b><small>${l}</small>${d(key,inv)}</div>`;
   return `<div class="kp">${k(c.anfragen,'Anfragen','anfragen')}${k(c.angebote,'Angebote','angebote')}${k(c.gemeldet,'haben sich gemeldet','gemeldet')}${k(c.verkaeufe,'Verkäufe','verkaeufe')}${k(eur2(c.umsatz),'Umsatz','umsatz')}${k(c.conversion+'%','Kaufquote (Angebote → gekauft)','conversion')}${k(c.erinnerungen,'Erinnerungen','erinnerungen')}${k(c.rabatte,'Rabatt-Mails','rabatte')}</div>`; }
+const stMd=(t)=>esc(t).replace(/^#{1,4}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 function stChat(agent,ph){ const S=DATA.st, M=(S.chat&&S.chat[agent])||[];
   return `<div><div class="preph"><p class="lbl" style="margin:0">Chat mit ${agent==='david'?'David':'Clara'}</p>${M.length?`<button class="b ghost" style="margin-left:auto" data-stclear="${agent}">Neu anfangen</button>`:''}</div>
-   <div class="stc" style="margin-top:8px" data-stscroll>${M.length?M.map(m=>`<div class="stm ${m.role==='ai'?'ai':'me'}">${esc(m.text)}</div>`).join(''):`<p class="isub" style="margin:0">${ph}</p>`}${STP.busy[agent]?`<div class="stm ai">${agent==='david'?'David':'Clara'} denkt nach …</div>`:''}</div>
+   <div class="stc" style="margin-top:8px" data-stscroll>${M.length?M.map(m=>`<div class="stm ${m.role==='ai'?'ai':'me'}">${stMd(m.text)}</div>`).join(''):`<p class="isub" style="margin:0">${ph}</p>`}${STP.busy[agent]?`<div class="stm ai">${agent==='david'?'David':'Clara'} denkt nach …</div>`:''}</div>
    <div class="stin" style="margin-top:8px"><textarea class="ekin" data-stin="${agent}" placeholder="Nachricht an ${agent==='david'?'David':'Clara'} …">${esc(STP.chat[agent])}</textarea><button class="b pri" data-stsend="${agent}" ${STP.busy[agent]?'disabled':''}>Senden</button></div></div>`; }
 function davidHTML(){
   const S=DATA.st; if(!S) return '<p class="isub">Wird geladen …</p>';
