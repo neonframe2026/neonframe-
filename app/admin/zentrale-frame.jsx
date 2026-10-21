@@ -140,7 +140,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       }
       if (e.data?.type === 'nf-fu') {
         const ids = e.data.action === 'all' ? (fuRef.current?.approve || []).map(a => a.id) : [e.data.id]
-        const action = e.data.action === 'skip' ? 'skip' : 'send'
+        const action = e.data.action === 'skip' ? 'skip' : e.data.action === 'wa' ? 'wa_done' : 'send'
         ;(async () => {
           const errs = []
           for (const id of ids) {
