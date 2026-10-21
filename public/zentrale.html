@@ -1116,7 +1116,9 @@ function renderCard(){
   card.querySelectorAll('[data-fu]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'send', id: b.dataset.fu }));
   card.querySelectorAll('[data-fuskip]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'skip', id: b.dataset.fuskip }));
   card.querySelectorAll('[data-fuall]').forEach(b=>b.onclick=()=>{ if(!confirm(`Alle ${(DATA.fu?.approve||[]).length} Mails jetzt senden?`)) return; fuBtn(b,{ type: 'nf-fu', action: 'all' }); });
-  card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>post({ type: 'nf-open', id: b.dataset.open }));
+  card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{ const t=DATA.tasks.find(x=>x.id===b.dataset.open); if(!t) return;
+    const url=t.type==='update'?`/admin?tncupdate=${encodeURIComponent(t.tnc)}`:`/admin?tnc=${encodeURIComponent(t.tnc)}&project=${encodeURIComponent(t.name==='ohne Projekt'?'':t.name)}&email=${encodeURIComponent(t.email||'')}`;
+    window.open(url,'_blank'); });
   if (p===ANNA) annaBind();
   if (p===SARAH) sarahBind();
   if (p===JONAS) jonasBind();
