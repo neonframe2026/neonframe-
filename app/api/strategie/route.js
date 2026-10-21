@@ -61,7 +61,7 @@ export async function GET(req) {
     for (const k of ['week', 'month', 'year']) {
       const p = P[k]
       const rep = R.filter(r => r.type === 'report' && r.key === p.key).pop()
-      per[k] = { key: p.key, label: p.label, prevLabel: p.prevLabel, nowLabel: p.nowLabel, lyLabel: p.lyLabel || '', fullLabel: p.fullLabel || '', cur: S(p.cur), prev: S(p.prev), ly: S(p.ly), full: S(p.full), now: S(p.now), report: rep ? { ...rep.data, at: rep.created_at } : null }
+      per[k] = { key: p.key, label: p.label, prevLabel: p.prevLabel, nowLabel: p.nowLabel, lyLabel: p.lyLabel || '', fullLabel: p.fullLabel || '', cur: S(p.cur), prev: S(p.prev), ly: S(p.ly), full: S(p.full), now: S(p.now), nowPrev: S(p.nowPrev), nowPrevLabel: p.nowPrevLabel, report: rep ? { ...rep.data, at: rep.created_at } : null }
     }
     const chat = (a) => R.filter(r => r.type === 'chat' && r.key === a).slice(-40).map(r => ({ role: r.data?.role, text: r.content, at: r.created_at }))
     return Response.json({
