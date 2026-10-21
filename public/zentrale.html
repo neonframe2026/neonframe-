@@ -1096,14 +1096,16 @@ function davidHTML(){
   const full=STP.tab==='year'?line(P.fullLabel,P.full):'';
   const now=STP.tab!=='year'?`<p class="lbl" style="margin:12px 0 0">Bericht · ${esc(P.label)} (abgeschlossen)</p>`+line(P.label,P.cur)+line(P.prevLabel,P.prev):'';
   const rep=R?`<div class="sum"><div><b>David sagt:</b> ${esc(R.summary)}</div>${(R.good||[]).length?`<div><small>Gut gelaufen</small><ul>${R.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${(R.bad||[]).length?`<div><small>Fällt auf</small><ul>${R.bad.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</div>
-    ${(R.suggestions||[]).length?`<div><p class="lbl" style="margin:8px 0 6px">Vorschläge</p><div class="items">${R.suggestions.map((g,i)=>(R.rejected||[]).includes(i)?'':`<div class="sg"><div style="display:flex;gap:8px;align-items:flex-start"><b style="flex:1">${i+1}. ${esc(g.title)}</b><button class="b ghost" data-streject="${i}" title="Ablehnen" style="padding:2px 8px">✕</button></div><small>${esc(g.why)}</small><div class="iacts"><button class="b" data-stgoal="${i}">Als Ziel übernehmen</button><button class="b" data-sttoclara="${i}">An Clara</button></div></div>`).join('')}</div></div>`:''}
+    ${(R.suggestions||[]).length?`<div><p class="lbl" style="margin:8px 0 6px">Vorschläge</p><div class="items">${R.suggestions.map((g,i)=>(R.rejected||[]).includes(i)?'':`<div class="sg"><div style="display:flex;gap:8px;align-items:flex-start"><b style="flex:1">${i+1}. ${esc(g.title)}</b><button class="b ghost" data-streject="${i}" title="Ablehnen" style="padding:2px 8px">✕</button></div><small>${esc(g.why)}</small><div class="iacts"><button class="b" data-sttoclara="${i}">→ Mit Clara umsetzen</button></div></div>`).join('')}</div></div>`:''}
     <button class="b ghost" data-streport="${STP.tab}" ${STP.busy.rep?'disabled':''}>${STP.busy.rep?'David schreibt …':'↻ Bericht neu schreiben'}</button>`
     :`<button class="b pri wide" data-streport="${STP.tab}" ${STP.busy.rep?'disabled':''}>${STP.busy.rep?'David schreibt den Bericht … (ca. 20 Sek.)':'Bericht von David schreiben lassen'}</button>`;
   const G=S.goals||[];
   const goals=`<div><div class="preph"><p class="lbl" style="margin:0">Ziele ${esc(S.monthName)}</p><button class="b ghost" style="margin-left:auto" data-stgf>${STP.gf?'Abbrechen':'+ Ziel'}</button></div>
     ${STP.gf?`<div class="gform" style="margin-top:8px"><select class="ekin" data-stg="metric">${Object.entries(S.metrics).map(([k,l])=>`<option value="${k}"${STP.g.metric===k?' selected':''}>${l}</option>`).join('')}</select><input class="ekin" data-stg="target" placeholder="${STP.g.metric==='frei'?'–':'Ziel'}" value="${esc(STP.g.target)}" ${STP.g.metric==='frei'?'disabled':''}><button class="b pri" data-stgsave>Speichern</button>${STP.g.metric==='frei'?`<input class="ekin" data-stg="title" placeholder="Was willst du erreichen?" value="${esc(STP.g.title)}" style="grid-column:1/4">`:''}</div>`:''}
     ${G.length?`<div class="gl2" style="margin-top:8px">${G.map(g=>`<div class="g2"><span>${g.metric==='frei'?`<label style="cursor:pointer"><input type="checkbox" data-stgdone="${g.id}" ${g.done?'checked':''}> ${esc(g.title)}</label>`:esc(g.title)}</span><small>${g.metric==='frei'?'':g.metric==='umsatz'?eur2(g.value):g.value+(g.metric==='conversion'?'%':'')}</small><button data-stdel="${g.id}" title="Löschen">✕</button><div class="bar"><i style="width:${g.pct}%"></i></div></div>`).join('')}</div>`:'<p class="isub" style="margin:6px 0 0">Noch keine Ziele für diesen Monat.</p>'}</div>`;
-  return `${tabs}<div><div class="preph"><p class="lbl" style="margin:0">${esc(P.nowLabel)}</p><small class="isub" style="margin-left:auto">vs. ${esc(P.nowPrevLabel)}</small></div><div style="margin-top:8px">${stKpis(P.now,P.nowPrev,'Vorher')}</div><p class="isub" style="margin:6px 0 0">Anfragen und „gemeldet“ zählen erst seit 20.10. (Start von Anna, Sarah und Jonas).</p>${ly}${full}${now}</div>${rep}${goals}${stChat('david','Frag David alles zu deinen Zahlen, z. B. „Warum kaufen so wenige nach dem Rabatt?“')}`;
+  const DM=(S.chat&&S.chat.david)||[];
+  const dActs=DM.length&&DM[DM.length-1].role==='ai'?`<div class="iacts"><button class="b pri" data-stdclara>→ Mit Clara umsetzen</button></div><p class="isub" style="margin:4px 0 0">Clara macht daraus einen Plan mit Datum, den du bei ihr im Kalender speicherst.</p>`:'';
+  return `${tabs}<div><div class="preph"><p class="lbl" style="margin:0">${esc(P.nowLabel)}</p><small class="isub" style="margin-left:auto">vs. ${esc(P.nowPrevLabel)}</small></div><div style="margin-top:8px">${stKpis(P.now,P.nowPrev,'Vorher')}</div><p class="isub" style="margin:6px 0 0">Anfragen und „gemeldet“ zählen erst seit 20.10. (Start von Anna, Sarah und Jonas).</p>${ly}${full}${now}</div>${rep}${stChat('david','Frag David alles zu deinen Zahlen, z. B. „Warum kaufen so wenige nach dem Rabatt?“')}${dActs}`;
 }
 const STL={idee:'Idee',planung:'in Planung',laeuft:'läuft',fertig:'fertig'};
 const dShort=(s)=>s?s.split('-').reverse().slice(0,2).join('.')+'.':'';
@@ -1117,7 +1119,7 @@ function claraHTML(){
   const M=(S.chat&&S.chat.clara)||[];
   return `<div><p class="lbl">Kampagnen-Kalender</p><div class="items">${cal||'<p class="isub">Noch keine Kampagnen.</p>'}</div></div>
    ${stChat('clara','Plan mit Clara eine Aktion, z. B. „Lass uns Black Friday mit 50% planen, was brauchen wir alles?“')}
-   ${M.length?`<button class="b wide" data-stcamp ${STP.busy.camp?'disabled':''}>${STP.busy.camp?'Clara legt an …':'✦ Als Kampagne in den Kalender übernehmen'}</button>`:''}
+   ${M.length?`<button class="b pri wide" data-stcamp ${STP.busy.camp?'disabled':''}>${STP.busy.camp?'Clara legt an …':'✦ Plan als Kampagne in den Kalender speichern'}</button><p class="isub" style="margin:4px 0 0">Klick erst, wenn ihr fertig geplant habt. Clara speichert dann Zeitraum, Angebot und alle Schritte im Kalender oben.</p>`:''}
    ${STP.err?`<div class="ekerr">${esc(STP.err)}</div>`:''}`;
 }
 function stBind(){
@@ -1137,6 +1139,8 @@ function stBind(){
   card.querySelectorAll('[data-stg]').forEach(el=>el.oninput=el.onchange=()=>{ STP.g[el.dataset.stg]=el.value; if(el.dataset.stg==='metric') keep(()=>{}); });
   card.querySelectorAll('[data-stgsave]').forEach(b=>b.onclick=()=>{ const g=STP.g; if(g.metric==='frei'?!g.title.trim():!(+String(g.target).replace(',','.'))){ alert('Bitte Ziel ausfüllen'); return; } const tgt=+String(g.target).replace(',','.')||0; const L=S.metrics[g.metric]; post({ type:'nf-st', action:'goal', metric:g.metric, target:tgt, title:g.metric==='frei'?g.title:`${g.metric==='umsatz'?eur2(tgt):tgt+(g.metric==='conversion'?'%':'')} ${L.replace(/ \(.*\)/,'')}` }); keep(()=>{ STP.gf=false; STP.g={metric:'umsatz',target:'',title:''}; }); });
   card.querySelectorAll('[data-stgoal]').forEach(b=>b.onclick=()=>{ const g=S.periods[STP.tab].report.suggestions[+b.dataset.stgoal]; post({ type:'nf-st', action:'goal', metric:'frei', title:g.title }); b.disabled=true; b.textContent='Übernommen ✓'; });
+  card.querySelectorAll('[data-stdgoal]').forEach(b=>b.onclick=()=>keep(()=>{ STP.busy.goal=true; post({ type:'nf-st', action:'goal_from_chat' }); }));
+  card.querySelectorAll('[data-stdclara]').forEach(b=>b.onclick=()=>{ const DM=(S.chat&&S.chat.david)||[]; const last=DM[DM.length-1]; if(!last) return; send('clara',`David schlägt vor:\n${last.text}\n\nWie setzen wir das konkret um? Bitte Plan mit Datum.`); openPerson(CLARA); });
   card.querySelectorAll('[data-streject]').forEach(b=>b.onclick=()=>{ const P=S.periods[STP.tab], i=+b.dataset.streject; P.report.rejected=[...(P.report.rejected||[]),i]; post({ type:'nf-st', action:'reject', key:P.key, i }); keep(()=>{}); });
   card.querySelectorAll('[data-sttoclara]').forEach(b=>b.onclick=()=>{ const g=S.periods[STP.tab].report.suggestions[+b.dataset.sttoclara]; send('clara',`David schlägt vor: ${g.title}. ${g.why} Wie setzen wir das als Aktion um?`); openPerson(CLARA); });
   card.querySelectorAll('[data-stgdone]').forEach(c=>c.onchange=()=>post({ type:'nf-st', action:'goal_done', id:c.dataset.stgdone }));
@@ -1152,6 +1156,7 @@ window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-st-re
   if(m.action==='report') STP.busy.rep=false;
   if(m.action==='chat'){ STP.busy.david=STP.busy.clara=false; if(m.ok&&DATA.st&&m.reply){ const a=openP===CLARA?'clara':'david'; } }
   if(m.action==='campaign_from_chat'){ STP.busy.camp=false; }
+  if(m.action==='goal_from_chat'){ STP.busy.goal=false; }
   if(m.action==='campaign_from_chat') STP.err=m.ok?'':(m.error||'Fehler'); else if(!m.ok) alert('Fehler: '+(m.error||''));
   if(openP===DAVID||openP===CLARA){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Creative Studio: Mia (Prompts) + Noah (Bild & Video) ================= */
