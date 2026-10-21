@@ -295,6 +295,13 @@ html.staff #testBtn,html.staff #mTest,html.staff .hsep{display:none!important}
 .shd{border:1px solid rgba(58,215,255,.4);background:rgba(58,215,255,.06);border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.55;overflow-wrap:anywhere}.shd small{display:block;color:#2bb8d8;font-size:11px;margin-bottom:4px;font-weight:600}
 .shlog{display:grid;gap:7px}.shlog>div{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}.shlog b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.shlog small{display:block;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .shlog .k{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:11px}.shlog .k.del{background:rgba(239,68,68,.12);color:#ef6b6b}.shlog .k.per{background:rgba(58,168,255,.12);color:#3aa8ff}.shlog .k.inv{background:rgba(163,200,60,.14);color:#8fae2a}
+.chn{margin-left:auto;font:700 11px var(--body);padding:3px 9px;border-radius:99px;flex:none}.chn.ig{background:rgba(225,48,108,.1);color:#c13584;border:1px solid rgba(225,48,108,.4)}.chn.fb{background:rgba(0,132,255,.1);color:#0a7cff;border:1px solid rgba(0,132,255,.4)}.ekmini .chn{margin:0}
+.jchat{display:grid;gap:7px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;padding:10px;max-height:420px;overflow:auto}
+.jb{max-width:85%;padding:8px 11px;border-radius:16px;font-size:12.5px;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}.jb time{display:block;font-size:10px;opacity:.6;margin-top:3px}
+.jb.in{background:var(--surface);border:1px solid var(--line-2);justify-self:start;border-bottom-left-radius:5px}
+.jb.out{background:rgba(120,135,165,.16);justify-self:end;border-bottom-right-radius:5px;color:var(--muted)}
+.jb.draft{justify-self:end;border:1.5px dashed #dd2a7b;background:rgba(225,48,108,.06);border-bottom-right-radius:5px;min-width:60%}.jb.draft em{display:block;font-style:normal;font-weight:700;font-size:11px;color:#c13584;margin-bottom:3px}
+.jb.draft textarea{min-height:120px;margin-top:2px}
 .shlog .u{color:#2bb8d8;font-size:11.5px;font-weight:600}.shlog em{color:var(--muted);font-size:11px;font-style:normal}
 /* Anna (Einkauf) */
 .ekconn{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;font-size:12.5px}
@@ -381,9 +388,9 @@ const DEPTS = [
  {id:'angebote', name:'Angebote', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M15 8h4v4"/></svg>`, color:'#3aa8ff', tags:['TNC-Angebote','Größentabelle','Kundenpreise','Shopify-Checkout'],
   kpis:[['Angebote / Woche','18'],['Annahme','34 %'],['Offen','3']],
   people:[{name:'Lisa Fischer',role:'Angebots-Managerin',agent:'Angebots-Agent',f:1},{name:'Tom Becker',role:'Änderungen',agent:'Änderungs-Agent',f:0}]},
- {id:'service', name:'Kundenservice', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h3zM3 15a2 2 0 0 0 2 2h1v-5H3z"/><path d="M18 17a4 4 0 0 1-4 4h-2"/></svg>`, color:'#3ad7ff', tags:['Posteingang','Antwortentwürfe','WhatsApp, Instagram & Facebook'],
+ {id:'service', name:'Kundenservice', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 15a2 2 0 0 1-2 2h-1v-5h3zM3 15a2 2 0 0 0 2 2h1v-5H3z"/><path d="M18 17a4 4 0 0 1-4 4h-2"/></svg>`, color:'#3ad7ff', tags:['Posteingang','Antwortentwürfe','Instagram & Facebook'],
   kpis:[['Anfragen heute','14'],['Antwortzeit','12 min'],['Entwürfe','9']],
-  people:[{name:'Sarah Krüger',role:'Posteingang',agent:'Posteingangs-Agent',f:1},{name:'Jonas Schröder',role:'WhatsApp, Instagram & Facebook',agent:'Chat-Agent',f:0}]},
+  people:[{name:'Sarah Krüger',role:'Posteingang',agent:'Posteingangs-Agent',f:1},{name:'Jonas Schröder',role:'Instagram & Facebook',agent:'Chat-Agent',f:0}]},
  {id:'creative', name:'Creative Studio', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>`, color:'#ff8a5c', tags:['Hooks & Angles','Briefings','Meta Ads'],
   kpis:[['Creatives / Woche','24'],['Hook-Rate','31 %'],['Gewinner','1 von 6']],
   people:[{name:'Mia Hoffmann',role:'Creative Strategist',agent:'Briefing-Agent',f:1},{name:'Noah Schmitt',role:'Motion Designer',agent:'Ads-Agent',f:0}]},
@@ -405,12 +412,13 @@ let DATA = { orders: [], due: [], tasks: [], stats: { total: 0, open: 0, week: 0
 const offerTasks = () => DATA.tasks.filter(t => t.type === 'offer'), updTasks = () => DATA.tasks.filter(t => t.type === 'update');
 const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `vor ${Math.max(1, m)} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : `vor ${Math.round(m / 1440)} Tagen` };
 const tlist = (rows, label) => rows.length ? `<div class="items">${rows.map(t => `<div class="item"><div class="itop"><span class="inum">${esc(t.tnc)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.email || 'ohne E-Mail')} · ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-open="${t.id}">${label}</button><button class="b ghost" data-dismiss="${t.id}">Erledigt</button></div></div>`).join('')}</div>` : '<p class="isub">Nichts offen.</p>';
-const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0];
+const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0], JONAS = DEPTS[1].people[1];
 // Was die Agenten wirklich tun (live = läuft schon)
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
   'Änderungs-Agent': { live: true, tasks: ['Erkennt Änderungs-Mails von Kenzo', 'Legt die Änderung bei Tom bereit, mit Vorher und Nachher', 'Aktualisiert Angebot und Shopify mit einem Klick', 'Informiert den Kunden per Mail'] },
   'Posteingangs-Agent': { live: true, tasks: ['Prüft info@neonframe.de alle 5 Minuten', 'Spam und Werbung in den Papierkorb', 'Persönliche Mails in „Phillip Nägele“', 'Rechnungen in „Rechnungen“', 'Schreibt Antworten auf Kundenfragen, du gibst frei', 'Mails von TNC und Kenzo fasst sie nie an'] },
+  'Chat-Agent': { live: true, tasks: ['Liest neue Nachrichten auf Instagram und im Facebook Messenger', 'Schreibt kurze, lockere Antworten, du gibst frei', 'Kennt das Wissen aus dem Wissensbereich', 'Lernt aus deinen Änderungen', 'Antwortest du selbst in der App, hakt er den Chat ab'] },
   'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
@@ -945,6 +953,50 @@ window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-sh-re
   if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.sh.open=shOpen().filter(x=>x.id!==m.id); updateBadges(); showToast('Antwort gesendet','Sarah Krüger · Posteingangs-Agent',SARAH,'SK'); } }
   else if(m.action==='undo'){ if(m.ok){ (DATA.sh.history||[]).forEach(h=>{ if(h.id===m.id) h.undone=true }); showToast('Mail zurück im Posteingang','Sarah Krüger · Posteingangs-Agent',SARAH,'SK'); } else alert('Rückgängig ging nicht: '+(m.error||'Fehler')); }
   if(openP===SARAH){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
+/* ================= Jonas (Instagram & Facebook) ================= */
+const joOpen=()=>((DATA.jo&&DATA.jo.open)||[]);
+const JO={}; let joShow=null, joAll=false;
+const CHN=(c)=>c==='ig'?'<span class="chn ig">Instagram</span>':'<span class="chn fb">Messenger</span>';
+function jonasHTML(){
+  const J=DATA.jo; if(!J) return '<p class="isub">Wird geladen …</p>';
+  const c=J.connection||{};
+  const conn=c.ok?`<div class="ekconn on"><i></i><div><b>Facebook${c.ig?' & Instagram':''} verbunden</b><small>Seite ${esc(c.page||'NeonFrame')}${c.ig?' · @'+esc(c.ig):''} · neue Nachrichten kommen sofort</small></div></div>`
+    :`<div class="ekconn off"><i></i><div><b>Verbindung zu Meta gestört</b><small>${esc(c.error||'Bitte META_PAGE_TOKEN in Vercel prüfen')}</small></div></div>`;
+  const st=J.stats||{};
+  const stats=`<div><p class="lbl">Heute</p><div class="shstats" style="grid-template-columns:repeat(3,1fr)"><div><b>${st.in||0}</b><small>Nachrichten</small></div><div><b>${st.replied||0}</b><small>beantwortet</small></div><div><b>${st.open||0}</b><small>wartet</small></div></div></div>`;
+  const open=joOpen(); if(open.length&&(!joShow||!open.some(r=>r.id===joShow))) joShow=open[0].id;
+  const items=open.map(r=>r.id===joShow?joFull(r):`<div class="ekmini">${CHN(r.channel)}<div><b>${esc(r.name)}</b><small>„${esc((r.msgs.filter(m=>m.dir==='in').pop()||{}).text||'')}“ · ${esc(ago(r.at))}</small></div><button class="b" data-joshow="${r.id}">Ansehen</button></div>`).join('');
+  const H=J.history||[]; const list=joAll?H:H.slice(0,5);
+  const hist=H.length?`<div class="shlog">${list.map(h=>`<div><span class="k per">${h.action==='replied'?'✓':'↩'}</span><span><b>„${esc(h.text||'…')}“</b><small>${esc(h.name)} · ${h.channel==='ig'?'Instagram':'Messenger'} · ${esc(shTime(h.at))}</small></span><em>${h.action==='replied'?'gesendet':'selbst'}</em></div>`).join('')}</div>${H.length>5?`<button class="b wide" data-joall="1" style="margin-top:8px">${joAll?'Weniger anzeigen ▴':`Alle anzeigen (${H.length}) ▾`}</button>`:''}`:'<p class="isub">Noch nichts beantwortet.</p>';
+  return `${conn}${stats}
+   <div><div class="preph"><p class="lbl">Antwort wartet auf Freigabe</p>${open.length?`<span class="tag-ready" style="color:#c13584;border-color:rgba(225,48,108,.45)">${open.length} bereit</span>`:''}</div>
+   ${open.length?`<div class="items">${items}</div>`:'<p class="isub">Keine offenen Nachrichten.</p>'}</div>
+   <div><p class="lbl">Zuletzt beantwortet</p>${hist}</div>`;
+}
+function joFull(r){ const st=JO[r.id]||(JO[r.id]={text:r.draft,edit:false,busy:false,err:r.error||''});
+  const bub=r.msgs.map(m=>`<div class="jb ${m.dir}">${esc(m.text||'')}<time>${esc(shTime(m.at))}</time></div>`).join('');
+  const dr=`<div class="jb draft"><em>Entwurf von Jonas</em>${st.edit||!st.text?`<textarea class="ekin" data-jotext="${r.id}" placeholder="Antwort schreiben …">${esc(st.text)}</textarea>`:esc(st.text)}</div>`;
+  return `<div class="ekit">
+   <div class="ektop"><div style="min-width:0"><b>${esc(r.name)}</b><small>${r.handle?esc(r.handle)+' · ':''}${esc(ago(r.at))}</small></div>${CHN(r.channel)}</div>
+   <div class="jchat">${bub}${dr}</div>
+   ${st.err?`<div class="ekerr">${esc(st.err)}</div>`:''}
+   <div class="iacts"><button class="b pri" data-josend="${r.id}" ${st.busy?'disabled':''}>${st.busy?'Wird gesendet …':'Senden'}</button><button class="b" data-joedit="${r.id}">${st.edit?'Fertig':'Bearbeiten'}</button><button class="b ghost" data-joskip="${r.id}">Selbst antworten</button></div>
+  </div>`; }
+function jonasBind(){
+  const keep=(fn)=>{ const y=card.scrollTop; fn(); renderCard(); card.scrollTop=y; };
+  card.querySelectorAll('[data-joshow]').forEach(b=>b.onclick=()=>keep(()=>{ joShow=b.dataset.joshow }));
+  card.querySelectorAll('[data-joall]').forEach(b=>b.onclick=()=>keep(()=>{ joAll=!joAll }));
+  card.querySelectorAll('[data-joedit]').forEach(b=>b.onclick=()=>keep(()=>{ const s=JO[b.dataset.joedit]; s.edit=!s.edit }));
+  card.querySelectorAll('[data-jotext]').forEach(t=>t.oninput=()=>{ JO[t.dataset.jotext].text=t.value });
+  card.querySelectorAll('.jchat').forEach(c=>c.scrollTop=c.scrollHeight);
+  card.querySelectorAll('[data-josend]').forEach(b=>b.onclick=()=>{ const id=b.dataset.josend, s=JO[id]; const r=joOpen().find(x=>x.id===id);
+    if(!String(s.text||'').trim()) { s.err='Antwort ist leer'; renderCard(); return; }
+    if(!confirm(`Antwort an ${r?r.name:'den Kunden'} jetzt senden?`)) return; keep(()=>{ s.busy=true; s.err='' }); post({ type:'nf-jo', action:'send', id, text:s.text }); });
+  card.querySelectorAll('[data-joskip]').forEach(b=>b.onclick=()=>{ if(!confirm('Selbst antworten? Der Entwurf wird verworfen.')) return; post({ type:'nf-jo', action:'skip', id:b.dataset.joskip }); DATA.jo.open=joOpen().filter(x=>x.id!==b.dataset.joskip); updateBadges(); renderCard(); });
+}
+window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-jo-res') return; const s=JO[m.id];
+  if(m.action==='send'){ if(s){ s.busy=false; s.err=m.ok?'':(m.error||'Fehler'); } if(m.ok){ DATA.jo.open=joOpen().filter(x=>x.id!==m.id); updateBadges(); showToast('Antwort gesendet','Jonas Schröder · Chat-Agent',JONAS,'JS'); } }
+  if(openP===JONAS){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Anna (Einkauf) ================= */
 const TNC_COLORS=[['White','#ffffff'],['Warm White','#ffe7b8'],['Soft Orange','#ffb37a'],['Orange','#f97316'],['Red','#ef4444'],['Purple','#a855f7'],['Peachy Pink','#fb7185'],['Soft Pink','#f9a8d4'],['Pink','#ec4899'],['Light Green','#86efac'],['Green','#22c55e'],['Yellow','#facc15'],['Lake Blue','#2ee6d6'],['Ice Blue','#7dd3fc'],['Blue','#2f3dff']];
 const APPS=['Innen','Draussen (IP65 wasserdicht)'], PLATES=['Rückwand ausschneiden','Quadratische Rückenplatte','Ohne Rückenplatte'];
@@ -1035,6 +1087,7 @@ function renderCard(){
   if (p===LISA) extra = `<div><div class="preph"><p class="lbl">Wartet auf Freigabe</p>${offerTasks().length?`<span class="tag-ready">${offerTasks().length} bereit</span>`:''}</div>${tlist(offerTasks(), 'Öffnen & freigeben')}</div><div><p class="lbl">Neueste Angebote</p>${olist(DATA.orders.slice(0,5))}</div><div class="iacts"><button class="b pri" data-nav="create">+ Angebot erstellen</button><button class="b" data-nav="manage">Alle Angebote</button></div>`;
   if (p===ANNA) extra = annaHTML();
   if (p===SARAH) extra = sarahHTML();
+  if (p===JONAS) extra = jonasHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
     const ap=F2.approve.length?`<div class="items">${F2.approve.map(t=>`<div class="item"><div class="itop"><span class="inum">${esc(t.nr)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.label)} · fällig ${ago(t.at)}</div>${t.last?`<div class="isub">✉ Letzte Mail: ${esc(t.last)}</div>`:''}</div></div><div class="iacts"><button class="b pri" data-fu="${t.id}">${F2.night?(t.kind==='rabatt'?'Rabatt ':'')+esc(F2.morning||'morgen 8:10')+' senden':(t.kind==='rabatt'?'Rabatt senden':'Jetzt senden')}</button><button class="b ghost" data-fuskip="${t.id}">Überspringen</button></div></div>`).join('')}</div>${F2.approve.length>1?`<button class="b wide" data-fuall="1">Alle ${F2.approve.length} freigeben${F2.night?' (gehen '+esc(F2.morning||'morgen 8:10')+' raus)':''}</button>`:''}${F2.night&&F2.approve.length?'<p class="isub">Es ist nach 20 Uhr. Freigegebene Mails gehen automatisch '+esc(F2.morning||'morgen 8:10')+' Uhr raus.</p>':''}`:'<p class="isub">Nichts zum Freigeben.</p>';
@@ -1064,17 +1117,18 @@ function renderCard(){
   card.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>post({ type: 'nf-open', id: b.dataset.open }));
   if (p===ANNA) annaBind();
   if (p===SARAH) sarahBind();
+  if (p===JONAS) jonasBind();
   card.querySelectorAll('[data-dismiss]').forEach(b=>b.onclick=()=>{ post({ type: 'nf-dismiss', id: b.dataset.dismiss }); DATA.tasks = DATA.tasks.filter(t => t.id !== b.dataset.dismiss); updateBadges(); renderCard(); });
 }
 
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, all=n+a+u+e+s2;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, all=n+a+u+e+s2+j2;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
   setB(DEPTS[5]._lbl, n); setB(EMMA._tag, n);
-  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2); setB(SARAH._tag, s2);
+  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2);
   okbar.hidden = !n;
   okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
   if (typeof onResize === 'function') requestAnimationFrame(onResize);
@@ -1086,6 +1140,7 @@ function renderDrop(){
     ...offerTasks().map(t=>({p:LISA,c:DEPTS[0].color,i:'LF',t:`Neues Angebot · ${t.name}`,s:'Lisa Fischer · Angebots-Agent'})),
     ...updTasks().map(t=>({p:TOM,c:DEPTS[0].color,i:'TB',t:`Änderung · ${t.name}`,s:'Tom Becker · Änderungs-Agent'})),
     ...shOpen().map(t=>({p:SARAH,c:DEPTS[1].color,i:'SK',t:`Antwort an ${t.name||'Kunde'}`,s:'Sarah Krüger · Posteingangs-Agent'})),
+    ...joOpen().map(t=>({p:JONAS,c:DEPTS[1].color,i:'JS',t:`Nachricht von ${t.name||'Kunde'}`,s:'Jonas Schröder · Chat-Agent'})),
     ...ekOpen().map(t=>({p:ANNA,c:DEPTS[4].color,i:'AS',t:`TNC-Anfrage · ${t.name||'Kunde'}`,s:'Anna Schulz · Einkaufs-Agent'})),
     ...DATA.due.map(o=>({p:EMMA,c:DEPTS[5].color,i:'EK',t:`${o.nr} · ${o.name}`,s:o.status})),
   ];
@@ -1112,10 +1167,12 @@ function showToast(title,sub,who,ini2){
 }
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
-  const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null;
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, stats: e.data.stats || DATA.stats };
+  const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null, joBefore = DATA.jo ? new Set(joOpen().map(r => r.id)) : null;
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, stats: e.data.stats || DATA.stats };
   const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
   const shNew = shBefore ? shOpen().filter(r => !shBefore.has(r.id)) : [];
+  const joNew = joBefore ? joOpen().filter(r => !joBefore.has(r.id)) : [];
+  if (joNew.length) showToast(`${joNew.length} ${joNew.length===1?'Nachricht wartet':'Nachrichten warten'} auf Freigabe`, 'Jonas Schröder · Chat-Agent', JONAS, 'JS');
   if (shNew.length) showToast(`${shNew.length} ${shNew.length===1?'Antwort wartet':'Antworten warten'} auf Freigabe`, 'Sarah Krüger · Posteingangs-Agent', SARAH, 'SK');
   if (ekNew.length) showToast(`${ekNew.length} ${ekNew.length===1?'neue Anfrage':'neue Anfragen'} für TNC`, 'Anna Schulz · Einkaufs-Agent', ANNA, 'AS');
   const fresh = DATA.tasks.filter(t => !before.has(t.id));
