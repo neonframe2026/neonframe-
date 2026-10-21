@@ -314,6 +314,7 @@ html.staff #testBtn,html.staff #mTest,html.staff .hsep{display:none!important}
 .jb.out{background:rgba(120,135,165,.16);justify-self:end;border-bottom-right-radius:5px;color:var(--muted)}
 .jb.draft{justify-self:end;border:1.5px dashed #dd2a7b;background:rgba(225,48,108,.06);border-bottom-right-radius:5px;min-width:60%}.jb.draft em{display:block;font-style:normal;font-weight:700;font-size:11px;color:#c13584;margin-bottom:3px}
 .jb.draft textarea{min-height:120px;margin-top:2px}
+.rfg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.rf{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line-2)}.rf img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in}.rf button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:11px;display:grid;place-items:center}
 .crf{display:grid;gap:8px}.crf .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.crf label{font-size:11px;color:var(--muted);display:grid;gap:3px}.crf textarea{min-height:64px}
 .pc{border:1px solid var(--line-2);background:var(--surface-2);border-radius:12px;padding:10px 12px;display:grid;gap:7px;min-width:0}
 .pt{display:flex;gap:8px;align-items:center;min-width:0}.pt b{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tg{margin-left:auto;font:600 10.5px var(--body);padding:2px 8px;border-radius:99px;color:#ff8a5c;border:1px solid rgba(255,138,92,.45);white-space:nowrap;flex:none}.tg.o{color:#c98a00;border-color:rgba(255,192,74,.5)}html.dark .tg.o{color:#ffc04a}
@@ -1024,12 +1025,12 @@ function fuNextBind(){
 /* ================= Creative Studio: Mia (Prompts) + Noah (Bild & Video) ================= */
 const ELEVEN_URL='https://elevenlabs.io/app/image-video';
 const crQueue=()=>((DATA.cr&&DATA.cr.queue)||[]);
-const CR={brief:'',kind:'image',format:'4:5',count:'5',busy:false,err:'',showP:3,showD:6,open:{},rw:{}};
+const CR={brief:'',kind:'image',format:'4:5',count:'5',busy:false,err:'',showP:3,showD:6,showR:8,refBusy:false,open:{},rw:{}};
 const KL={image:'Bild',video:'Video'};
 function miaHTML(){
   const C=DATA.cr; if(!C) return '<p class="isub">Wird geladen …</p>';
   const sel=(k,opts)=>`<select class="ekin" data-crf="${k}">${opts.map(([v,l])=>`<option value="${v}"${CR[k]===v?' selected':''}>${l}</option>`).join('')}</select>`;
-  const form=`<div class="abox crf"><p class="lbl" style="margin:0">Was brauchst du?</p><textarea class="ekin" data-crf="brief" placeholder="z. B. 10 Black-Friday-Creatives für Meta Ads, verschiedene Räume, mit Rabatt-Hinweis">${esc(CR.brief)}</textarea>
+  const form=`<div class="abox crf"><p class="lbl" style="margin:0">Was brauchst du?</p><textarea class="ekin" data-crf="brief" placeholder="z. B. 10 Black-Friday-Creatives, 50% Rabatt">${esc(CR.brief)}</textarea>
     <div class="opts"><label>Art${sel('kind',[['image','Bild'],['video','Video']])}</label><label>Format${sel('format',[['4:5','4:5 Feed'],['1:1','1:1'],['9:16','9:16 Story'],['16:9','16:9']])}</label><label>Anzahl${sel('count',[1,3,5,10,15,20].map(n=>[String(n),String(n)]))}</label></div>
     ${CR.err?`<div class="ekerr">${esc(CR.err)}</div>`:''}
     <button class="b pri wide" data-crwrite ${CR.busy?'disabled':''}>${CR.busy?'Mia schreibt … (ca. 20 Sek.)':'Prompts schreiben'}</button></div>`;
@@ -1037,7 +1038,11 @@ function miaHTML(){
   const list=P.slice(0,CR.showP).map(r=>`<div class="pc"><div class="pt"><b>${esc(r.title)}</b><span class="tg">${KL[r.kind]||'Bild'} · ${esc(r.format)}</span></div><p class="${CR.open[r.id]?'':'cl'}" data-crx="${r.id}">${esc(r.prompt)}</p>
     <div class="iacts"><button class="b pri" data-crfw="${r.id}">An Noah weiterleiten</button><button class="b" data-crcp="${r.id}">Kopieren</button><button class="b ghost" data-crrw="${r.id}" ${CR.rw[r.id]?'disabled':''}>${CR.rw[r.id]?'Schreibt …':'Neu schreiben'}</button><button class="b ghost" data-crdel="${r.id}" title="Löschen">✕</button></div></div>`).join('');
   const more=P.length>CR.showP?`<button class="b wide" data-crmore="P">Weitere ${P.length-CR.showP} anzeigen ▾</button>`:'';
-  return `${form}<div><div class="preph"><p class="lbl" style="margin:0">${P.length?`Prompts · ${esc(P[0].series)}${new Set(P.map(x=>x.series)).size>1?' und weitere':''}`:'Prompts'}</p>${P.length>1?`<button class="b ghost" style="margin-left:auto" data-crall>Alle ${P.length} an Noah</button>`:''}</div>
+  const RF=C.refs||[];
+  const refs=`<div><div class="preph"><p class="lbl" style="margin:0">Vorbilder${RF.length?' · '+RF.length:''}</p><label class="b" style="margin-left:auto;cursor:pointer">${CR.refBusy?'Lädt hoch …':'+ Hochladen'}<input type="file" accept="image/*" multiple data-crref hidden></label></div>
+    <p class="isub" style="margin:4px 0 8px">Ads, die dir gefallen. Mia übernimmt den Stil, nie Logos oder Zahlen.</p>
+    ${RF.length?`<div class="rfg">${RF.slice(0,CR.showR).map(r=>`<div class="rf"><img src="${esc(r.url)}" alt="" data-crlb="${r.id}"><button data-crdel="${r.id}" title="Entfernen">✕</button></div>`).join('')}</div>${RF.length>CR.showR?`<button class="b wide" data-crmore="R" style="margin-top:6px">Alle ${RF.length} anzeigen ▾</button>`:''}`:''}</div>`;
+  return `${form}${refs}<div><div class="preph"><p class="lbl" style="margin:0">${P.length?`Prompts · ${esc(P[0].series)}${new Set(P.map(x=>x.series)).size>1?' und weitere':''}`:'Prompts'}</p>${P.length>1?`<button class="b ghost" style="margin-left:auto" data-crall>Alle ${P.length} an Noah</button>`:''}</div>
     ${P.length?`<div class="items" style="margin-top:8px">${list}${more}</div>`:'<p class="isub">Noch keine Prompts. Beschreib oben, was du brauchst.</p>'}</div>`;
 }
 function noahHTML(){
@@ -1058,19 +1063,20 @@ function crLightbox(r){ const w=document.createElement('div'); w.className='eklb
   w.onclick=e=>{ if(e.target===w||e.target.closest('[data-x]')) w.remove(); }; document.body.appendChild(w); }
 function crBind(){
   const keep=(fn)=>{ const y=card.scrollTop; fn(); renderCard(); card.scrollTop=y; };
-  const all=()=>[...((DATA.cr&&DATA.cr.prompts)||[]),...crQueue(),...((DATA.cr&&DATA.cr.done)||[])];
+  const all=()=>[...((DATA.cr&&DATA.cr.refs)||[]),...((DATA.cr&&DATA.cr.prompts)||[]),...crQueue(),...((DATA.cr&&DATA.cr.done)||[])];
   const find=id=>all().find(x=>x.id===id);
   const copy=(t)=>{ try{ navigator.clipboard.writeText(t) }catch(e){} const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy')}catch(e){} ta.remove(); };
   card.querySelectorAll('[data-crf]').forEach(el=>el.oninput=el.onchange=()=>{ CR[el.dataset.crf]=el.value });
   card.querySelectorAll('[data-crwrite]').forEach(b=>b.onclick=()=>{ if(!CR.brief.trim()){ keep(()=>{ CR.err='Bitte beschreiben, was du brauchst' }); return; } keep(()=>{ CR.busy=true; CR.err=''; }); post({ type:'nf-cr', action:'write', brief:CR.brief, kind:CR.kind, format:CR.format, count:CR.count }); });
   card.querySelectorAll('[data-crx]').forEach(p=>p.onclick=()=>keep(()=>{ CR.open[p.dataset.crx]=!CR.open[p.dataset.crx] }));
-  card.querySelectorAll('[data-crmore]').forEach(b=>b.onclick=()=>keep(()=>{ if(b.dataset.crmore==='P') CR.showP+=10; else CR.showD+=10; }));
+  card.querySelectorAll('[data-crmore]').forEach(b=>b.onclick=()=>keep(()=>{ if(b.dataset.crmore==='P') CR.showP+=10; else if(b.dataset.crmore==='R') CR.showR=999; else CR.showD+=10; }));
   card.querySelectorAll('[data-crcp]').forEach(b=>b.onclick=()=>{ const r=find(b.dataset.crcp); if(!r) return; copy(r.prompt); b.textContent='Kopiert ✓'; setTimeout(()=>{ b.textContent='Kopieren' },1500); });
   const moveToQueue=(ids)=>{ if(!DATA.cr) return; const mv=DATA.cr.prompts.filter(x=>ids.includes(x.id)); DATA.cr.prompts=DATA.cr.prompts.filter(x=>!ids.includes(x.id)); DATA.cr.queue=[...DATA.cr.queue,...mv.map(x=>({...x,status:'queued'}))]; updateBadges(); };
   card.querySelectorAll('[data-crfw]').forEach(b=>b.onclick=()=>keep(()=>{ const id=b.dataset.crfw; post({ type:'nf-cr', action:'forward', ids:[id], id }); moveToQueue([id]); }));
   card.querySelectorAll('[data-crall]').forEach(b=>b.onclick=()=>{ const ids=((DATA.cr&&DATA.cr.prompts)||[]).map(x=>x.id); if(!ids.length||!confirm(`Alle ${ids.length} Prompts an Noah weiterleiten?`)) return; keep(()=>{ post({ type:'nf-cr', action:'forward', ids, id:ids[0] }); moveToQueue(ids); }); });
   card.querySelectorAll('[data-crrw]').forEach(b=>b.onclick=()=>keep(()=>{ CR.rw[b.dataset.crrw]=true; post({ type:'nf-cr', action:'rewrite', id:b.dataset.crrw }); }));
-  card.querySelectorAll('[data-crdel]').forEach(b=>b.onclick=()=>{ if(!confirm('Diesen Prompt löschen?')) return; const id=b.dataset.crdel; post({ type:'nf-cr', action:'delete', id }); if(DATA.cr){ DATA.cr.prompts=DATA.cr.prompts.filter(x=>x.id!==id); DATA.cr.queue=DATA.cr.queue.filter(x=>x.id!==id); } updateBadges(); keep(()=>{}); });
+  card.querySelectorAll('[data-crref]').forEach(inp=>inp.onchange=()=>{ const fs=[...(inp.files||[])].filter(f=>f.size<=15*1024*1024); if(!fs.length) return; keep(()=>{ CR.refBusy=true; CR.err=''; }); post({ type:'nf-cr', action:'ref', files:fs }); });
+  card.querySelectorAll('[data-crdel]').forEach(b=>b.onclick=()=>{ if(!confirm('Wirklich löschen?')) return; const id=b.dataset.crdel; post({ type:'nf-cr', action:'delete', id }); if(DATA.cr){ DATA.cr.prompts=DATA.cr.prompts.filter(x=>x.id!==id); DATA.cr.queue=DATA.cr.queue.filter(x=>x.id!==id); DATA.cr.refs=(DATA.cr.refs||[]).filter(x=>x.id!==id); } updateBadges(); keep(()=>{}); });
   card.querySelectorAll('[data-crgo]').forEach(b=>b.onclick=()=>{ const r=find(b.dataset.crgo); if(!r) return; copy(r.prompt); window.open(ELEVEN_URL,'_blank'); b.textContent='Kopiert ✓ ElevenLabs offen'; setTimeout(()=>{ b.textContent='Kopieren & ElevenLabs öffnen' },2500); });
   card.querySelectorAll('[data-crup]').forEach(inp=>inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; if(f.size>50*1024*1024){ alert('Datei ist zu groß (max. 50 MB)'); return; } keep(()=>{ CR.rw[inp.dataset.crup]=true; CR.err=''; }); post({ type:'nf-cr', action:'upload', id:inp.dataset.crup, file:f }); });
   card.querySelectorAll('[data-crredo]').forEach(b=>b.onclick=()=>{ if(!confirm('Dieses Creative neu erstellen? Es kommt zurück zu „Zu erstellen“.')) return; post({ type:'nf-cr', action:'redo', id:b.dataset.crredo }); });
@@ -1081,6 +1087,7 @@ function crBind(){
 }
 window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-cr-res') return;
   if(m.action==='write'){ CR.busy=false; CR.err=m.ok?'':(m.error||'Fehler'); if(m.ok){ CR.brief=''; CR.showP=3; } }
+  else if(m.action==='ref'){ CR.refBusy=false; CR.err=m.ok?'':(m.error||'Fehler'); }
   else if(m.action==='rewrite'||m.action==='upload'){ delete CR.rw[m.id]; CR.err=m.ok?'':(m.error||'Fehler'); }
   else if(!m.ok) CR.err=m.error||'Fehler';
   if(openP===MIA||openP===NOAH){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
