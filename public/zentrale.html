@@ -413,7 +413,7 @@ const DEPTS = [
  {id:'creative', name:'Creative Studio', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>`, color:'#ff8a5c', tags:['Prompts & Serien','Bilder & Videos','3D-Vorschau'],
   kpis:[['Creatives / Woche','24'],['Hook-Rate','31 %'],['Gewinner','1 von 6']],
   people:[{name:'Mia Hoffmann',role:'Prompts',agent:'Prompt-Agent',f:1},{name:'Noah Schmitt',role:'Bild & Video',agent:'Bild- & Video-Agent',f:0},{name:'Lea Wagner',role:'3D-Vorschau',agent:'Vorschau-Agent',f:1}]},
- {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>`, color:'#8f7bff', tags:['Ziele & Planung','Kampagnen-Kalender','Wochenbericht'],
+ {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2 2 4-4"/></svg>`, color:'#8f7bff', tags:['Ziele & Planung','Kampagnen-Kalender','Wochenbericht'],
   kpis:[['Ziele','3'],['Kampagnen','2'],['Bericht','Mo']],
   people:[{name:'Max Richter',role:'Stratege',agent:'Strategie-Agent',f:0}]},
  {id:'einkauf', name:'Einkauf', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 10.5A2 2 0 0 1 15.5 20h-7a2 2 0 0 1-2-1.5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`, color:'#ffc04a', tags:['TNC-Anfragen','Logos & Farben','TNC-Portal'],
@@ -422,10 +422,10 @@ const DEPTS = [
  {id:'followup', name:'Follow-up & CRM', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M12 7v5l3 2"/></svg>`, color:'#34e39b', tags:['Erinnerungen','Rabatt-Mails','Bewertungen'],
   kpis:[['Offene Angebote','11'],['Mails fällig','3'],['Bewertungen','5']],
   people:[{name:'Emma Koch',role:'CRM-Managerin',agent:'Follow-up-Agent',f:1}]},
- {id:'shoptest', name:'Shop-Tester', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>`, color:'#f472b6', tags:['Startseite & Produktseiten','Fehlende Infos','Conversion'],
+ {id:'shoptest', name:'Shop-Tester', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h13L19 9"/><path d="M4 9v10h7"/><circle cx="17" cy="16" r="3"/><path d="M21 20l-1.8-1.8"/></svg>`, color:'#f472b6', tags:['Startseite & Produktseiten','Fehlende Infos','Conversion'],
   kpis:[['Vorschläge','0'],['Umgesetzt','0'],['Clarity','bald']],
   people:[{name:'Lena Wolf',role:'Growth & CRO',agent:'Shop-Tester-Agent',f:1}]},
- {id:'ads', name:'Ads-Analyse', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6"/><path d="M19 6a7 7 0 0 1 0 12"/></svg>`, color:'#a3e635', tags:['Meta Ads','Kosten & ROAS','Gewinner-Creatives'],
+ {id:'ads', name:'Ads-Analyse', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M10 20V10M16 20V12M22 20H2"/><path d="M4 9l6-4 6 3 5-5"/></svg>`, color:'#a3e635', tags:['Meta Ads','Kosten & ROAS','Gewinner-Creatives'],
   kpis:[['ROAS','–'],['Kosten','–'],['Gewinner','–']],
   people:[{name:'Paul Neumann',role:'Ads-Analyst',agent:'Ads-Agent',f:0}]}
 ];
@@ -899,7 +899,7 @@ nav.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.id?focusRoom(b
 function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.id||null)===focused))); }
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
-function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78*1.04; }
+function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78*.92; }
 function overPhi(){ return isMob()?1.18:1.05; }
 function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
 function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
