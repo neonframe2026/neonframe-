@@ -4,6 +4,7 @@ import ZentraleFrame from './zentrale-frame'
 import TncUpdatePage2 from './tnc-update-page'
 import AdminLogin from './login-screen'
 import SettingsPage from './settings-page'
+import WissenPage from './wissen-page'
 import { authSignOut } from '../../lib/admin-auth'
 
 const STATUS_OPTIONS = [
@@ -1915,6 +1916,7 @@ if (tab === 'tncupdate') return (
     </div>
   )
 if (tab === 'settings') return <SettingsPage onBack={() => setTab('zentrale')} />
+if (tab === 'wissen') return <WissenPage onBack={() => setTab('zentrale')} />
 if (tab === 'zentrale' || tab === 'home') return (
         <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
       onOpenOffer={(t, pre) => { setTab('create'); setTncLink(t); handleTNC(t, pre) }}
