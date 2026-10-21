@@ -91,7 +91,7 @@ async function load() {
     if (s.due < now - MAX_OLD_DAYS * 24 * H) continue
     const p = planned.get(id)
     if (p) { items.push({ o, id, ...s, manual: false, approved: true, at: sendAt(t(p.created_at)) }); continue }
-    const manual = s.kind === 'rabatt' || s.due < START
+    const manual = s.due < START
     items.push({ o, id, ...s, manual, at: sendAt(Math.max(s.due, START)) })
   }
   return { items, logs: (logs || []).filter(l => l.type === 'fu_sent') }
