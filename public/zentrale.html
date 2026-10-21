@@ -135,6 +135,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .chead .av{width:46px;height:46px;border-radius:50%;font-size:15px}
 .chead h2{font-family:var(--display);font-size:24px;font-weight:700;margin:0;line-height:1.05}
 .chead .role{font-size:12.5px;color:var(--muted)}
+.chead .x.bx{margin-left:auto}.chead .x.bx+.x{margin-left:6px}
+.card.big{left:12.5%;right:12.5%;width:auto;max-width:none;display:block;column-count:2;column-gap:22px;padding:22px 26px;z-index:9}
+.card.big>*{break-inside:avoid;margin:0 0 16px}
+.card.big>.chead,.card.big>.cfoot{column-span:all}
+@media (max-width:900px){ .chead .x.bx{display:none}.chead .x.bx+.x{margin-left:auto} .card.big{left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));column-count:1} }
 .chead .x{margin-left:auto;align-self:flex-start;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;font-size:18px;text-align:center}
 .eyebrow{font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:flex;align-items:center;gap:6px}
 .eyebrow i{width:7px;height:7px;border-radius:50%}
@@ -904,7 +909,7 @@ persons.forEach(p=>{
 
 /* ================= Navigation ================= */
 const nav=document.getElementById('nav');
-let focused=null, openP=null;
+let focused=null, openP=null, BIG=(()=>{ try{ return localStorage.getItem('nf_big')==='1' }catch(e){ return false } })();
 nav.innerHTML=`<button data-id="" aria-pressed="true">◎ Übersicht</button>`+[...DEPTS.filter(d=>d.active.length),...DEPTS.filter(d=>!d.active.length)].map(d=>`<button data-id="${d.id}" aria-pressed="false"><span class="d" style="background:${d.active.length?d.color:'#5b6680'}"></span>${d.name} <span class="k">${d.active.length}</span></button>`).join('');
 nav.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.id?focusRoom(b.dataset.id):overview());
 
@@ -952,7 +957,7 @@ function roomActions(d){
 const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:p===NOAH?crQueue().length:0;
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
-  card.classList.add('room');
+  card.classList.add('room'); card.classList.remove('big');
   card.innerHTML=`<div class="chead"><span class="av dic" style="--c:${d.color};border-radius:12px">${d.icon}</span>
      <div><div class="eyebrow"><i style="background:var(--ok)"></i>Abteilung</div><h2>${d.name}</h2></div>
      <button class="x" id="rx" aria-label="Zur Übersicht">×</button></div>
@@ -1367,7 +1372,7 @@ function renderCard(){
   card.innerHTML=`
    <div class="chead"><span class="av" style="background:${d.color}">${ini(p.name)}</span>
      <div><div class="eyebrow"><i style="background:${d.color}"></i>${d.name}</div><h2>${p.name}</h2><div class="role">${p.role}</div></div>
-     <button class="x" id="cx" aria-label="Schließen">×</button></div>
+     <button class="x bx" id="cbig" aria-label="${BIG?'Verkleinern':'Vollbild'}" title="${BIG?'Verkleinern':'Vollbild'}">${BIG?'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>':'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'}</button><button class="x" id="cx" aria-label="Schließen">×</button></div>
    <div><p class="lbl">Zuständig für</p><div class="chips">${d.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div></div>
    <div class="agentbox">
      <div class="agenth"><span class="orb" ${info?'':'style="filter:grayscale(1);opacity:.5"'}></span><div><small>KI-Agent von ${first}</small><b>${p.agent}</b></div>${info?'<span class="st">aktiv</span>':'<span class="st" style="color:var(--muted)">in Planung</span>'}</div>
@@ -1376,6 +1381,8 @@ function renderCard(){
    ${extra}
    <div class="cfoot">${first} entscheidet. ${p.agent} bereitet vor.</div>`;
   card.querySelector('#cx').onclick=closeCard;
+  card.classList.toggle('big',BIG);
+  card.querySelector('#cbig').onclick=()=>{ BIG=!BIG; try{ localStorage.setItem('nf_big',BIG?'1':'0') }catch(e){} renderCard(); card.scrollTop=0; };
   card.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>goTab(b.dataset.nav));
   const fuBtn=(b,msg)=>{ b.disabled=true; b.textContent='Wird gesendet...'; post(msg); };
   card.querySelectorAll('[data-fu]').forEach(b=>b.onclick=()=>fuBtn(b,{ type: 'nf-fu', action: 'send', id: b.dataset.fu }));
