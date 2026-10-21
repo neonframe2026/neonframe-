@@ -138,13 +138,18 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
         if (t.type === 'update') onOpenUpdate(t.tnc_id)
         else onOpenOffer(t.tnc_id, { project: t.project || '', email: t.email || '' })
       }
+      if (e.data?.type === 'nf-fu' && e.data.action === 'plan') {
+        fetch('/api/followup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'plan', ids: e.data.ids, at: e.data.at }) })
+          .then(r => r.json()).then(j => { if (j.error) alert('Fehler: ' + j.error) }).catch(err => alert('Fehler: ' + err.message)).finally(loadFu)
+        return
+      }
       if (e.data?.type === 'nf-fu') {
-        const ids = e.data.action === 'all' ? (fuRef.current?.approve || []).map(a => a.id) : [e.data.id]
+        const ids = e.data.action === 'all' ? (fuRef.current?.approve || []).map(a => a.id) : e.data.ids || [e.data.id]
         const action = e.data.action === 'skip' ? 'skip' : e.data.action === 'wa' ? 'wa_done' : 'send'
         ;(async () => {
           const errs = []
           for (const id of ids) {
-            const j = await fetch('/api/followup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, id }) }).then(r => r.json()).catch(err => ({ error: err.message }))
+            const j = await fetch('/api/followup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, id, now: e.data.action === 'now' }) }).then(r => r.json()).catch(err => ({ error: err.message }))
             if (j.error) errs.push(j.error)
           }
           if (errs.length) alert('Fehler: ' + errs.join(', '))
