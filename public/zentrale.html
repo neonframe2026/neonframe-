@@ -952,7 +952,7 @@ const ekOpen=()=>((DATA.ek&&DATA.ek.open)||[]);
 const EK={}; let ekShow=null;
 const hex2=(h)=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 function ekState(r){ if(!EK[r.id]){ const cc=String(r.customerColors||'').split(/,\s*/).map(x=>x.trim()).filter(Boolean).map(x=>(TNC_COLORS.find(c=>c[0].toLowerCase()===x.toLowerCase())||[])[0]).filter(Boolean);
-  EK[r.id]={ colors:new Set(r.kind==='text'?cc:[]), sug:false, note:'', edit:false, busy:false, err:r.error||'', ...r.tncDefaults }; } return EK[r.id]; }
+  EK[r.id]={ colors:new Set(r.kind==='text'?cc:(r.suggest||[])), sug:r.kind!=='text'&&!!(r.suggest||[]).length, note:'', edit:false, busy:false, err:r.error||'', ...r.tncDefaults }; } return EK[r.id]; }
 // Farben aus dem Logo erkennen und passende TNC-Farben vorschlagen
 function ekSuggest(r){ const st=EK[r.id]; const img=new Image(); img.crossOrigin='anonymous';
   img.onload=()=>{ try{ const c=document.createElement('canvas'); const k=Math.min(1,96/Math.max(img.width,img.height)); c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k)); const g=c.getContext('2d'); g.drawImage(img,0,0,c.width,c.height);
@@ -997,7 +997,7 @@ function ekFull(r,on){ const st=ekState(r);
     ${row('Art',r.kind==='logo'?'Logo':'Text')}
     ${r.kind==='text'?row('Neon-Text',esc(r.text||'–')):''}
     ${row('Datei',r.logo?`<span class="ekfile"><button class="ekth" type="button" data-eklb="${r.id}"><img src="${esc(r.logo)}" alt=""><em>⤢</em></button><small><u data-eklb="${r.id}">${esc(r.fileName||'neon-vorschau.png')}</u><br>antippen zum Vergrößern · wird mitgesendet</small></span>`:'<span class="isub">Keine Datei</span>')}
-    ${row('Farben',`${st.sug&&!st.touched?'<span class="eksug">Von Anna aus dem Logo vorgeschlagen</span>':''}${pick}`,true)}
+    ${row('Farben',`${st.sug&&!st.touched?'<span class="eksug">✦ Von Anna erkannt</span>':''}${pick}`,true)}
     ${row('Größe',st.edit?inp('size'):`${esc(st.size||'Kleinstmögliche Größe')} ${r.width?'<span class="isub">(vom Kunden)</span>':''}`)}
     ${row('Anwendung',st.edit?sel('application',APPS):esc(st.application))}
     ${row('Rückwand',st.edit?sel('backplate',PLATES):esc(st.backplate))}
