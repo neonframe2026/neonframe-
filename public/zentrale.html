@@ -972,7 +972,7 @@ function fuNextHTML(rows){
   const head=`<div class="preph"><p class="lbl" style="margin:0">Schickt Emma als Nächstes</p>${can.length?`<div class="fusel">${FUP.multi?`<b>${FUP.sel.size} ausgewählt</b><button class="b ghost" data-fuall2>Alle</button><button class="b ghost" data-fumulti>Fertig</button>`:`<button class="b" data-fumulti>Auswählen</button>`}</div>`:''}</div>`;
   if(!rows.length) return `<div>${head}<p class="isub">Nichts geplant.</p></div>`;
   const li=rows.map(r=>{ const on=FUP.sel.has(r.id), op=!FUP.multi&&FUP.open===r.id;
-    let h=`<li class="${r.id?'fun':''}${on?' sel':''}${op?' open':''}" ${r.id?`data-fun="${r.id}"`:''}>${FUP.multi&&r.id?`<span class="cb${on?' on':''}">${on?'✓':''}</span>`:'<span class="fic wait">⏱</span>'}<span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${esc(r.when)}</time></li>`;
+    let h=`<li class="${r.id?'fun':''}${on?' sel':''}${op?' open':''}" ${r.id?`data-fun="${r.id}"`:''}>${FUP.multi&&r.id?`<span class="cb${on?' on':''}">${on?'✓':''}</span>`:'<span class="fic wait">⏱</span>'}<span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${r.orig?`<s style="opacity:.55">${esc(r.orig)}</s><br>`:''}${esc(r.when)}</time></li>`;
     if(op) h+=`<li class="pl"><div class="plb"><button class="b pri" data-funow>Jetzt senden</button><button class="b" data-fuplan>Planen</button><button class="b ghost" data-fux>Abbrechen</button></div>${FUP.plan?fuForm('Speichern'):''}</li>`;
     return h; }).join('');
   const n=FUP.sel.size;
