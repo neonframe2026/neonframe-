@@ -865,8 +865,8 @@ nav.querySelectorAll('button').forEach(b=>b.onclick=()=>b.dataset.id?focusRoom(b
 function setNav(){ nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.id||null)===focused))); }
 function fitDist(w,h){ const asp=Math.max(.3,(stage.clientWidth||1)/(stage.clientHeight||1)), tv=Math.tan(cam.fov*Math.PI/360); return Math.max(h/2/tv, w/2/(tv*asp)); }
 const isMob=()=>stage.clientWidth<700;
-function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78; }
-function overPhi(){ return isMob()?1.18:1.35; }
+function overDist(){ return isMob()?fitDist(38*RS*RS,40*RS)*.9:fitDist(50*RS,40*RS)*.78*1.08; }
+function overPhi(){ return isMob()?1.18:1.15; }
 function roomDist(){ return isMob()?fitDist(13,11):fitDist(12.5,10); }
 function cardShift(dd){ if(stage.clientWidth<=760) return; const asp=stage.clientWidth/stage.clientHeight, visH=2*dd*Math.tan(cam.fov*Math.PI/360), visW=visH*asp; goal.add(new THREE.Vector3(Math.cos(thetaGoal),0,-Math.sin(thetaGoal)).multiplyScalar(visW*Math.min(.24,190/stage.clientWidth))); }
 function roomZoom(){ return 1; }
