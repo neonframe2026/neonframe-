@@ -953,7 +953,7 @@ function roomActions(d){
   if(d.id==='einkauf') return `<div class="abox"><h3>Anfrage an Hersteller</h3><p>Kundenanfrage an TNC übertragen. In Planung.</p><button class="b wide" disabled style="opacity:.6">Kommt bald</button></div>`+ask;
   return ask;
 }
-const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:p===NOAH?crQueue().length:0;
+const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:p===NOAH?crQueue().length:p===DAVID?stNew().length:0;
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
   card.classList.add('room'); card.classList.remove('big');
@@ -1074,6 +1074,7 @@ function fuNextBind(){
      });
 }
 /* ================= Strategie & Planung: David (Berichte & Ziele) + Clara (Kampagnen) ================= */
+const stNew=()=>{ const S=DATA.st; if(!S||!S.periods) return []; return ['week','month','year'].filter(k=>S.periods[k]&&S.periods[k].report&&S.periods[k].report.seen===false); };
 const STP={tab:'week',chat:{david:'',clara:''},busy:{},err:'',gf:false,g:{metric:'umsatz',target:'',title:''},open:null,asked:{}};
 const eur2=(n)=>Number(n||0).toLocaleString('de-DE')+' €';
 function stKpis(c,p,lbl){ if(!c) return '';
@@ -1126,6 +1127,8 @@ function stBind(){
   const S=DATA.st; if(!S) return;
   card.querySelectorAll('[data-stscroll]').forEach(c=>c.scrollTop=c.scrollHeight);
   card.querySelectorAll('[data-sttab]').forEach(b=>b.onclick=()=>keep(()=>{ STP.tab=b.dataset.sttab }));
+  // Neuer automatischer Bericht: beim Öffnen als gelesen markieren
+  if(openP===DAVID){ const P=S.periods[STP.tab]; if(P.report&&P.report.seen===false){ P.report.seen=true; post({ type:'nf-st', action:'seen', key:P.key }); setTimeout(updateBadges,0); } }
   // Bericht automatisch schreiben lassen, wenn noch keiner da ist und es Zahlen gibt
   if(openP===DAVID){ const P=S.periods[STP.tab]; if(!P.report&&!STP.busy.rep&&!STP.asked[P.key]&&P.cur&&(P.cur.anfragen||P.cur.angebote||P.cur.verkaeufe)){ STP.asked[P.key]=1; STP.busy.rep=true; post({ type:'nf-st', action:'report', period:STP.tab }); setTimeout(()=>{ if(openP===DAVID) keep(()=>{}) },0); } }
   card.querySelectorAll('[data-streport]').forEach(b=>b.onclick=()=>keep(()=>{ STP.busy.rep=true; STP.asked[S.periods[b.dataset.streport].key]=1; post({ type:'nf-st', action:'report', period:b.dataset.streport }); }));
@@ -1359,7 +1362,7 @@ function renderCard(){
   if (p===SARAH) extra = sarahHTML();
   if (p===JONAS) extra = jonasHTML();
   if (p===MIA) extra = miaHTML();
-  if (p===DAVID) extra = davidHTML();
+  if (p===DAVID) { const nw=stNew(); if(nw.length&&!nw.includes(STP.tab)) STP.tab=nw[nw.length-1]; extra = davidHTML(); }
   if (p===CLARA) extra = claraHTML();
   if (p===NOAH) extra = noahHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
@@ -1410,11 +1413,11 @@ function renderCard(){
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, q=crQueue().length, all=n+a+u+e+s2+j2+w;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, q=crQueue().length, dv=stNew().length, all=n+a+u+e+s2+j2+w+dv;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
   setB(DEPTS[5]._lbl, n+w); setB(EMMA._tag, n+w);
-  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2); setB(DEPTS[2]._lbl, q); setB(NOAH._tag, q);
+  setB(DEPTS[0]._lbl, a+u); setB(LISA._tag, a); setB(TOM._tag, u); setB(DEPTS[4]._lbl, e); setB(ANNA._tag, e); setB(DEPTS[1]._lbl, s2+j2); setB(SARAH._tag, s2); setB(JONAS._tag, j2); setB(DEPTS[2]._lbl, q); setB(NOAH._tag, q); setB(DEPTS[3]._lbl, dv); setB(DAVID._tag, dv);
   okbar.hidden = !n;
   okbar.textContent = DATA.fu ? `● ${DATA.fu.approve.length} ${DATA.fu.approve.length===1?'Rabatt-Mail wartet':'Rabatt-Mails warten'} auf deine Freigabe →` : `● ${n} ${n===1?'Angebot wartet':'Angebote warten'} auf Nachfassen →`; okbar.style.cursor='pointer';
   if (typeof onResize === 'function') requestAnimationFrame(onResize);
@@ -1427,6 +1430,7 @@ function renderDrop(){
     ...updTasks().map(t=>({p:TOM,c:DEPTS[0].color,i:'TB',t:`Änderung · ${t.name}`,s:'Tom Becker · Änderungs-Agent'})),
     ...shOpen().map(t=>({p:SARAH,c:DEPTS[1].color,i:'SK',t:`Antwort an ${t.name||'Kunde'}`,s:'Sarah Krüger · Posteingangs-Agent'})),
     ...joOpen().map(t=>({p:JONAS,c:DEPTS[1].color,i:'JS',t:`Nachricht von ${t.name||'Kunde'}`,s:'Jonas Schröder · Chat-Agent'})),
+    ...stNew().map(k=>({p:DAVID,c:DEPTS[3].color,i:'DL',t:k==='week'?'Neuer Wochenbericht':k==='month'?'Neuer Monatsbericht':'Neuer Jahresbericht',s:'David Lehmann · Bericht-Agent'})),
     ...ekOpen().map(t=>({p:ANNA,c:DEPTS[4].color,i:'AS',t:`TNC-Anfrage · ${t.name||'Kunde'}`,s:'Anna Schulz · Einkaufs-Agent'})),
     ...DATA.due.map(o=>({p:EMMA,c:DEPTS[5].color,i:'EK',t:`${o.nr} · ${o.name}`,s:o.status})),
   ];
