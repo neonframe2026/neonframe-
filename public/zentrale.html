@@ -962,7 +962,7 @@ window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-sh-re
   else if(m.action==='undo'){ if(m.ok){ (DATA.sh.history||[]).forEach(h=>{ if(h.id===m.id) h.undone=true }); showToast('Mail zurück im Posteingang','Sarah Krüger · Posteingangs-Agent',SARAH,'SK'); } else alert('Rückgängig ging nicht: '+(m.error||'Fehler')); }
   if(openP===SARAH){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Emma: Mails einzeln oder gesammelt senden / planen ================= */
-const FUP={open:null,plan:false,multi:false,sel:new Set(),d:'',t:''};
+const FUP={open:null,plan:false,multi:false,sel:new Set(),d:'',t:'',show:5};
 function fuDefault(iso){ const d=new Date(iso||Date.now()); const s=d.toLocaleString('sv-SE',{timeZone:'Europe/Berlin'}); return { d:s.slice(0,10), t:s.slice(11,16) }; }
 function fuISO(d,t){ if(!d||!t) return ''; const guess=new Date(d+'T'+t+':00Z'); const s=guess.toLocaleString('sv-SE',{timeZone:'Europe/Berlin'}); const off=new Date(s.replace(' ','T')+'Z')-guess; return new Date(guess-off).toISOString(); }
 function fuForm(btn){ return `<div class="plf"><label>Datum<input class="ekin" type="date" data-fud value="${esc(FUP.d)}"></label><label>Uhrzeit<input class="ekin" type="time" data-fut value="${esc(FUP.t)}"></label><button class="b pri" data-fusave>${btn}</button></div>`; }
@@ -971,13 +971,14 @@ function fuNextHTML(rows){
   FUP.sel.forEach(id=>{ if(!can.some(r=>r.id===id)) FUP.sel.delete(id) });
   const head=`<div class="preph"><p class="lbl" style="margin:0">Schickt Emma als Nächstes</p>${can.length?`<div class="fusel">${FUP.multi?`<b>${FUP.sel.size} ausgewählt</b><button class="b ghost" data-fuall2>Alle</button><button class="b ghost" data-fumulti>Fertig</button>`:`<button class="b" data-fumulti>Auswählen</button>`}</div>`:''}</div>`;
   if(!rows.length) return `<div>${head}<p class="isub">Nichts geplant.</p></div>`;
-  const li=rows.map(r=>{ const on=FUP.sel.has(r.id), op=!FUP.multi&&FUP.open===r.id;
+  const li=rows.slice(0,FUP.show).map(r=>{ const on=FUP.sel.has(r.id), op=!FUP.multi&&FUP.open===r.id;
     let h=`<li class="${r.id?'fun':''}${on?' sel':''}${op?' open':''}" ${r.id?`data-fun="${r.id}"`:''}>${FUP.multi&&r.id?`<span class="cb${on?' on':''}">${on?'✓':''}</span>`:'<span class="fic wait">⏱</span>'}<span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${r.orig?`<s style="opacity:.55">${esc(r.orig)}</s><br>`:''}${esc(r.when)}</time></li>`;
     if(op) h+=`<li class="pl"><div class="plb"><button class="b pri" data-funow>Jetzt senden</button><button class="b" data-fuplan>Planen</button><button class="b ghost" data-fux>Abbrechen</button></div>${FUP.plan?fuForm('Speichern'):''}</li>`;
     return h; }).join('');
   const n=FUP.sel.size;
   const bar=FUP.multi&&n?`<div class="mbar"><button class="b pri" data-funow>Jetzt senden (${n})</button><button class="b" data-fuplan>Planen (${n})</button></div>${FUP.plan?fuForm(`Alle ${n} planen`):''}`:'';
-  return `<div>${head}<ul class="fulog" style="margin-top:7px">${li}</ul>${bar}</div>`;
+  const more=rows.length>FUP.show?`<button class="b wide" data-fumore style="margin-top:8px">Weitere anzeigen (${rows.length-FUP.show}) ▾</button>`:FUP.show>5?`<button class="b wide" data-fuless style="margin-top:8px">Weniger anzeigen ▴</button>`:'';
+  return `<div>${head}<ul class="fulog" style="margin-top:7px">${li}</ul>${more}${bar}</div>`;
 }
 function fuNextBind(){
   const keep=(fn)=>{ const y=card.scrollTop; fn(); renderCard(); card.scrollTop=y; };
@@ -987,6 +988,8 @@ function fuNextBind(){
   card.querySelectorAll('[data-fumulti]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.multi=!FUP.multi; FUP.sel.clear(); FUP.open=null; FUP.plan=false; }));
   card.querySelectorAll('[data-fuall2]').forEach(b=>b.onclick=()=>keep(()=>{ const c=rows().filter(r=>r.id); if(FUP.sel.size===c.length) FUP.sel.clear(); else c.forEach(r=>FUP.sel.add(r.id)); FUP.plan=false; }));
   card.querySelectorAll('[data-fun]').forEach(li=>li.onclick=()=>keep(()=>{ const id=li.dataset.fun; if(FUP.multi){ FUP.sel.has(id)?FUP.sel.delete(id):FUP.sel.add(id); FUP.plan=false; } else { FUP.open=FUP.open===id?null:id; FUP.plan=false; } }));
+  card.querySelectorAll('[data-fumore]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.show+=10 }));
+  card.querySelectorAll('[data-fuless]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.show=5 }));
   card.querySelectorAll('[data-fux]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.open=null; FUP.plan=false; }));
   card.querySelectorAll('[data-fuplan]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.plan=!FUP.plan; if(FUP.plan) start(); }));
   card.querySelectorAll('[data-fud]').forEach(i=>i.oninput=()=>{ FUP.d=i.value });
