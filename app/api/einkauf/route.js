@@ -43,6 +43,31 @@ const APP = (v) => /au(ß|ss)en|draussen|ip65/i.test(v || '') ? 'Draussen (IP65 
 const PLATE = (v) => /ohne/i.test(v || '') ? 'Ohne Rückenplatte' : /quadrat|recht/i.test(v || '') ? 'Quadratische Rückenplatte' : 'Rückwand ausschneiden'
 const firstName = (n) => String(n || '').trim().split(/\s+/)[0] || 'Kunde'
 
+// Anna erkennt die Neonfarben im Logo-Bild (nur das Schild, nicht Wand oder Rückwand)
+const COLORS = ['White', 'Warm White', 'Soft Orange', 'Orange', 'Red', 'Purple', 'Peachy Pink', 'Soft Pink', 'Pink', 'Light Green', 'Green', 'Yellow', 'Lake Blue', 'Ice Blue', 'Blue']
+async function detectColors(b64, mime) {
+  const key = process.env.ANTHROPIC_API_KEY
+  if (!key || !b64) return []
+  const m = String(b64).match(/^data:([^;]+);base64,/)
+  let type = (m?.[1] || mime || 'image/png').toLowerCase()
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(type)) type = 'image/png'
+  const data = String(b64).replace(/^data:[^,]+,/, '')
+  const ask = `Auf dem Bild ist ein Logo oder eine Vorschau für ein LED-Neonschild. Schau NUR auf das Logo bzw. die Neon-Linien selbst. Ignoriere Hintergrund, Wand, Rückwand, Acrylplatte, Schatten und Raum.
+Welche Neonfarben braucht das Schild? Wähle für jede im Logo vorkommende Farbe die passendste aus dieser Liste: ${COLORS.join(', ')}.
+Schwarz oder sehr dunkle Linien im Logo werden zu White. Höchstens 4 Farben, die wichtigste zuerst.
+Antworte NUR mit JSON: {"colors":["..."]}`
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 200, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: type, data } }, { type: 'text', text: ask }] }] }),
+  })
+  const j = await res.json()
+  if (!res.ok) throw new Error(j?.error?.message || res.status)
+  const txt = (j.content || []).map(c => c.text || '').join('')
+  const out = JSON.parse((txt.match(/\{[\s\S]*\}/) || ['{}'])[0]).colors || []
+  return [...new Set(out.map(x => COLORS.find(c => c.toLowerCase() === String(x).trim().toLowerCase())).filter(Boolean))].slice(0, 4)
+}
+
 function view(r) {
   const d = r.data || {}
   return {
@@ -52,7 +77,7 @@ function view(r) {
     fileName: d.fileName || '',
     text: d.wunschtext || '', font: d.schriftart || '', customerColors: d.neonfarbname || '',
     width: d.breite || '', backplate: d.rueckwandform || '', backplateColor: d.rueckwandfarbe || '', usage: d.verwendungszweck || '',
-    notes: d.projektnotizen || '',
+    notes: d.projektnotizen || '', suggest: d.suggestColors || [],
     tncDefaults: { project: firstName(r.name), size: d.breite || '', application: APP(d.verwendungszweck), backplate: PLATE(d.rueckwandform) },
   }
 }
@@ -71,6 +96,7 @@ export async function POST(req) {
     const keep = ['wunschtext', 'schriftart', 'neonfarbname', 'breite', 'rueckwandform', 'rueckwandfarbe', 'verwendungszweck', 'projektnotizen', 'whatsapp', 'seite', 'zeitpunkt']
     const data = Object.fromEntries(keep.map(k => [k, b[k] ?? '']))
     data.fileName = b.screenshotFilename || 'neon-vorschau.png'
+    if (kind === 'logo') data.suggestColors = await detectColors(b.screenshotBase64, b.screenshotMime).catch(() => [])
     const { error } = await sb().from('einkauf').insert([{ kind, status: 'open', name: (b.name || '').trim(), email: (b.email || '').trim(), phone: (b.telefon || '').trim(), data, logo_url, preview_url, wall_url }])
     if (error) throw new Error(error.message)
     await sendPush({ title: 'Anna: Neue TNC-Anfrage', body: `${(b.name || 'Kunde').trim().split(/\s+/)[0]} · ${kind === 'logo' ? 'Logo' : 'Text'} · bereit zum Senden an TNC.`, tag: 'ek' }).catch(() => {})
