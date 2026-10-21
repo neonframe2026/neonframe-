@@ -49,9 +49,12 @@ async function detectColors(b64, mime) {
   const key = process.env.ANTHROPIC_API_KEY
   if (!key || !b64) return []
   const m = String(b64).match(/^data:([^;]+);base64,/)
-  let type = (m?.[1] || mime || 'image/png').toLowerCase()
-  if (!/^image\/(png|jpeg|webp|gif)$/.test(type)) type = 'image/png'
-  const data = String(b64).replace(/^data:[^,]+,/, '')
+  const data = String(b64).replace(/^data:[^,]+,/, '').replace(/\s/g, '')
+  // Bildtyp an den ersten Bytes erkennen (Dateiname/Angabe stimmt nicht immer)
+  const head = Buffer.from(data.slice(0, 24), 'base64')
+  let type = head[0] === 0x89 && head[1] === 0x50 ? 'image/png' : head[0] === 0xff && head[1] === 0xd8 ? 'image/jpeg' : head.slice(0, 3).toString() === 'GIF' ? 'image/gif' : head.slice(8, 12).toString() === 'WEBP' ? 'image/webp' : (m?.[1] || mime || 'image/png').toLowerCase()
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(type)) throw new Error('Bildformat wird nicht unterstützt')
+  if (data.length > 6.5e6) throw new Error('Bild ist zu groß für die Farberkennung')
   const ask = `Auf dem Bild ist ein Logo oder eine Vorschau für ein LED-Neonschild. Schau NUR auf das Logo bzw. die Neon-Linien selbst. Ignoriere Hintergrund, Wand, Rückwand, Acrylplatte, Schatten und Raum.
 Welche Neonfarben braucht das Schild? Wähle für jede im Logo vorkommende Farbe die passendste aus dieser Liste: ${COLORS.join(', ')}.
 Schwarz oder sehr dunkle Linien im Logo werden zu White. Höchstens 4 Farben, die wichtigste zuerst.
@@ -77,7 +80,7 @@ function view(r) {
     fileName: d.fileName || '',
     text: d.wunschtext || '', font: d.schriftart || '', customerColors: d.neonfarbname || '',
     width: d.breite || '', backplate: d.rueckwandform || '', backplateColor: d.rueckwandfarbe || '', usage: d.verwendungszweck || '',
-    notes: d.projektnotizen || '', suggest: d.suggestColors || [],
+    notes: d.projektnotizen || '', suggest: d.suggestColors || [], suggestError: d.suggestError || '',
     tncDefaults: { project: firstName(r.name), size: d.breite || '', application: APP(d.verwendungszweck), backplate: PLATE(d.rueckwandform) },
   }
 }
@@ -96,7 +99,7 @@ export async function POST(req) {
     const keep = ['wunschtext', 'schriftart', 'neonfarbname', 'breite', 'rueckwandform', 'rueckwandfarbe', 'verwendungszweck', 'projektnotizen', 'whatsapp', 'seite', 'zeitpunkt']
     const data = Object.fromEntries(keep.map(k => [k, b[k] ?? '']))
     data.fileName = b.screenshotFilename || 'neon-vorschau.png'
-    if (kind === 'logo') data.suggestColors = await detectColors(b.screenshotBase64, b.screenshotMime).catch(() => [])
+    if (kind === 'logo') data.suggestColors = await detectColors(b.screenshotBase64, b.screenshotMime).catch(e => { data.suggestError = e.message; return [] })
     const { error } = await sb().from('einkauf').insert([{ kind, status: 'open', name: (b.name || '').trim(), email: (b.email || '').trim(), phone: (b.telefon || '').trim(), data, logo_url, preview_url, wall_url }])
     if (error) throw new Error(error.message)
     await sendPush({ title: 'Anna: Neue TNC-Anfrage', body: `${(b.name || 'Kunde').trim().split(/\s+/)[0]} · ${kind === 'logo' ? 'Logo' : 'Text'} · bereit zum Senden an TNC.`, tag: 'ek' }).catch(() => {})
@@ -130,6 +133,16 @@ export async function PATCH(req) {
     const { data: r } = await db.from('einkauf').select('*').eq('id', id).maybeSingle()
     if (!r) return Response.json({ error: 'Anfrage nicht gefunden' }, { status: 404 })
     if (r.status !== 'open') return Response.json({ error: 'Diese Anfrage wurde schon bearbeitet' }, { status: 400 })
+    if (action === 'detect') {
+      // Farben nachträglich erkennen (z. B. wenn es beim Eingang nicht geklappt hat)
+      if (!r.logo_url) return Response.json({ error: 'Keine Datei vorhanden' }, { status: 400 })
+      const fr = await fetch(r.logo_url, { cache: 'no-store' })
+      if (!fr.ok) throw new Error('Datei konnte nicht geladen werden')
+      const cols = await detectColors(Buffer.from(await fr.arrayBuffer()).toString('base64'), fr.headers.get('content-type'))
+      if (!cols.length) throw new Error('Anna hat keine Farben erkannt')
+      await db.from('einkauf').update({ data: { ...r.data, suggestColors: cols, suggestError: null } }).eq('id', id)
+      return Response.json({ success: true, colors: cols })
+    }
     if (action === 'discard') {
       await db.from('einkauf').update({ status: 'discarded' }).eq('id', id)
       return Response.json({ success: true })
