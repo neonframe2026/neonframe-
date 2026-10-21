@@ -130,6 +130,12 @@ function lastMail(o) {
     .filter(([, d]) => d).sort((a, b) => t(b[1]) - t(a[1]))[0]
   return c ? `${c[0]} ${when(t(c[1]))}` : ''
 }
+// Mail-Verlauf für die Zentrale: was hat der Kunde schon bekommen, was kommt als Nächstes
+function hist(o, kind) {
+  const h = [['Angebot', o.created_at, null], ['Erinnerung', o.recontacted_at, 'erinnerung'], ['Rabatt-Mail', o.extra_discount_at, 'rabatt'], ['Rabatt-Erinnerung', o.discount_reminder_sent_at, 'rabatt_erinnerung']]
+  if (kind === 'bewertung') h.push(['Bewertung', o.review_email_sent_at, 'bewertung'])
+  return h.map(([k, d, key]) => ({ k, w: d ? when(t(d)) : '', next: key === kind }))
+}
 const nr = (o) => String(o.offer_num || o.custom_id || String(o.id).slice(0, 8))
 
 // ---------- WhatsApp (nur Kunden, die im Konfigurator WhatsApp angehakt haben) ----------
@@ -217,7 +223,7 @@ export async function GET(req) {
       next: items.filter(i => (!i.manual || i.due > now) && Math.min(i.at, i.due) <= now + 36 * H)
         .map(i => i.manual
           ? { at: i.due, kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: when(i.due), note: 'dann zur Freigabe bei dir' }
-          : { id: i.id, at: i.custom ? i.at : Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), orig: !i.custom && !i.approved && i.at > i.due + 10 * 60000 ? when(i.due) : '', note: i.custom ? 'von dir geplant' : i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
+          : { id: i.id, at: i.custom ? i.at : Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), h: hist(i.o, i.kind), orig: !i.custom && !i.approved && i.at > i.due + 10 * 60000 ? when(i.due) : '', note: i.custom ? 'von dir geplant' : i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
         .sort((a, b) => a.at - b.at).slice(0, 100)
         .map(({ at, ...r }) => ({ ...r, plan: new Date(at).toISOString(), when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
       sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
