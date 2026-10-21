@@ -226,6 +226,7 @@ td.hi{font-weight:600}
 html.dark{--bg:#0b0f17;--surface:#141a26;--surface-2:#182031;--line:#232c3d;--line-2:#2b3548;--fg:#e9eef7;--muted:#8b97ad;--glass:rgba(20,26,38,.92);color-scheme:dark}
 html.dark header{background:#0f141e!important}
 html.dark .dlabel,html.dark .ptag,html.dark .nav-in{background:#151b27!important;border-color:#283246!important;box-shadow:0 8px 22px rgba(0,0,0,.45)!important}
+html.dark .ptag:hover,html.dark .trow:hover{border-color:color-mix(in srgb,var(--c) 85%,transparent)!important;box-shadow:0 0 10px color-mix(in srgb,var(--c) 18%,transparent)!important}
 html.dark .dlabel.hov{border-color:color-mix(in srgb,var(--c) 85%,transparent)!important;box-shadow:0 0 10px color-mix(in srgb,var(--c) 18%,transparent)!important}
 html.dark .dlabel.planned .ic{background:#283246;color:#8b97ad}
 html.dark .card{background:rgba(17,22,33,.97)!important;border-color:#283246!important;box-shadow:0 24px 60px rgba(0,0,0,.55)!important}
@@ -874,13 +875,14 @@ function roomActions(d){
   if(d.id==='einkauf') return `<div class="abox"><h3>Anfrage an Hersteller</h3><p>Kundenanfrage an TNC übertragen. In Planung.</p><button class="b wide" disabled style="opacity:.6">Kommt bald</button></div>`+ask;
   return ask;
 }
+const pCount=(p)=>p===EMMA?DATA.due.length:p===LISA?offerTasks().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:0;
 function renderRoom(id){
   const d=DEPTS.find(x=>x.id===id);
   card.classList.add('room');
   card.innerHTML=`<div class="chead"><span class="av dic" style="--c:${d.color};border-radius:12px">${d.icon}</span>
      <div><div class="eyebrow"><i style="background:var(--ok)"></i>Abteilung</div><h2>${d.name}</h2></div>
      <button class="x" id="rx" aria-label="Zur Übersicht">×</button></div>
-   <div><p class="lbl">Dein Team</p>${d.active.length?'':'<p class="isub">Noch keine Mitarbeiter. Diese Abteilung ist in Planung.</p>'}<div class="team">${d.active.map((p,k)=>`<button class="trow" data-k="${k}" style="--c:${d.color}"><span class="av" style="background:${d.color}">${ini(p.name)}</span><span><b>${p.name}</b><small>${p.role}</small><br><em>● ${p.agent}</em></span>${p===EMMA&&DATA.due.length?`<span class="badge">${DATA.due.length}</span>`:''}</button>`).join('')}</div></div>`;
+   <div><p class="lbl">Dein Team</p>${d.active.length?'':'<p class="isub">Noch keine Mitarbeiter. Diese Abteilung ist in Planung.</p>'}<div class="team">${d.active.map((p,k)=>`<button class="trow" data-k="${k}" style="--c:${d.color}"><span class="av" style="background:${d.color}">${ini(p.name)}</span><span><b>${p.name}</b><small>${p.role}</small><br><em>● ${p.agent}</em></span>${pCount(p)?`<span class="badge">${pCount(p)}</span>`:''}</button>`).join('')}</div></div>${d.id==='angebote'?'<div class="iacts"><button class="b pri" data-nav="create">+ Angebot erstellen</button><button class="b" data-nav="manage">Alle Angebote</button></div>':''}`;
   card.hidden=false;
   card.querySelector('#rx').onclick=overview;
   card.querySelectorAll('.trow').forEach(b=>b.onclick=()=>{card.classList.remove('room');openPerson(d.active[+b.dataset.k]);});
@@ -1266,7 +1268,7 @@ function frame(){ frame.n=(frame.n||0)+1;
     rm.walls.forEach(w=>{ const goalO=w.n.dot(cd)>.12?0:1; w.o+=(goalO-w.o)*(reduce?1:.14); const o=w.o; w.m.opacity=o; w.tm.opacity=o; w.m.depthWrite=o>.95; w.objs.forEach(x=>{ x.visible=o>.03; if(x!==w.objs[0]&&x!==w.objs[1]&&x.material){ x.material.transparent=true; x.material.opacity=o; } }); });
     const hy=0; rm.g.position.y+=(hy-rm.g.position.y)*(reduce?1:.15); });
   DEPTS.forEach(d=>{ const r=rooms[d.id]; r.pulse.position.lerpVectors(r.from,r.to,reduce?.5:((t*.3+r.ph)%1));
-    place(d._lbl, tmp.copy(r.g.position).add(isMob()?new THREE.Vector3(0,3.4,0):new THREE.Vector3(-1.5,3.6,-3.6))); d._lbl.classList.toggle('off',!!openP||(!!focused&&d.id!==focused));
+    place(d._lbl, tmp.copy(r.g.position).add(isMob()?new THREE.Vector3(0,3.4,0):new THREE.Vector3(-1.5,3.6,-3.6))); d._lbl.classList.toggle('off',!!openP||!!focused);
     const behind=!focused && r.g.position.distanceTo(cam.position)>cam.position.distanceTo(target) && overlapsHead(d._lbl); d._lbl.classList.toggle('behind',behind); });
   place(hubLbl, new THREE.Vector3(0,8.2,0)); hubLbl.classList.toggle('off',!!focused||isMob());
   const showTags = dist<30;
