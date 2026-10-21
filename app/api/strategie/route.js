@@ -123,6 +123,17 @@ export async function POST(req) {
       await db.from('strategie').insert([{ type: 'goal', title: title.slice(0, 120), data: { metric, target: +b.target || 0, month: P.monthKey, done: false } }])
       return Response.json({ success: true })
     }
+    if (b.action === 'goal_from_chat') {
+      // David macht aus dem Chat ein Ziel für diesen Monat
+      const { data: hist } = await db.from('strategie').select('content,data').eq('type', 'chat').eq('key', 'david').order('created_at', { ascending: false }).limit(8)
+      const chat = (hist || []).reverse().map(r => `${r.data?.role === 'ai' ? 'David' : 'Phillip'}: ${r.content}`).join('\n\n')
+      if (!chat) return Response.json({ error: 'Erst mit David schreiben' }, { status: 400 })
+      const out = await claude({ system: PERSONA.david + '\n\n' + await context(db), messages: [{ role: 'user', content: `Mach aus dem letzten Vorschlag in diesem Chat EIN messbares Ziel für diesen Monat:\n\n${chat}\n\nAntworte NUR mit JSON: {"title":"kurzes Ziel auf Deutsch, max 8 Wörter","metric":"umsatz|verkaeufe|angebote|anfragen|conversion|frei","target":Zahl oder 0}` }], json: true })
+      const metric = METRICS[out.metric] ? out.metric : 'frei'
+      const P = periods()
+      await db.from('strategie').insert([{ type: 'goal', title: String(out.title || 'Neues Ziel').slice(0, 120), data: { metric, target: +out.target || 0, month: P.monthKey, done: false } }])
+      return Response.json({ success: true, title: out.title })
+    }
     if (b.action === 'campaign_from_chat') {
       const { data: hist } = await db.from('strategie').select('content,data').eq('type', 'chat').eq('key', 'clara').order('created_at', { ascending: false }).limit(12)
       const chat = (hist || []).reverse().map(r => `${r.data?.role === 'ai' ? 'Clara' : 'Phillip'}: ${r.content}`).join('\n\n')
