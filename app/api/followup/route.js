@@ -128,6 +128,49 @@ function lastMail(o) {
 }
 const nr = (o) => String(o.offer_num || o.custom_id || String(o.id).slice(0, 8))
 
+// ---------- WhatsApp (nur Kunden, die im Konfigurator WhatsApp angehakt haben) ----------
+// Telefonnummer + Haken kommen aus Annas Anfragen (Tabelle einkauf), Zuordnung über die E-Mail
+const WA_KIND = { angebot: 'Angebot ist da', rabatt: 'Rabatt', rabatt_erinnerung: 'Rabatt-Erinnerung' }
+const waYes = (v) => { const s = String(v ?? '').trim().toLowerCase(); return !!s && !/^(nein|no|false|0|off|aus)$/.test(s) }
+function waNum(p) {
+  let d = String(p || '').replace(/[^\d+]/g, '')
+  if (d.startsWith('+')) d = d.slice(1); else if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '49' + d.slice(1)
+  return d.length >= 10 ? d : ''
+}
+function waText(o, kind) {
+  const first = String(o.project || '').trim().split(/\s+/)[0]
+  const link = `${SITE}/angebot/${o.custom_id || o.id}`
+  const hi = first ? `Hallo ${first},` : 'Hallo,'
+  const end = 'Bei weiteren Fragen stehen wir dir jederzeit gerne zur Verfügung.\n\nViele Grüße\nDein NeonFrame-Team'
+  if (kind === 'angebot') return `${hi}\n\ndein Angebot für dein Neonschild ist fertig! Hier kannst du es dir ansehen: ${link}\n\n${end}`
+  if (kind === 'rabatt') return `${hi}\n\ngute Nachrichten: Du bekommst jetzt zusätzlich 10% Rabatt auf dein Angebot. Das Extra gilt nur für kurze Zeit: ${link}\n\n${end}`
+  const until = o.discount_valid_until ? new Date(o.discount_valid_until).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit' }) : ''
+  return `${hi}\n\nkurze Erinnerung: Dein Extra-Rabatt läuft bald ab${until ? ` (gültig bis ${until})` : ''}. Hier geht's zu deinem Angebot: ${link}\n\n${end}`
+}
+async function waList() {
+  const sb = db()
+  const { data: ek } = await sb.from('einkauf').select('email,phone,data,created_at').order('created_at', { ascending: false }).limit(500)
+  const people = new Map()
+  for (const r of ek || []) { const e = String(r.email || '').trim().toLowerCase(); const num = waNum(r.phone); if (e && num && waYes(r.data?.whatsapp) && !people.has(e)) people.set(e, num) }
+  if (!people.size) return []
+  const since = new Date(Date.now() - 4 * 24 * H).toISOString()
+  const { data: offers } = await sb.from('offers').select('*').or(`created_at.gte.${since},extra_discount_at.gte.${since},discount_reminder_sent_at.gte.${since}`)
+  const { data: done } = await sb.from('agent_tasks').select('tnc_id').eq('type', 'wa_done').limit(1000)
+  const skip = new Set((done || []).map(d => d.tnc_id))
+  const out = []
+  for (const o of offers || []) {
+    const num = people.get(String(o.customer_email || '').trim().toLowerCase())
+    if (!num || BOUGHT.includes(o.status) || o.unsubscribed) continue
+    const ev = [['angebot', o.created_at], ['rabatt', o.extra_discount_at], ['rabatt_erinnerung', o.discount_reminder_sent_at]]
+      .filter(([, d]) => d && t(d) >= t(since)).sort((a, b) => t(b[1]) - t(a[1]))[0] // nur das Neueste pro Angebot
+    if (!ev) continue
+    const id = `${o.id}:wa_${ev[0]}`
+    if (skip.has(id)) continue
+    out.push({ id, nr: nr(o), name: o.project || 'ohne Projekt', label: WA_KIND[ev[0]], when: when(t(ev[1])), url: `https://wa.me/${num}?text=${encodeURIComponent(waText(o, ev[0]))}` })
+  }
+  return out
+}
+
 export async function GET(req) {
   try {
     const sp = new URL(req.url).searchParams
@@ -160,7 +203,9 @@ export async function GET(req) {
     }
 
     const now = Date.now()
+    const wa = await waList().catch(() => [])
     return Response.json({
+      wa,
       approve: items.filter(i => i.manual && i.due <= now).map(i => ({ id: i.id, kind: i.kind, nr: nr(i.o), name: i.o.project || 'ohne Projekt', label: KIND[i.kind] + (i.kind === 'rabatt' ? ' mit Extra-Rabatt' : ' (vor dem Start fällig)'), at: new Date(i.due).toISOString(), last: lastMail(i.o) })),
       night: !inWindow(Date.now()), morning: when(sendAt(Date.now())),
       // Automatische Mails + Rabatt-Mails, die bald zur Freigabe kommen (nächste 36 Std.)
@@ -180,6 +225,11 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const { action, id } = await req.json()
+    if (action === 'wa_done') {
+      if (!/:wa_/.test(String(id || ''))) return Response.json({ error: 'Ungültige Aufgabe' }, { status: 400 })
+      await db().from('agent_tasks').insert([{ type: 'wa_done', tnc_id: id, status: 'done', done_at: new Date().toISOString() }])
+      return Response.json({ success: true })
+    }
     const [offerId, kind] = String(id || '').split(':')
     if (!offerId || !KIND[kind]) return Response.json({ error: 'Ungültige Aufgabe' }, { status: 400 })
     if (action === 'skip') {
