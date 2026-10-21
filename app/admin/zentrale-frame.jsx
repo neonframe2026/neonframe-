@@ -86,6 +86,17 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
     return j
   }
+  // Creative Studio (Mia + Noah)
+  const [cr, setCr] = useState(null)
+  const crRef = useRef(null)
+  const crApi = async (method, body) => {
+    const { data } = await authClient().auth.getSession()
+    const r = await fetch('/api/creative', { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data?.session?.access_token || '') }, body: body ? JSON.stringify(body) : undefined })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+    return j
+  }
+  const loadCr = () => crApi('GET').then(j => { crRef.current = j; setCr(j) }).catch(() => {})
   const loadJo = () => joApi('GET').then(j => { joRef.current = j; setJo(j) }).catch(() => {})
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
@@ -93,8 +104,8 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu(); loadEk(); loadSh(); loadJo()
-    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo() }, 60000)
+    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr()
+    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr() }, 60000)
     return () => { alive = false; clearInterval(t) }
   }, [])
 
@@ -117,6 +128,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       ek: ekRef.current || undefined,
       sh: shRef.current || undefined,
       jo: joRef.current || undefined,
+      cr: crRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
       stats: {
         total: offers.length,
@@ -170,6 +182,19 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
           .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-sh-res', id, action, ok: false, error: err.message }, window.location.origin))
           .finally(loadSh)
       }
+      if (e.data?.type === 'nf-cr') {
+        const { action, file, ...rest } = e.data
+        const res = (ok, error) => ref.current?.contentWindow?.postMessage({ type: 'nf-cr-res', action, id: rest.id, ok, error }, window.location.origin)
+        ;(async () => {
+          if (action === 'upload') {
+            // Datei direkt in den Speicher laden, danach als fertig markieren
+            const up = await crApi('POST', { action: 'upload', id: rest.id, name: file?.name, mime: file?.type })
+            const r = await fetch(up.url, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file })
+            if (!r.ok) throw new Error('Upload fehlgeschlagen (' + r.status + ')')
+            await crApi('POST', { action: 'uploaded', id: rest.id, path: up.path, mime: file.type })
+          } else await crApi('POST', { action, ...rest })
+        })().then(() => res(true)).catch(err => res(false, err.message)).finally(loadCr)
+      }
       if (e.data?.type === 'nf-jo') {
         const { action, id, text } = e.data
         joApi('POST', { action, id, text })
@@ -185,7 +210,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr])
 
   return (
     <>
