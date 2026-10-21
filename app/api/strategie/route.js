@@ -162,8 +162,13 @@ export async function POST(req) {
       const { data: hist } = await db.from('strategie').select('content,data').eq('type', 'chat').eq('key', 'clara').order('created_at', { ascending: false }).limit(12)
       const chat = (hist || []).reverse().map(r => `${r.data?.role === 'ai' ? 'Clara' : 'Phillip'}: ${r.content}`).join('\n\n')
       if (!chat) return Response.json({ error: 'Erst mit Clara über die Kampagne schreiben' }, { status: 400 })
-      const out = await claude({ system: PERSONA.clara + '\n\n' + await context(db), messages: [{ role: 'user', content: `Mach aus diesem Chat eine Kampagne für den Kalender:\n\n${chat}\n\nAntworte NUR mit JSON: {"title":"Name","start":"YYYY-MM-DD","end":"YYYY-MM-DD","offer":"Angebot kurz","color":"#hex passend","steps":[{"t":"Schritt kurz","due":"YYYY-MM-DD","who":"mia|emma|shop|du"}]}` }], max: 1500, json: true })
-      const data = { start: out.start || '', end: out.end || '', offer: out.offer || '', color: /^#[0-9a-f]{6}$/i.test(out.color || '') ? out.color : '#8f7bff', status: 'planung', steps: (out.steps || []).slice(0, 15).map(s => ({ t: String(s.t || ''), due: s.due || '', who: s.who || 'du', done: false })) }
+      // Wird gerade eine bestehende Kampagne weitergeplant? Dann die aktualisieren statt neu anlegen
+      const { data: cur } = b.id ? await db.from('strategie').select('*').eq('id', b.id).eq('type', 'campaign').maybeSingle() : { data: null }
+      const base = cur ? `Das ist die BESTEHENDE Kampagne, die wir weiterplanen. Behalte alles, was im Chat nicht geändert wurde, und ergänze oder ändere nur, was besprochen wurde:\n${JSON.stringify({ title: cur.title, start: cur.data?.start, end: cur.data?.end, offer: cur.data?.offer, steps: (cur.data?.steps || []).map(s => ({ t: s.t, due: s.due, who: s.who, done: !!s.done })) })}\n\n` : ''
+      const out = await claude({ system: PERSONA.clara + '\n\n' + await context(db), messages: [{ role: 'user', content: `${base}${cur ? 'Aktualisiere die Kampagne' : 'Mach aus diesem Chat eine Kampagne für den Kalender'} anhand dieses Chats:\n\n${chat}\n\nAntworte NUR mit JSON: {"title":"Name","start":"YYYY-MM-DD","end":"YYYY-MM-DD","offer":"Angebot kurz","color":"#hex passend","steps":[{"t":"Schritt kurz","due":"YYYY-MM-DD","who":"mia|emma|shop|du"}]}` }], max: 1500, json: true })
+      const was = new Map((cur?.data?.steps || []).filter(s => s.done).map(s => [String(s.t).toLowerCase(), true]))
+      const data = { ...(cur?.data || {}), start: out.start || cur?.data?.start || '', end: out.end || cur?.data?.end || '', offer: out.offer ?? cur?.data?.offer ?? '', color: cur?.data?.color || (/^#[0-9a-f]{6}$/i.test(out.color || '') ? out.color : '#8f7bff'), status: cur?.data?.status && cur.data.status !== 'idee' ? cur.data.status : 'planung', steps: (out.steps || []).slice(0, 20).map(s => ({ t: String(s.t || ''), due: s.due || '', who: s.who || 'du', done: !!s.done || was.has(String(s.t || '').toLowerCase()) })) }
+      if (cur) { await db.from('strategie').update({ title: String(out.title || cur.title).slice(0, 80), data }).eq('id', cur.id); return Response.json({ success: true, title: out.title || cur.title }) }
       const { data: ex } = await db.from('strategie').select('id').eq('type', 'campaign').ilike('title', String(out.title || '').trim()).limit(1)
       if (ex?.[0]) await db.from('strategie').update({ data }).eq('id', ex[0].id)
       else await db.from('strategie').insert([{ type: 'campaign', title: String(out.title || 'Neue Kampagne').slice(0, 80), data }])
@@ -173,6 +178,11 @@ export async function POST(req) {
     if (!r) return Response.json({ error: 'Nicht gefunden' }, { status: 404 })
     if (b.action === 'goal_done') { await db.from('strategie').update({ data: { ...r.data, done: !r.data?.done } }).eq('id', r.id); return Response.json({ success: true }) }
     if (b.action === 'step') { const steps = [...(r.data?.steps || [])]; if (steps[b.i]) steps[b.i] = { ...steps[b.i], done: !steps[b.i].done }; await db.from('strategie').update({ data: { ...r.data, steps } }).eq('id', r.id); return Response.json({ success: true }) }
+    if (b.action === 'campaign_edit') {
+      const title = String(b.title || '').trim().slice(0, 80) || r.title
+      await db.from('strategie').update({ title, data: { ...r.data, offer: String(b.offer ?? r.data?.offer ?? '').slice(0, 300), start: b.start || r.data?.start || '', end: b.end || r.data?.end || '' } }).eq('id', r.id)
+      return Response.json({ success: true })
+    }
     if (b.action === 'campaign_status') { await db.from('strategie').update({ data: { ...r.data, status: ['idee', 'planung', 'laeuft', 'fertig'].includes(b.status) ? b.status : 'idee' } }).eq('id', r.id); return Response.json({ success: true }) }
     if (b.action === 'delete') { await db.from('strategie').delete().eq('id', r.id); return Response.json({ success: true }) }
     return Response.json({ error: 'Unbekannte Aktion' }, { status: 400 })
