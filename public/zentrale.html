@@ -156,6 +156,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 ul.fulog{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 ul.fulog li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:9px;align-items:center;font-size:13px}
 ul.fulog li small{display:block;font:500 11px var(--mono);color:var(--muted)}
+.tl{display:grid}.ts{display:grid;grid-template-columns:16px 1fr;gap:9px;align-items:start;padding:3px 0;position:relative}
+.ts i{width:10px;height:10px;border-radius:50%;margin:4px 3px;background:#34e39b;box-shadow:0 0 8px rgba(52,227,155,.6)}
+.ts:not(:last-child)::after{content:"";position:absolute;left:7.5px;top:17px;bottom:-5px;width:1px;background:var(--line-2)}
+.ts.next i{background:#ffc04a;box-shadow:0 0 8px rgba(255,192,74,.6)}.ts.todo i{background:transparent;border:1.5px solid var(--line-2);box-shadow:none}
+.ts b{font-size:12.5px;font-weight:600}.ts small{display:block;font:500 11px var(--mono);color:var(--muted)}.ts.todo b{color:var(--muted);font-weight:500}
 .fusel{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:12px}
 ul.fulog li.fun{cursor:pointer;border-radius:10px;padding:6px 8px;margin:0 -8px}ul.fulog li.fun:hover,ul.fulog li.fun.open,ul.fulog li.fun.sel{background:rgba(52,227,155,.08)}
 ul.fulog li.pl{display:block;cursor:default;background:rgba(52,227,155,.06);border:1px solid rgba(52,227,155,.3);border-radius:10px;padding:8px;margin:-4px -8px 0}
@@ -973,7 +978,7 @@ function fuNextHTML(rows){
   if(!rows.length) return `<div>${head}<p class="isub">Nichts geplant.</p></div>`;
   const li=rows.slice(0,FUP.show).map(r=>{ const on=FUP.sel.has(r.id), op=!FUP.multi&&FUP.open===r.id;
     let h=`<li class="${r.id?'fun':''}${on?' sel':''}${op?' open':''}" ${r.id?`data-fun="${r.id}"`:''}>${FUP.multi&&r.id?`<span class="cb${on?' on':''}">${on?'✓':''}</span>`:'<span class="fic wait">⏱</span>'}<span><b>${esc(r.kind)}</b> an ${esc(r.name)}<small>${esc(r.nr)}${r.note?' · '+esc(r.note):''}</small></span><time>${r.orig?`<s style="opacity:.55">${esc(r.orig)}</s><br>`:''}${esc(r.when)}</time></li>`;
-    if(op) h+=`<li class="pl"><div class="plb"><button class="b pri" data-funow>Jetzt senden</button><button class="b" data-fuplan>Planen</button><button class="b ghost" data-fux>Abbrechen</button></div>${FUP.plan?fuForm('Speichern'):''}</li>`;
+    if(op) h+=`<li class="pl">${(r.h||[]).length?`<p class="lbl" style="margin:0 0 6px">Mail-Verlauf</p><div class="tl">${r.h.map(x=>{ const c=x.w?"ok":x.next?"next":"todo"; return `<div class="ts ${c}"><i></i><span><b>${esc(x.k)}</b><small>${x.w?esc(x.w):x.next?"geplant · "+esc(r.when):"noch offen"}</small></span></div>`; }).join("")}</div>`:""}<div class="plb" style="margin-top:10px"><button class="b pri" data-funow>Jetzt senden</button><button class="b" data-fuplan>Planen</button><button class="b ghost" data-fux>Abbrechen</button></div>${FUP.plan?fuForm('Speichern'):''}</li>`;
     return h; }).join('');
   const n=FUP.sel.size;
   const bar=FUP.multi&&n?`<div class="mbar"><button class="b pri" data-funow>Jetzt senden (${n})</button><button class="b" data-fuplan>Planen (${n})</button></div>${FUP.plan?fuForm(`Alle ${n} planen`):''}`:'';
