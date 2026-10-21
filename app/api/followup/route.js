@@ -81,6 +81,9 @@ async function load() {
   // Von dir freigegeben, aber nachts geklickt -> geht automatisch am nächsten Morgen um 8:10 raus
   const { data: sch } = await sb.from('agent_tasks').select('*').eq('type', 'fu_sched').eq('status', 'open')
   const planned = new Map((sch || []).map(x => [x.tnc_id, x]))
+  // Von dir selbst geplant (Datum + Uhrzeit, steht in done_at) -> geht genau dann raus, auch außerhalb 8:10 bis 20:00
+  const { data: pl } = await sb.from('agent_tasks').select('*').eq('type', 'fu_plan').eq('status', 'open')
+  const custom = new Map((pl || []).map(x => [x.tnc_id, t(x.done_at)]))
   const now = Date.now()
   const items = []
   for (const o of offers || []) {
@@ -89,6 +92,7 @@ async function load() {
     const id = `${o.id}:${s.kind}`
     if (skipped.has(id)) continue
     if (s.due < now - MAX_OLD_DAYS * 24 * H) continue
+    if (custom.has(id)) { items.push({ o, id, ...s, manual: false, custom: true, at: custom.get(id) }); continue }
     const p = planned.get(id)
     if (p) { items.push({ o, id, ...s, manual: false, approved: true, at: sendAt(t(p.created_at)) }); continue }
     const manual = s.due < START
@@ -116,7 +120,7 @@ async function send(o, kind) {
     await post('review-request', { customerEmail: o.customer_email, customerName: o.project, offerId: o.id })
     await db().from('offers').update({ review_email_sent_at: new Date().toISOString() }).eq('id', o.id)
   }
-  await db().from('agent_tasks').update({ status: 'done', done_at: new Date().toISOString() }).eq('type', 'fu_sched').eq('tnc_id', `${o.id}:${kind}`).eq('status', 'open')
+  await db().from('agent_tasks').update({ status: 'done', done_at: new Date().toISOString() }).in('type', ['fu_sched', 'fu_plan']).eq('tnc_id', `${o.id}:${kind}`).eq('status', 'open')
   await db().from('agent_tasks').insert([{ type: 'fu_sent', tnc_id: `${o.id}:${kind}`, project: o.project || '', email: KIND[kind], status: 'log', done_at: new Date().toISOString() }])
 }
 
@@ -194,9 +198,10 @@ export async function GET(req) {
           await db().from('agent_tasks').insert(fresh.map(i => ({ type: 'push_sent', tnc_id: i.id, status: 'log', done_at: new Date().toISOString() })))
         }
       }
-      if (!inWindow(Date.now())) return Response.json({ success: true, sent: 0, info: 'Außerhalb 8:10 bis 20:00 Uhr, keine Mails' })
+      const open = inWindow(Date.now())
       const done = [], failed = []
-      for (const it of items.filter(i => !i.manual && i.at <= Date.now()).slice(0, 10)) {
+      // Außerhalb 8:10 bis 20:00 nur das, was du selbst auf diese Uhrzeit geplant hast
+      for (const it of items.filter(i => !i.manual && i.at <= Date.now() && (open || i.custom)).slice(0, 10)) {
         try { await send(it.o, it.kind); done.push(it.id) } catch (e) { failed.push({ id: it.id, error: e.message }) }
       }
       return Response.json({ success: true, sent: done.length, done, failed })
@@ -212,9 +217,9 @@ export async function GET(req) {
       next: items.filter(i => (!i.manual || i.due > now) && Math.min(i.at, i.due) <= now + 36 * H)
         .map(i => i.manual
           ? { at: i.due, kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: when(i.due), note: 'dann zur Freigabe bei dir' }
-          : { at: Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
+          : { id: i.id, at: i.custom ? i.at : Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.custom ? 'von dir geplant' : i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
         .sort((a, b) => a.at - b.at).slice(0, 12)
-        .map(({ at, ...r }) => ({ ...r, when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
+        .map(({ at, ...r }) => ({ ...r, plan: new Date(at).toISOString(), when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
       sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
     })
   } catch (err) {
@@ -224,7 +229,20 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { action, id } = await req.json()
+    const { action, id, ids, at, now: force } = await req.json()
+    // Planen: eine oder mehrere Mails auf Datum + Uhrzeit legen
+    if (action === 'plan') {
+      const list = (Array.isArray(ids) ? ids : [id]).filter(x => KIND[String(x || '').split(':')[1]])
+      const ms = t(at)
+      if (!list.length || !ms) return Response.json({ error: 'Bitte Datum und Uhrzeit wählen' }, { status: 400 })
+      const sb = db()
+      await sb.from('agent_tasks').update({ status: 'done' }).in('type', ['fu_plan', 'fu_sched']).in('tnc_id', list).eq('status', 'open')
+      const { data: offs } = await sb.from('offers').select('id,project').in('id', list.map(x => x.split(':')[0]))
+      const nm = new Map((offs || []).map(o => [String(o.id), o.project || '']))
+      const { error } = await sb.from('agent_tasks').insert(list.map(x => ({ type: 'fu_plan', tnc_id: x, project: nm.get(x.split(':')[0]) || '', email: KIND[x.split(':')[1]], status: 'open', done_at: new Date(ms).toISOString() })))
+      if (error) throw new Error(error.message)
+      return Response.json({ success: true, planned: list.length, when: when(ms) })
+    }
     if (action === 'wa_done') {
       if (!/:wa_/.test(String(id || ''))) return Response.json({ error: 'Ungültige Aufgabe' }, { status: 400 })
       await db().from('agent_tasks').insert([{ type: 'wa_done', tnc_id: id, status: 'done', done_at: new Date().toISOString() }])
@@ -241,7 +259,7 @@ export async function POST(req) {
     const s = step(o)
     if (!s || s.kind !== kind) return Response.json({ error: 'Diese Mail ist nicht mehr fällig' }, { status: 400 })
     // Nachts nicht stören: zwischen 20:00 und 8:10 Uhr wird die Mail für 8:10 Uhr eingeplant
-    if (!inWindow(Date.now())) {
+    if (!force && !inWindow(Date.now())) {
       const { data: ex } = await db().from('agent_tasks').select('id').eq('type', 'fu_sched').eq('tnc_id', id).eq('status', 'open').limit(1)
       if (!ex?.length) await db().from('agent_tasks').insert([{ type: 'fu_sched', tnc_id: id, project: o.project || '', email: KIND[kind], status: 'open' }])
       return Response.json({ success: true, scheduled: when(sendAt(Date.now())) })
