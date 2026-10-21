@@ -217,7 +217,7 @@ export async function GET(req) {
       next: items.filter(i => (!i.manual || i.due > now) && Math.min(i.at, i.due) <= now + 36 * H)
         .map(i => i.manual
           ? { at: i.due, kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), when: when(i.due), note: 'dann zur Freigabe bei dir' }
-          : { id: i.id, at: i.custom ? i.at : Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), note: i.custom ? 'von dir geplant' : i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
+          : { id: i.id, at: i.custom ? i.at : Math.max(i.at, sendAt(now)), kind: KIND[i.kind], name: i.o.project || 'ohne Projekt', nr: nr(i.o), orig: !i.custom && !i.approved && i.at > i.due + 10 * 60000 ? when(i.due) : '', note: i.custom ? 'von dir geplant' : i.approved ? 'von dir freigegeben' : i.at > i.due + 10 * 60000 && i.due > START ? 'nachts keine Mails' : '' })
         .sort((a, b) => a.at - b.at).slice(0, 12)
         .map(({ at, ...r }) => ({ ...r, plan: new Date(at).toISOString(), when: r.when || (at <= now + 5 * 60000 ? 'gleich' : when(at)) })),
       sent: logs.slice(0, 5).map(l => ({ kind: l.email, name: l.project || 'ohne Projekt', nr: '', when: when(t(l.done_at || l.created_at)) })),
