@@ -314,6 +314,16 @@ html.staff #testBtn,html.staff #mTest,html.staff .hsep{display:none!important}
 .jb.out{background:rgba(120,135,165,.16);justify-self:end;border-bottom-right-radius:5px;color:var(--muted)}
 .jb.draft{justify-self:end;border:1.5px dashed #dd2a7b;background:rgba(225,48,108,.06);border-bottom-right-radius:5px;min-width:60%}.jb.draft em{display:block;font-style:normal;font-weight:700;font-size:11px;color:#c13584;margin-bottom:3px}
 .jb.draft textarea{min-height:120px;margin-top:2px}
+.stt{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:3px}.stt button{flex:1;text-align:center;padding:6px;border-radius:8px;font-size:12.5px;color:var(--muted)}.stt button.on{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.kp .k{background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:8px;min-width:0}.kp .k b{display:block;font-size:16px}.kp .k small{display:block;color:var(--muted);font-size:11px}.kp .k em{font-style:normal;font-size:10.5px;color:var(--muted)}.kp .k em.up{color:#16b871}.kp .k em.dn{color:#ef4444}
+.sum{font-size:12.5px;line-height:1.5;background:rgba(143,123,255,.08);border:1px solid rgba(143,123,255,.35);border-radius:10px;padding:9px 11px;display:grid;gap:6px}.sum ul{margin:0;padding-left:16px}.sum small{color:var(--muted)}
+.sg{border:1px solid var(--line-2);background:var(--surface-2);border-radius:10px;padding:8px 10px;display:grid;gap:5px}.sg b{font-size:12.5px}.sg small{color:var(--muted);font-size:11.5px}
+.gl2{display:grid;gap:9px}.g2{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:3px 8px;font-size:12.5px;align-items:center}.g2 .bar{grid-column:1/4;height:8px;border-radius:99px;background:var(--line-2);overflow:hidden}.g2 .bar i{display:block;height:100%;background:#8f7bff}.g2 small{color:var(--muted)}.g2 button{color:var(--muted);font-size:11px}
+.gform{display:grid;grid-template-columns:minmax(0,1fr) 90px auto;gap:6px}
+.stc{display:grid;gap:7px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;padding:10px;max-height:420px;overflow:auto}.stm{max-width:90%;padding:8px 11px;border-radius:14px;font-size:12.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.stm.me{justify-self:end;background:#2f6bff;color:#fff;border-bottom-right-radius:4px}.stm.ai{justify-self:start;background:var(--surface);border:1px solid var(--line-2);border-bottom-left-radius:4px}
+.stin{display:flex;gap:6px}.stin textarea{flex:1;min-height:42px;max-height:140px}
+.ev2{border:1px solid var(--line-2);background:var(--surface-2);border-radius:10px;overflow:hidden}.ev2 .eh{display:grid;grid-template-columns:4px 1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;cursor:pointer}.ev2 .eh::before{content:"";grid-row:1/3;width:4px;height:100%;border-radius:4px;background:var(--c)}.ev2 .eh b{font-size:13px}.ev2 .eh small{grid-column:2;color:var(--muted);font-size:11px}.ev2 .eh .stg{grid-row:1/3;grid-column:3;font-size:10.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--line-2);color:var(--muted)}
+.ev2 .eb{padding:4px 10px 10px;display:grid;gap:8px}.ev2 ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}.ev2 li{display:grid;grid-template-columns:20px 1fr;gap:8px;font-size:12.5px;cursor:pointer}.ev2 li span{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;font-size:11px}.ev2 li.ok span{background:#34e39b;border-color:#34e39b;color:#04121c}.ev2 li.ok b{text-decoration:line-through;opacity:.6}.ev2 li small{display:block;color:var(--muted);font-size:11px}
 .crf{display:grid;gap:8px}.crf .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.crf label{font-size:11px;color:var(--muted);display:grid;gap:3px}.crf textarea{min-height:64px}
 .pc{border:1px solid var(--line-2);background:var(--surface-2);border-radius:12px;padding:10px 12px;display:grid;gap:7px;min-width:0}
 .pt{display:flex;gap:8px;align-items:center;min-width:0}.pt b{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tg{margin-left:auto;font:600 10.5px var(--body);padding:2px 8px;border-radius:99px;color:#ff8a5c;border:1px solid rgba(255,138,92,.45);white-space:nowrap;flex:none}.tg.o{color:#c98a00;border-color:rgba(255,192,74,.5)}html.dark .tg.o{color:#ffc04a}
@@ -413,9 +423,9 @@ const DEPTS = [
  {id:'creative', name:'Creative Studio', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>`, color:'#ff8a5c', tags:['Prompts & Serien','Bilder & Videos','3D-Vorschau'],
   kpis:[['Creatives / Woche','24'],['Hook-Rate','31 %'],['Gewinner','1 von 6']],
   people:[{name:'Mia Hoffmann',role:'Prompts',agent:'Prompt-Agent',f:1},{name:'Noah Schmitt',role:'Bild & Video',agent:'Bild- & Video-Agent',f:0},{name:'Lea Wagner',role:'3D-Vorschau',agent:'Vorschau-Agent',f:1}]},
- {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2 2 4-4"/></svg>`, color:'#8f7bff', tags:['Ziele & Planung','Kampagnen-Kalender','Wochenbericht'],
+ {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2 2 4-4"/></svg>`, color:'#8f7bff', tags:['Berichte & Ziele','Kampagnen-Kalender','Chat & Planung'],
   kpis:[['Ziele','3'],['Kampagnen','2'],['Bericht','Mo']],
-  people:[{name:'Max Richter',role:'Stratege',agent:'Strategie-Agent',f:0}]},
+  people:[{name:'David Lehmann',role:'Berichte & Ziele',agent:'Bericht-Agent',f:0},{name:'Clara Vogel',role:'Kampagnen',agent:'Kampagnen-Agent',f:1}]},
  {id:'einkauf', name:'Einkauf', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 10.5A2 2 0 0 1 15.5 20h-7a2 2 0 0 1-2-1.5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`, color:'#ffc04a', tags:['TNC-Anfragen','Logos & Farben','TNC-Portal'],
   kpis:[['Hersteller','2'],['Ersparnis','18 %'],['Muster','Dez']],
   people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Einkaufs-Agent',f:1}]},
@@ -437,7 +447,7 @@ let DATA = { orders: [], due: [], tasks: [], stats: { total: 0, open: 0, week: 0
 const offerTasks = () => DATA.tasks.filter(t => t.type === 'offer'), updTasks = () => DATA.tasks.filter(t => t.type === 'update');
 const ago = (iso) => { const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000); return m < 60 ? `vor ${Math.max(1, m)} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : `vor ${Math.round(m / 1440)} Tagen` };
 const tlist = (rows, label) => rows.length ? `<div class="items">${rows.map(t => `<div class="item"><div class="itop"><span class="inum">${esc(t.tnc)}</span><div><div class="ititle">${esc(t.name)}</div><div class="isub">${esc(t.email || 'ohne E-Mail')} · ${ago(t.at)}</div></div></div><div class="iacts"><button class="b pri" data-open="${t.id}">${label}</button><button class="b ghost" data-dismiss="${t.id}">Erledigt</button></div></div>`).join('')}</div>` : '<p class="isub">Nichts offen.</p>';
-const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0], JONAS = DEPTS[1].people[1], MIA = DEPTS[2].people[0], NOAH = DEPTS[2].people[1];
+const LISA = DEPTS[0].people[0], TOM = DEPTS[0].people[1], EMMA = DEPTS[5].people[0], ANNA = DEPTS[4].people[0], SARAH = DEPTS[1].people[0], JONAS = DEPTS[1].people[1], MIA = DEPTS[2].people[0], NOAH = DEPTS[2].people[1], DAVID = DEPTS[3].people[0], CLARA = DEPTS[3].people[1];
 // Was die Agenten wirklich tun (live = läuft schon)
 const AGENT_INFO = {
   'Angebots-Agent': { live: true, tasks: ['Erkennt neue Angebots-Mails von Kenzo', 'Liest Größen, Preise und Bilder von TNC aus', 'Sucht die Kunden-E-Mail in "Neue Anfragen"', 'Legt es bei Lisa zur Freigabe bereit'] },
@@ -446,6 +456,8 @@ const AGENT_INFO = {
   'Chat-Agent': { live: true, tasks: ['Liest neue Nachrichten auf Instagram und im Facebook Messenger', 'Schreibt kurze, lockere Antworten, du gibst frei', 'Kennt das Wissen aus dem Wissensbereich', 'Lernt aus deinen Änderungen', 'Antwortest du selbst in der App, hakt er den Chat ab'] },
   'Prompt-Agent': { live: true, tasks: ['Schreibt Prompts für Bilder und Videos auf Englisch', 'Ganze Serien auf einmal, z. B. 10 Black-Friday-Creatives', 'Text im Bild bleibt Deutsch', 'Leitet Prompts an Noah weiter'] },
   'Bild- & Video-Agent': { live: true, tasks: ['Sammelt die Prompts von Mia', 'Kopiert den Prompt und öffnet ElevenLabs', 'Speichert fertige Bilder und Videos', 'Alles zum Download an einem Ort'] },
+  'Bericht-Agent': { live: true, tasks: ['Wochen-, Monats- und Jahresberichte aus deinen echten Zahlen', 'Anfragen, Angebote, Rückmeldungen, Verkäufe, Umsatz', 'Vergleich mit Vorwoche, Vormonat und Vorjahr', 'Konkrete Vorschläge, was du verbessern kannst', 'Ziele mit Fortschritt', 'Chat: frag ihn alles zu deinen Zahlen'] },
+  'Kampagnen-Agent': { live: true, tasks: ['Kampagnen-Kalender mit allen Aktionen', 'Plant Angebot, Zeitplan, Ads und Mails', 'Achtet auf Marge und Bestellschluss', 'Gibt Ads direkt an Mia weiter', 'Chat: plant alles zusammen mit dir'] },
   'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
 };
@@ -1057,6 +1069,81 @@ function fuNextBind(){
     b.disabled=true; b.textContent='Wird gespeichert …'; post({ type:'nf-fu', action:'plan', ids:l, at }); const msg=`${FUP.d.split('-').reverse().join('.')} · ${FUP.t} Uhr`; FUP.open=null; FUP.sel.clear(); FUP.plan=false; FUP.multi=false;
      });
 }
+/* ================= Strategie & Planung: David (Berichte & Ziele) + Clara (Kampagnen) ================= */
+const STP={tab:'week',chat:{david:'',clara:''},busy:{},err:'',gf:false,g:{metric:'umsatz',target:'',title:''},open:null,asked:{}};
+const eur2=(n)=>Number(n||0).toLocaleString('de-DE')+' €';
+function stKpis(c,p,lbl){ if(!c) return '';
+  const d=(k,inv)=>{ if(!p) return ''; const a=c[k]||0,b=p[k]||0; if(!b&&!a) return '<em>±0</em>'; if(!b) return `<em class="up">neu</em>`; const x=Math.round((a-b)/b*100); if(!x) return `<em>±0 zu ${esc(lbl)}</em>`; return `<em class="${(x>=0)!==!!inv?'up':'dn'}">${x>0?'+':''}${x}% zu ${esc(lbl)}</em>`; };
+  const k=(v,l,key,inv)=>`<div class="k"><b>${v}</b><small>${l}</small>${d(key,inv)}</div>`;
+  return `<div class="kp">${k(c.anfragen,'Anfragen','anfragen')}${k(c.angebote,'Angebote','angebote')}${k(c.gemeldet,'haben sich gemeldet','gemeldet')}${k(c.verkaeufe,'Verkäufe','verkaeufe')}${k(eur2(c.umsatz),'Umsatz','umsatz')}${k(c.conversion+'%','Angebot → Kauf','conversion')}${k(c.erinnerungen,'Erinnerungen','erinnerungen')}${k(c.rabatte,'Rabatt-Mails','rabatte')}${k(c.wartezeit==null?'–':String(c.wartezeit).replace('.',',')+' h','bis Angebot','wartezeit',true)}</div>`; }
+function stChat(agent,ph){ const S=DATA.st, M=(S.chat&&S.chat[agent])||[];
+  return `<div><div class="preph"><p class="lbl" style="margin:0">Chat mit ${agent==='david'?'David':'Clara'}</p>${M.length?`<button class="b ghost" style="margin-left:auto" data-stclear="${agent}">Neu anfangen</button>`:''}</div>
+   <div class="stc" style="margin-top:8px" data-stscroll>${M.length?M.map(m=>`<div class="stm ${m.role==='ai'?'ai':'me'}">${esc(m.text)}</div>`).join(''):`<p class="isub" style="margin:0">${ph}</p>`}${STP.busy[agent]?`<div class="stm ai">${agent==='david'?'David':'Clara'} denkt nach …</div>`:''}</div>
+   <div class="stin" style="margin-top:8px"><textarea class="ekin" data-stin="${agent}" placeholder="Nachricht an ${agent==='david'?'David':'Clara'} …">${esc(STP.chat[agent])}</textarea><button class="b pri" data-stsend="${agent}" ${STP.busy[agent]?'disabled':''}>Senden</button></div></div>`; }
+function davidHTML(){
+  const S=DATA.st; if(!S) return '<p class="isub">Wird geladen …</p>';
+  const P=S.periods[STP.tab]; const R=P.report;
+  const tabs=`<div class="stt">${[['week','Woche'],['month','Monat'],['year','Jahr']].map(([k,l])=>`<button class="${STP.tab===k?'on':''}" data-sttab="${k}">${l}</button>`).join('')}</div>`;
+  const ly=STP.tab==='month'&&P.ly?`<p class="isub" style="margin:6px 0 0">${esc(P.lyLabel)}: ${P.ly.anfragen} Anfragen · ${P.ly.verkaeufe} Verkäufe · ${eur2(P.ly.umsatz)}</p>`:'';
+  const full=STP.tab==='year'&&P.full?`<p class="isub" style="margin:6px 0 0">${esc(P.fullLabel)}: ${P.full.angebote} Angebote · ${P.full.verkaeufe} Verkäufe · ${eur2(P.full.umsatz)}</p>`:'';
+  const now=STP.tab!=='year'&&P.now?`<p class="isub" style="margin:6px 0 0">${esc(P.nowLabel)}: ${P.now.anfragen} Anfragen · ${P.now.angebote} Angebote · ${P.now.verkaeufe} Verkäufe · ${eur2(P.now.umsatz)}</p>`:'';
+  const rep=R?`<div class="sum"><div><b>David sagt:</b> ${esc(R.summary)}</div>${(R.good||[]).length?`<div><small>Gut gelaufen</small><ul>${R.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}${(R.bad||[]).length?`<div><small>Fällt auf</small><ul>${R.bad.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}</div>
+    ${(R.suggestions||[]).length?`<div><p class="lbl" style="margin:8px 0 6px">Vorschläge</p><div class="items">${R.suggestions.map((g,i)=>`<div class="sg"><b>${i+1}. ${esc(g.title)}</b><small>${esc(g.why)}</small><div class="iacts"><button class="b" data-stgoal="${i}">Als Ziel übernehmen</button><button class="b" data-sttoclara="${i}">An Clara</button></div></div>`).join('')}</div></div>`:''}
+    <button class="b ghost" data-streport="${STP.tab}" ${STP.busy.rep?'disabled':''}>${STP.busy.rep?'David schreibt …':'↻ Bericht neu schreiben'}</button>`
+    :`<button class="b pri wide" data-streport="${STP.tab}" ${STP.busy.rep?'disabled':''}>${STP.busy.rep?'David schreibt den Bericht … (ca. 20 Sek.)':'Bericht von David schreiben lassen'}</button>`;
+  const G=S.goals||[];
+  const goals=`<div><div class="preph"><p class="lbl" style="margin:0">Ziele ${esc(S.monthName)}</p><button class="b ghost" style="margin-left:auto" data-stgf>${STP.gf?'Abbrechen':'+ Ziel'}</button></div>
+    ${STP.gf?`<div class="gform" style="margin-top:8px"><select class="ekin" data-stg="metric">${Object.entries(S.metrics).map(([k,l])=>`<option value="${k}"${STP.g.metric===k?' selected':''}>${l}</option>`).join('')}</select><input class="ekin" data-stg="target" placeholder="${STP.g.metric==='frei'?'–':'Ziel'}" value="${esc(STP.g.target)}" ${STP.g.metric==='frei'?'disabled':''}><button class="b pri" data-stgsave>Speichern</button>${STP.g.metric==='frei'?`<input class="ekin" data-stg="title" placeholder="Was willst du erreichen?" value="${esc(STP.g.title)}" style="grid-column:1/4">`:''}</div>`:''}
+    ${G.length?`<div class="gl2" style="margin-top:8px">${G.map(g=>`<div class="g2"><span>${g.metric==='frei'?`<label style="cursor:pointer"><input type="checkbox" data-stgdone="${g.id}" ${g.done?'checked':''}> ${esc(g.title)}</label>`:esc(g.title)}</span><small>${g.metric==='frei'?'':g.metric==='umsatz'?eur2(g.value):g.value+(g.metric==='conversion'?'%':'')}</small><button data-stdel="${g.id}" title="Löschen">✕</button><div class="bar"><i style="width:${g.pct}%"></i></div></div>`).join('')}</div>`:'<p class="isub" style="margin:6px 0 0">Noch keine Ziele für diesen Monat.</p>'}</div>`;
+  return `${tabs}<div><div class="preph"><p class="lbl" style="margin:0">${esc(P.label)}</p><small class="isub" style="margin-left:auto">vs. ${esc(P.prevLabel)}</small></div><div style="margin-top:8px">${stKpis(P.cur,P.prev,P.prevLabel)}</div>${ly}${full}${now}</div>${rep}${goals}${stChat('david','Frag David alles zu deinen Zahlen, z. B. „Warum kaufen so wenige nach dem Rabatt?“')}`;
+}
+const STL={idee:'Idee',planung:'in Planung',laeuft:'läuft',fertig:'fertig'};
+const dShort=(s)=>s?s.split('-').reverse().slice(0,2).join('.')+'.':'';
+function claraHTML(){
+  const S=DATA.st; if(!S) return '<p class="isub">Wird geladen …</p>';
+  const C=S.campaigns||[];
+  const cal=C.map(c=>{ const op=STP.open===c.id, done=(c.steps||[]).filter(s=>s.done).length;
+    return `<div class="ev2"><div class="eh" style="--c:${esc(c.color||'#8f7bff')}" data-stopen="${c.id}"><b>${esc(c.title)}</b><small>${dShort(c.start)} bis ${dShort(c.end)}${c.offer?' · '+esc(c.offer):''}${(c.steps||[]).length?` · ${done}/${c.steps.length} erledigt`:''}</small><span class="stg">${STL[c.status]||'Idee'}</span></div>
+     ${op?`<div class="eb">${(c.steps||[]).length?`<ul>${c.steps.map((s,i)=>`<li class="${s.done?'ok':''}" data-ststep="${c.id}" data-i="${i}"><span>${s.done?'✓':''}</span><div><b>${esc(s.t)}</b><small>${dShort(s.due)}${s.who&&s.who!=='du'?' · '+({mia:'Mia',emma:'Emma',shop:'Shop'}[s.who]||esc(s.who)):''}</small></div></li>`).join('')}</ul>`:'<p class="isub" style="margin:0">Noch kein Plan. Schreib Clara unten, was du dir vorstellst, dann „Als Kampagne übernehmen“.</p>'}
+      <div class="iacts"><select class="ekin" style="width:auto" data-ststatus="${c.id}">${Object.entries(STL).map(([k,l])=>`<option value="${k}"${c.status===k?' selected':''}>${l}</option>`).join('')}</select><button class="b pri" data-stmia="${c.id}">Ads bei Mia</button><button class="b" data-stask="${c.id}">Mit Clara planen</button><button class="b ghost" data-stdel="${c.id}">Löschen</button></div></div>`:''}</div>`; }).join('');
+  const M=(S.chat&&S.chat.clara)||[];
+  return `<div><p class="lbl">Kampagnen-Kalender</p><div class="items">${cal||'<p class="isub">Noch keine Kampagnen.</p>'}</div></div>
+   ${stChat('clara','Plan mit Clara eine Aktion, z. B. „Lass uns Black Friday mit 50% planen, was brauchen wir alles?“')}
+   ${M.length?`<button class="b wide" data-stcamp ${STP.busy.camp?'disabled':''}>${STP.busy.camp?'Clara legt an …':'✦ Als Kampagne in den Kalender übernehmen'}</button>`:''}
+   ${STP.err?`<div class="ekerr">${esc(STP.err)}</div>`:''}`;
+}
+function stBind(){
+  const keep=(fn)=>{ const y=card.scrollTop; fn(); renderCard(); card.scrollTop=y; };
+  const S=DATA.st; if(!S) return;
+  card.querySelectorAll('[data-stscroll]').forEach(c=>c.scrollTop=c.scrollHeight);
+  card.querySelectorAll('[data-sttab]').forEach(b=>b.onclick=()=>keep(()=>{ STP.tab=b.dataset.sttab }));
+  // Bericht automatisch schreiben lassen, wenn noch keiner da ist und es Zahlen gibt
+  if(openP===DAVID){ const P=S.periods[STP.tab]; if(!P.report&&!STP.busy.rep&&!STP.asked[P.key]&&P.cur&&(P.cur.anfragen||P.cur.angebote||P.cur.verkaeufe)){ STP.asked[P.key]=1; STP.busy.rep=true; post({ type:'nf-st', action:'report', period:STP.tab }); setTimeout(()=>{ if(openP===DAVID) keep(()=>{}) },0); } }
+  card.querySelectorAll('[data-streport]').forEach(b=>b.onclick=()=>keep(()=>{ STP.busy.rep=true; STP.asked[S.periods[b.dataset.streport].key]=1; post({ type:'nf-st', action:'report', period:b.dataset.streport }); }));
+  card.querySelectorAll('[data-stin]').forEach(t=>{ t.oninput=()=>{ STP.chat[t.dataset.stin]=t.value }; t.onkeydown=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); card.querySelector(`[data-stsend="${t.dataset.stin}"]`)?.click(); } }; });
+  const send=(agent,text)=>{ if(!text.trim()||STP.busy[agent]) return; S.chat[agent]=[...(S.chat[agent]||[]),{role:'me',text}]; STP.chat[agent]=''; STP.busy[agent]=true; post({ type:'nf-st', action:'chat', agent, text }); };
+  card.querySelectorAll('[data-stsend]').forEach(b=>b.onclick=()=>keep(()=>send(b.dataset.stsend,STP.chat[b.dataset.stsend]||'')));
+  card.querySelectorAll('[data-stclear]').forEach(b=>b.onclick=()=>{ if(!confirm('Chat löschen und neu anfangen?')) return; S.chat[b.dataset.stclear]=[]; post({ type:'nf-st', action:'chat_clear', agent:b.dataset.stclear }); keep(()=>{}); });
+  card.querySelectorAll('[data-stgf]').forEach(b=>b.onclick=()=>keep(()=>{ STP.gf=!STP.gf }));
+  card.querySelectorAll('[data-stg]').forEach(el=>el.oninput=el.onchange=()=>{ STP.g[el.dataset.stg]=el.value; if(el.dataset.stg==='metric') keep(()=>{}); });
+  card.querySelectorAll('[data-stgsave]').forEach(b=>b.onclick=()=>{ const g=STP.g; if(g.metric==='frei'?!g.title.trim():!(+String(g.target).replace(',','.'))){ alert('Bitte Ziel ausfüllen'); return; } const tgt=+String(g.target).replace(',','.')||0; const L=S.metrics[g.metric]; post({ type:'nf-st', action:'goal', metric:g.metric, target:tgt, title:g.metric==='frei'?g.title:`${g.metric==='umsatz'?eur2(tgt):tgt+(g.metric==='conversion'?'%':'')} ${L.replace(/ \(.*\)/,'')}` }); keep(()=>{ STP.gf=false; STP.g={metric:'umsatz',target:'',title:''}; }); });
+  card.querySelectorAll('[data-stgoal]').forEach(b=>b.onclick=()=>{ const g=S.periods[STP.tab].report.suggestions[+b.dataset.stgoal]; post({ type:'nf-st', action:'goal', metric:'frei', title:g.title }); b.disabled=true; b.textContent='Übernommen ✓'; });
+  card.querySelectorAll('[data-sttoclara]').forEach(b=>b.onclick=()=>{ const g=S.periods[STP.tab].report.suggestions[+b.dataset.sttoclara]; send('clara',`David schlägt vor: ${g.title}. ${g.why} Wie setzen wir das als Aktion um?`); openPerson(CLARA); });
+  card.querySelectorAll('[data-stgdone]').forEach(c=>c.onchange=()=>post({ type:'nf-st', action:'goal_done', id:c.dataset.stgdone }));
+  card.querySelectorAll('[data-stdel]').forEach(b=>b.onclick=()=>{ if(!confirm('Wirklich löschen?')) return; const id=b.dataset.stdel; S.goals=(S.goals||[]).filter(x=>x.id!==id); S.campaigns=(S.campaigns||[]).filter(x=>x.id!==id); post({ type:'nf-st', action:'delete', id }); keep(()=>{}); });
+  card.querySelectorAll('[data-stopen]').forEach(h=>h.onclick=()=>keep(()=>{ STP.open=STP.open===h.dataset.stopen?null:h.dataset.stopen }));
+  card.querySelectorAll('[data-ststep]').forEach(li=>li.onclick=()=>{ const c=S.campaigns.find(x=>x.id===li.dataset.ststep); const s=c&&c.steps[+li.dataset.i]; if(!s) return; s.done=!s.done; post({ type:'nf-st', action:'step', id:c.id, i:+li.dataset.i }); keep(()=>{}); });
+  card.querySelectorAll('[data-ststatus]').forEach(sel=>sel.onchange=()=>{ const c=S.campaigns.find(x=>x.id===sel.dataset.ststatus); if(c) c.status=sel.value; post({ type:'nf-st', action:'campaign_status', id:sel.dataset.ststatus, status:sel.value }); keep(()=>{}); });
+  card.querySelectorAll('[data-stmia]').forEach(b=>b.onclick=()=>{ const c=S.campaigns.find(x=>x.id===b.dataset.stmia); if(!c) return; CR.brief=`10 Creatives für ${c.title}${c.offer?', '+c.offer:''}, Zeitraum ${dShort(c.start)} bis ${dShort(c.end)}`; CR.count='10'; openPerson(MIA); });
+  card.querySelectorAll('[data-stask]').forEach(b=>b.onclick=()=>{ const c=S.campaigns.find(x=>x.id===b.dataset.stask); if(!c) return; keep(()=>{ STP.chat.clara=`Lass uns ${c.title} (${dShort(c.start)} bis ${dShort(c.end)}${c.offer?', '+c.offer:''}) planen. Was brauchen wir alles, mit Zeitplan?`; }); card.querySelector('[data-stin="clara"]')?.focus(); });
+  card.querySelectorAll('[data-stcamp]').forEach(b=>b.onclick=()=>keep(()=>{ STP.busy.camp=true; STP.err=''; post({ type:'nf-st', action:'campaign_from_chat' }); }));
+}
+window.addEventListener('message',e=>{ const m=e.data||{}; if(m.type!=='nf-st-res') return;
+  if(m.action==='report') STP.busy.rep=false;
+  if(m.action==='chat'){ STP.busy.david=STP.busy.clara=false; if(m.ok&&DATA.st&&m.reply){ const a=openP===CLARA?'clara':'david'; } }
+  if(m.action==='campaign_from_chat'){ STP.busy.camp=false; }
+  STP.err=m.ok?'':(m.error||'Fehler'); if(!m.ok&&m.action!=='campaign_from_chat') alert('Fehler: '+(m.error||''));
+  if(openP===DAVID||openP===CLARA){ const y=card.scrollTop; renderCard(); card.scrollTop=y; } });
 /* ================= Creative Studio: Mia (Prompts) + Noah (Bild & Video) ================= */
 const ELEVEN_URL='https://elevenlabs.io/app/image-video';
 const crQueue=()=>((DATA.cr&&DATA.cr.queue)||[]);
@@ -1258,6 +1345,8 @@ function renderCard(){
   if (p===SARAH) extra = sarahHTML();
   if (p===JONAS) extra = jonasHTML();
   if (p===MIA) extra = miaHTML();
+  if (p===DAVID) extra = davidHTML();
+  if (p===CLARA) extra = claraHTML();
   if (p===NOAH) extra = noahHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
@@ -1298,6 +1387,7 @@ function renderCard(){
   if (p===SARAH) sarahBind();
   if (p===JONAS) jonasBind();
   if (p===MIA||p===NOAH) crBind();
+  if (p===DAVID||p===CLARA) stBind();
   card.querySelectorAll('[data-dismiss]').forEach(b=>b.onclick=()=>{ post({ type: 'nf-dismiss', id: b.dataset.dismiss }); DATA.tasks = DATA.tasks.filter(t => t.id !== b.dataset.dismiss); updateBadges(); renderCard(); });
 }
 
@@ -1348,7 +1438,7 @@ function showToast(title,sub,who,ini2){
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
   const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null, joBefore = DATA.jo ? new Set(joOpen().map(r => r.id)) : null;
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, stats: e.data.stats || DATA.stats };
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, st: e.data.st || DATA.st, stats: e.data.stats || DATA.stats };
   const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
   const shNew = shBefore ? shOpen().filter(r => !shBefore.has(r.id)) : [];
   const joNew = joBefore ? joOpen().filter(r => !joBefore.has(r.id)) : [];
