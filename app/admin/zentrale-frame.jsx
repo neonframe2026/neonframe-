@@ -97,6 +97,17 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return j
   }
   const loadCr = () => crApi('GET').then(j => { crRef.current = j; setCr(j) }).catch(() => {})
+  // Strategie & Planung (David + Clara)
+  const [st, setSt] = useState(null)
+  const stRef = useRef(null)
+  const stApi = async (method, body) => {
+    const { data } = await authClient().auth.getSession()
+    const r = await fetch('/api/strategie', { method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data?.session?.access_token || '') }, body: body ? JSON.stringify(body) : undefined })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+    return j
+  }
+  const loadSt = () => stApi('GET').then(j => { stRef.current = j; setSt(j) }).catch(() => {})
   const loadJo = () => joApi('GET').then(j => { joRef.current = j; setJo(j) }).catch(() => {})
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
@@ -104,8 +115,8 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr()
-    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr() }, 60000)
+    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt()
+    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt() }, 120000)
     return () => { alive = false; clearInterval(t) }
   }, [])
 
@@ -129,6 +140,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       sh: shRef.current || undefined,
       jo: joRef.current || undefined,
       cr: crRef.current || undefined,
+      st: stRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
       stats: {
         total: offers.length,
@@ -182,6 +194,13 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
           .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-sh-res', id, action, ok: false, error: err.message }, window.location.origin))
           .finally(loadSh)
       }
+      if (e.data?.type === 'nf-st') {
+        const { type, ...body } = e.data
+        stApi('POST', body)
+          .then(j => ref.current?.contentWindow?.postMessage({ type: 'nf-st-res', action: body.action, ok: true, ...j }, window.location.origin))
+          .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-st-res', action: body.action, ok: false, error: err.message }, window.location.origin))
+          .finally(loadSt)
+      }
       if (e.data?.type === 'nf-cr') {
         const { action, file, ...rest } = e.data
         const res = (ok, error) => ref.current?.contentWindow?.postMessage({ type: 'nf-cr-res', action, id: rest.id, ok, error }, window.location.origin)
@@ -210,7 +229,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st])
 
   return (
     <>
