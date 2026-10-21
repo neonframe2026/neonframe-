@@ -988,7 +988,7 @@ function fuNextBind(){
   card.querySelectorAll('[data-fumulti]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.multi=!FUP.multi; FUP.sel.clear(); FUP.open=null; FUP.plan=false; }));
   card.querySelectorAll('[data-fuall2]').forEach(b=>b.onclick=()=>keep(()=>{ const c=rows().filter(r=>r.id); if(FUP.sel.size===c.length) FUP.sel.clear(); else c.forEach(r=>FUP.sel.add(r.id)); FUP.plan=false; }));
   card.querySelectorAll('[data-fun]').forEach(li=>li.onclick=()=>keep(()=>{ const id=li.dataset.fun; if(FUP.multi){ FUP.sel.has(id)?FUP.sel.delete(id):FUP.sel.add(id); FUP.plan=false; } else { FUP.open=FUP.open===id?null:id; FUP.plan=false; } }));
-  card.querySelectorAll('[data-fumore]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.show+=10 }));
+  card.querySelectorAll('[data-fumore]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.show=FUP.show<10?10:FUP.show+10 }));
   card.querySelectorAll('[data-fuless]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.show=5 }));
   card.querySelectorAll('[data-fux]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.open=null; FUP.plan=false; }));
   card.querySelectorAll('[data-fuplan]').forEach(b=>b.onclick=()=>keep(()=>{ FUP.plan=!FUP.plan; if(FUP.plan) start(); }));
