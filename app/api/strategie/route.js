@@ -102,6 +102,15 @@ export async function POST(req) {
       await db.from('strategie').insert([{ type: 'chat', key: agent, content: text, data: { role: 'me' } }, { type: 'chat', key: agent, content: reply, data: { role: 'ai' } }])
       return Response.json({ success: true, reply })
     }
+    if (b.action === 'reject') {
+      // Vorschlag ablehnen: verschwindet und David merkt sich, dass er so etwas nicht mehr vorschlagen soll
+      const { data: rep } = await db.from('strategie').select('*').eq('type', 'report').eq('key', String(b.key || '')).order('created_at', { ascending: false }).limit(1)
+      const r = rep?.[0]; if (!r) return Response.json({ error: 'Bericht nicht gefunden' }, { status: 404 })
+      const s = (r.data?.suggestions || [])[+b.i]
+      await db.from('strategie').update({ data: { ...r.data, rejected: [...new Set([...(r.data?.rejected || []), +b.i])] } }).eq('id', r.id)
+      if (s) await db.from('strategie').insert([{ type: 'rejected', title: String(s.title || '').slice(0, 200) }])
+      return Response.json({ success: true })
+    }
     if (b.action === 'chat_clear') {
       await db.from('strategie').delete().eq('type', 'chat').eq('key', b.agent === 'clara' ? 'clara' : 'david')
       return Response.json({ success: true })
