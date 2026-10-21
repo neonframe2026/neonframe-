@@ -171,8 +171,8 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       if (e.data?.type === 'nf-ek') {
         const { action, id, fields } = e.data
         ekApi('PATCH', { action, id, fields })
-          .then(j => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, ok: true, tnc: j.tnc || '' }, window.location.origin))
-          .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, ok: false, error: err.message }, window.location.origin))
+          .then(j => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, action, ok: true, tnc: j.tnc || '', colors: j.colors || [] }, window.location.origin))
+          .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-ek-res', id, action, ok: false, error: err.message }, window.location.origin))
           .finally(loadEk)
       }
       if (e.data?.type === 'nf-sh') {
@@ -186,15 +186,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
         const { action, file, ...rest } = e.data
         const res = (ok, error) => ref.current?.contentWindow?.postMessage({ type: 'nf-cr-res', action, id: rest.id, ok, error }, window.location.origin)
         ;(async () => {
-          if (action === 'ref') {
-            // Vorbilder hochladen (mehrere Dateien), Claude beschreibt den Stil
-            for (const f of (rest.files || [])) {
-              const up = await crApi('POST', { action: 'ref_upload', name: f.name })
-              const r = await fetch(up.url, { method: 'PUT', headers: { 'Content-Type': f.type || 'image/jpeg', 'x-upsert': 'true' }, body: f })
-              if (!r.ok) throw new Error('Upload fehlgeschlagen (' + r.status + ')')
-              await crApi('POST', { action: 'ref_add', path: up.path, mime: f.type, name: f.name })
-            }
-          } else if (action === 'upload') {
+          if (action === 'upload') {
             // Datei direkt in den Speicher laden, danach als fertig markieren
             const up = await crApi('POST', { action: 'upload', id: rest.id, name: file?.name, mime: file?.type })
             const r = await fetch(up.url, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' }, body: file })
