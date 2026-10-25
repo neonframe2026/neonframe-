@@ -1052,19 +1052,19 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
   )
 }
 
-function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTheme, onLogout, updateStatus, toggleOffer, deleteOffer }) {
+function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTheme, onLogout, updateStatus, toggleOffer, deleteOffer, initialSel }) {
   const [q, setQ] = useState('')
   const [st, setSt] = useState('')
-  const [sel, setSel] = useState(null)
+  const [sel, setSel] = useState(initialSel || null)
   const [editing, setEditing] = useState(null)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(!!initialSel)
 
   const ql = q.toLowerCase()
   const list = offers.filter(o =>
     (!ql || (o.project || '').toLowerCase().includes(ql) || String(o.custom_id || '').includes(ql) || String(o.offer_num || '').toLowerCase().includes(ql)) &&
     (!st || o.status === st)
   )
-  const o = list.find(x => x.id === sel) || list[0]
+  const o = list.find(x => String(x.id) === String(sel)) || list[0]
   const due = offers.filter(mIsRed).length
   const inp = { background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: 'var(--text)', width: '100%' }
 
@@ -1353,6 +1353,7 @@ export default function AdminPage() {
   const [pwErr, setPwErr] = useState(false)
   const [tab, setTab] = useState('zentrale')
   const [updateId, setUpdateId] = useState('')
+  const [manageSel, setManageSel] = useState(null)
   const [previewTab, setPreviewTab] = useState('angebot')
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
@@ -1670,6 +1671,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
   useEffect(() => {
     if (!authed) return
     const sp = new URLSearchParams(window.location.search)
+    const of = sp.get('offer'); if (of) { setManageSel(of); setTab('manage'); window.history.replaceState(null, '', window.location.pathname); return }
     const u = sp.get('tncupdate'); if (u) { setUpdateId(u); setTab('tncupdate'); window.history.replaceState(null, '', window.location.pathname); return }
     const t = sp.get('tnc'); if (!t) return
     setTab('create'); setTncLink(t)
@@ -1918,7 +1920,7 @@ if (tab === 'tncupdate') return (
 if (tab === 'settings') return <SettingsPage onBack={() => setTab('zentrale')} />
 if (tab === 'wissen') return <WissenPage onBack={() => setTab('zentrale')} />
 if (tab === 'zentrale' || tab === 'home') return (
-        <ZentraleFrame offers={offers} setTab={setTab} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
+        <ZentraleFrame offers={offers} setTab={setTab} onRefresh={loadOffers} onLogout={() => setAuthed(false)} mIsRed={mIsRed} mStatus={mStatus} mId={mId} mBought={mBought}
       onOpenOffer={(t, pre) => { setTab('create'); setTncLink(t); handleTNC(t, pre) }}
       onOpenUpdate={(u) => { setUpdateId(u); setTab('tncupdate') }} />
   )
@@ -1941,6 +1943,7 @@ if (tab === 'manage') return (
       updateStatus={updateStatus}
       toggleOffer={toggleOffer}
       deleteOffer={deleteOffer}
+      initialSel={manageSel}
     />
   )
 
