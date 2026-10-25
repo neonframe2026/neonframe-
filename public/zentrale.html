@@ -1324,7 +1324,7 @@ function ekFull(r,on){ const st=ekState(r);
   const inp=(k)=>`<input class="ekin" data-ekf="${k}" value="${esc(st[k])}">`;
   const cols=[...st.colors];
   const pick=`<div class="ekpick">${TNC_COLORS.map(([n,h])=>`<button type="button" class="${st.colors.has(n)?'on':''}" data-ekc="${esc(n)}"><i style="background:${h}"></i>${esc(n)}${st.colors.has(n)?' ✓':''}</button>`).join('')}</div>`;
-  const info=[r.kind==='text'&&r.text?`Text: „${esc(r.text)}“`:'', r.kind==='text'&&r.font?`Schrift: ${esc(r.font)}`:'', r.backplateColor&&!/transparent/i.test(r.backplateColor)?`Rückwandfarbe laut Kunde: ${esc(r.backplateColor)}`:'', r.notes?`Projektnotiz vom Kunden: ${esc(r.notes)}`:''].filter(Boolean);
+  const info=[r.source?`Kam per <b>${esc(r.source)}</b>${r.email?'':' · E-Mail fehlt noch'}`:'', r.kind==='text'&&r.text?`Text: „${esc(r.text)}“`:'', r.kind==='text'&&r.font?`Schrift: ${esc(r.font)}`:'', r.backplateColor&&!/transparent/i.test(r.backplateColor)?`Rückwandfarbe laut Kunde: ${esc(r.backplateColor)}`:'', r.notes?`Projektnotiz vom Kunden: ${esc(r.notes)}`:''].filter(Boolean);
   return `<div class="ekit">
    <div class="ektop"><div style="min-width:0"><b>${esc(st.project)}</b><small>${esc(ago(r.at))} aus dem Konfigurator</small></div><span class="ektyp${r.kind==='text'?' t':''}">${r.kind==='logo'?'Logo':'Text'}</span></div>
    <div class="ekcust">Kunde (bleibt bei dir, geht nicht an TNC): <b>${esc(r.name||'')}</b>${r.email?' · '+esc(r.email):''}${r.phone?' · '+esc(r.phone):''}${r.phone?` · WhatsApp: <b>${/^(ja|yes|true|1|on)$/i.test(String(r.whatsapp||'').trim())?'Ja':'Nein'}</b>`:''}${info.length?'<br>'+info.join('<br>'):''}</div>
