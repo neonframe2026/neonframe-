@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { authClient } from '../../lib/admin-auth'
 
 // Die 3D-Zentrale (public/zentrale.html) im Admin anzeigen und mit echten Daten füttern
-export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatus, mId, mBought, onOpenOffer, onOpenUpdate }) {
+export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIsRed, mStatus, mId, mBought, onOpenOffer, onOpenUpdate }) {
   const ref = useRef(null)
   const [tasks, setTasks] = useState([])
   const tasksRef = useRef([])
@@ -124,6 +124,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
     const w = ref.current?.contentWindow
     if (!w) return
     const row = (o) => ({
+      oid: o.id,
       nr: o.offer_num || mId(o),
       name: o.project || 'ohne Projekt',
       status: mStatus(o.status).label,
@@ -155,6 +156,7 @@ export default function ZentraleFrame({ offers, setTab, onLogout, mIsRed, mStatu
       if (e.origin !== window.location.origin) return
       if (e.data?.type === 'nf-ready') send()
       if (e.data?.type === 'nf-nav') setTab(e.data.tab)
+      if (e.data?.type === 'nf-refresh') { fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {}); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); onRefresh && onRefresh() }
       if (e.data?.type === 'nf-logout') onLogout()
       if (e.data?.type === 'nf-open') {
         const t = tasksRef.current.find(x => x.id === e.data.id)
