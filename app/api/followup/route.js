@@ -147,18 +147,29 @@ function waNum(p) {
   if (d.startsWith('+')) d = d.slice(1); else if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '49' + d.slice(1)
   return d.length >= 10 ? d : ''
 }
+// WhatsApp-Texte (Vorlagen von Phillip, nur Name, Link und Datum werden eingesetzt)
 function waText(o, kind) {
   const first = String(o.project || '').trim().split(/\s+/)[0]
   const link = `${SITE}/angebot/${o.custom_id || o.id}`
   const hi = first ? `Hallo ${first},` : 'Hallo,'
-  const end = 'Bei weiteren Fragen stehen wir dir jederzeit gerne zur Verfügung.\n\nViele Grüße\nDein NeonFrame-Team'
-  if (kind === 'angebot') return `${hi}\n\ndein Angebot für dein Neonschild ist fertig! Hier kannst du es dir ansehen: ${link}\n\n${end}`
-  if (kind === 'erinnerung') return `${hi}\n\nhast du dir dein Angebot schon angesehen? Hier ist nochmal der Link zu deinem Neonschild: ${link}\n\nWenn du Fragen hast oder etwas ändern möchtest, schreib uns einfach hier.\n\n${end}`
-  if (kind === 'rabatt') return `${hi}\n\ngute Nachrichten: Du bekommst jetzt zusätzlich 10% Rabatt auf dein Angebot. Das Extra gilt nur für kurze Zeit: ${link}\n\n${end}`
-  const until = o.discount_valid_until ? new Date(o.discount_valid_until).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit' }) : ''
-  return `${hi}\n\nkurze Erinnerung: Dein Extra-Rabatt läuft bald ab${until ? ` (gültig bis ${until})` : ''}. Hier geht's zu deinem Angebot: ${link}\n\n${end}`
+  const end = 'Viele Grüße\nDein NeonFrame-Team'
+  const day = (d) => new Date(d).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric' })
+  if (kind === 'angebot') return `${hi}\n\ndein individuelles Angebot für dein personalisiertes LED-Neon-Schild ist fertig. Maße, Farben und alle Details haben wir für dich zusammengefasst. Das Angebot ist für dich reserviert.\n\nHier kannst du dir alles in Ruhe ansehen und dein Neon-Schild ganz einfach in Auftrag geben:\n${link}\n\nWenn du noch Änderungswünsche hast, schreib uns einfach hier.\n\n${end}`
+  if (kind === 'rabatt') {
+    const baseNet = parseFloat(o.base_price) || 0
+    const amt = o.disc_type === 'pct' ? baseNet * (parseFloat(o.disc_val) || 0) / 100 : (parseFloat(o.disc_val) || 0)
+    const basePct = baseNet > 0 ? Math.round(amt / baseNet * 100) : 0
+    const ex = Math.round(parseFloat(o.extra_disc_pct) || 10)
+    const rab = basePct > 0 ? `zusätzlich ${ex}% Rabatt auf deinen bestehenden ${basePct}% Rabatt` : `zusätzlich ${ex}% Rabatt`
+    const until = o.discount_valid_until ? `\n\nDas Angebot mit Extra-Rabatt gilt bis zum ${day(o.discount_valid_until)}.` : ''
+    return `${hi}\n\nwir haben dir gerade eine E-Mail geschickt, wollten dir die Info aber auch nochmal kurz hier weiterleiten.\n\nDiese Woche bündeln wir mehrere Aufträge in einer gemeinsamen Produktion und möchten den Vorteil gerne an dich weitergeben. Deshalb bekommst du ${rab}.\n\nDen Rabatt haben wir dir bereits direkt in deinem Angebot eingetragen:\n${link}${until}\n\nWenn du noch Änderungswünsche hast, schreib uns einfach hier.\n\n${end}`
+  }
+  const u = o.discount_valid_until
+  const today = day(Date.now()), tomorrow = day(Date.now() + 24 * H)
+  const bis = !u ? 'nur noch kurze Zeit gilt' : day(u) === today ? `nur noch heute, den ${day(u)} gilt` : day(u) === tomorrow ? `nur noch bis morgen, den ${day(u)} gilt` : `nur noch bis zum ${day(u)} gilt`
+  return `${hi}\n\nwir wollten dich nur kurz daran erinnern, dass dein zusätzlicher Rabatt ${bis}. Danach schließen wir die Planung für unsere nächste Produktionsrunde ab.\n\nWenn du dir den Preis noch sichern möchtest, findest du dein Angebot hier:\n${link}\n\nFalls du vorher noch Fragen oder Änderungswünsche hast, schreib uns einfach hier.\n\n${end}`
 }
-// Lisa: "Angebot ist da" per WhatsApp · Emma: nach jeder Follow-up-Mail (Erinnerung, Rabatt, Rabatt-Erinnerung)
+// Lisa: "Angebot ist da" per WhatsApp · Emma: nach Rabatt-Mail und Rabatt-Erinnerung
 async function waList() {
   const sb = db()
   const { data: ek } = await sb.from('einkauf').select('email,phone,data,created_at').order('created_at', { ascending: false }).limit(1000)
@@ -175,7 +186,7 @@ async function waList() {
     if (!num || BOUGHT.includes(o.status) || o.unsubscribed) continue
     const item = (kind, d) => ({ id: `${o.id}:wa_${kind}`, offerId: o.id, nr: nr(o), name: o.project || 'ohne Projekt', label: WA_KIND[kind], when: when(t(d)), url: `https://wa.me/${num}?text=${encodeURIComponent(waText(o, kind))}` })
     if (t(o.created_at) >= t(since) && !skip.has(`${o.id}:wa_angebot`)) lisa.push(item('angebot', o.created_at))
-    const ev = [['erinnerung', o.recontacted_at], ['rabatt', o.extra_discount_at], ['rabatt_erinnerung', o.discount_reminder_sent_at]]
+    const ev = [['rabatt', o.extra_discount_at], ['rabatt_erinnerung', o.discount_reminder_sent_at]]
       .filter(([, d]) => d && t(d) >= t(since)).sort((a, b) => t(b[1]) - t(a[1]))[0] // nur die neueste Mail pro Angebot
     if (ev && !skip.has(`${o.id}:wa_${ev[0]}`)) emma.push(item(ev[0], ev[1]))
   }
