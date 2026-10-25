@@ -75,7 +75,7 @@ function view(r) {
   const d = r.data || {}
   return {
     id: r.id, at: r.created_at, kind: r.kind, status: r.status, tnc: r.tnc_id, sent_at: r.sent_at, error: r.error,
-    name: r.name, email: r.email, phone: r.phone,
+    name: r.name, email: r.email, phone: r.phone, whatsapp: d.whatsapp ?? '',
     logo: r.logo_url, preview: r.preview_url, wall: r.wall_url,
     fileName: d.fileName || '',
     text: d.wunschtext || '', font: d.schriftart || '', customerColors: d.neonfarbname || '',
