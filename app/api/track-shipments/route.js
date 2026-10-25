@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
 import { expireAll } from '../../../lib/discount'
+import { syncTnc } from '../../../lib/tnc-status'
 import { buildShippedEmail, buildTodayEmail, sendMail, SUBJECT_SHIPPED, SUBJECT_TODAY } from '../../../lib/shipping-emails'
 
 export const dynamic = 'force-dynamic'
@@ -54,6 +55,9 @@ export async function GET(request) {
     }
   } catch (e) { cleaned.push('Fehler: ' + e.message) }
 
+  // ---- TNC-Stand übernehmen: In Produktion, Versendet (Sendungsnummer), Zugestellt ----
+  let tnc = []
+  try { tnc = await syncTnc(supabase) } catch (e) { tnc = ['Fehler: ' + e.message] }  
   // Nur tagsüber prüfen (spart DHL-Abfragen)
   const hour = Number(new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hour12: false, timeZone: 'Europe/Berlin' }).format(new Date()))
   if (hour < 5 || hour > 21) return Response.json({ skipped: 'Nachtruhe', cleaned })
@@ -92,5 +96,5 @@ export async function GET(request) {
     await new Promise(res => setTimeout(res, 5500)) // DHL erlaubt max. 1 Abfrage pro 5 Sek.
   }
 
-  return Response.json({ checked: results.length, results, cleaned, expired })
+    return Response.json({ checked: results.length, results, cleaned, expired, tnc })
 }
