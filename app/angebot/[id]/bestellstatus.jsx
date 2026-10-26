@@ -89,13 +89,13 @@ export default function Bestellstatus({ offer: o }) {
         <div className="card">
           <h2>Dein Neonschild</h2>
           <div className="prod">
-            <div className="img">{o.preview_image ? <img src={o.preview_image} alt="Dein Neonschild" /> : null}</div>
+            <div className="img">{(o.checkout_image || o.preview_image) ? <img src={o.checkout_image || o.preview_image} alt="Dein Neonschild" /> : null}</div>
             <div><b>LED-Neonschild nach Maß</b><div className="d">{details.map((l, i) => <span key={i}>{i > 0 && <br />}{l}</span>)}</div></div>
           </div>
         </div>
 
         <div className="grid2">
-          <div className="card"><h3>LIEFERADRESSE</h3><p>{o.ship_name ? <><b>{o.ship_name}</b><br /></> : null}{city || 'Wie bei der Bestellung angegeben'}</p></div>
+          <div className="card"><h3>LIEFERADRESSE</h3><p>{o.ship_name ? <><b>{o.ship_name}</b><br /></> : null}{o.ship_street ? <>{o.ship_street}<br /></> : null}{city || 'Wie bei der Bestellung angegeben'}</p></div>
           <div className="card"><h3>BESTELLUNG</h3><p>#{num}<br />{ordered ? dLong(ordered) : ''}<br />Bezahlt</p></div>
         </div>
 
