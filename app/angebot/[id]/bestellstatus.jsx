@@ -33,7 +33,7 @@ export default function Bestellstatus({ offer: o }) {
   // Voraussichtliche Lieferung wie bei TNC: Zahlung bei TNC + 9 bis 16 Tage
   let eta = null
   if (n < 3 && o.tnc_paid_at) {
-    eta = <span className="eta" style={{ color: '#0f1726', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 7 }}><svg width="17" height="17" viewBox="0 0 24 24" fill="#3aa8ff" aria-hidden="true"><path d="M1 5.5A1.5 1.5 0 0 1 2.5 4h10A1.5 1.5 0 0 1 14 5.5V16H1z" /><path d="M15 8h3.6l4.4 4.6V16h-8z" /><circle cx="6" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /><circle cx="18" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /></svg>Voraussichtl. Lieferung: <b>{dShort(addDays(o.tnc_paid_at, 9))} bis {dShort(addDays(o.tnc_paid_at, 16))}</b></span>
+    eta = <span className="eta" style={{ color: '#6b7a93', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 7 }}><svg width="17" height="17" viewBox="0 0 24 24" fill="#3aa8ff" aria-hidden="true"><path d="M1 5.5A1.5 1.5 0 0 1 2.5 4h10A1.5 1.5 0 0 1 14 5.5V16H1z" /><path d="M15 8h3.6l4.4 4.6V16h-8z" /><circle cx="6" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /><circle cx="18" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /></svg>Voraussichtl. Lieferung: <b>{dShort(addDays(o.tnc_paid_at, 9))} bis {dShort(addDays(o.tnc_paid_at, 16))}</b></span>
   }
 
   const ups = []
