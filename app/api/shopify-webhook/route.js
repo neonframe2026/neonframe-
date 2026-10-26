@@ -34,6 +34,7 @@ export async function POST(request) {
         status: 'confirmed',
         ordered_at: draft.completed_at || new Date().toISOString(),
         ship_name: draft.shipping_address?.name || [draft.shipping_address?.first_name, draft.shipping_address?.last_name].filter(Boolean).join(' ') || null,
+        ship_street: [draft.shipping_address?.address1, draft.shipping_address?.address2].filter(Boolean).join(', ') || null,
         ship_zip: draft.shipping_address?.zip || null,
         ship_city: draft.shipping_address?.city || null,
         ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}),
