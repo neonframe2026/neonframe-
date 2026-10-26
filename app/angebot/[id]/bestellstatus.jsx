@@ -30,13 +30,10 @@ export default function Bestellstatus({ offer: o }) {
   const ordered = o.ordered_at || (o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at) - 15 * 6e4).toISOString() : null)
   const steps = [['Bestellt', 'ok'], ['In Produktion', 'gear'], ['Versendet', 'truck'], ['Zugestellt', 'home']]
 
+  // Voraussichtliche Lieferung wie bei TNC: Zahlung bei TNC + 9 bis 16 Tage
   let eta = null
-  if (n < 2 && ordered) {
-    const [a, b] = o.express ? [addWork(ordered, 7), addWork(ordered, 10)] : [addDays(ordered, 14), addDays(ordered, 21)]
-    eta = <span className="eta">Voraussichtl. Lieferung: <b>{dShort(a)} bis {dShort(b)}</b></span>
-  } else if (n === 2 && o.shipped_at) {
-    const a = addWork(o.shipped_at, 2)
-    eta = <span className="eta">Voraussichtl. bei dir: <b>{WD[a.getDay()]}, {dShort(a)}</b></span>
+  if (n < 3 && o.tnc_paid_at) {
+    eta = <span className="eta">Voraussichtl. Lieferung: <b>{dShort(addDays(o.tnc_paid_at, 9))} bis {dShort(addDays(o.tnc_paid_at, 16))}</b></span>
   }
 
   const ups = []
