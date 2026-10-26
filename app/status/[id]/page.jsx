@@ -8,9 +8,10 @@ export const metadata = { title: 'Dein Bestellstatus · NeonFrame' }
 
 export default async function Page({ params }) {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  let { data: offer } = await supabase.from('offers').select('*').eq('custom_id', params.id).maybeSingle()
-  if (!offer && /^[0-9a-f-]{36}$/i.test(params.id)) offer = (await supabase.from('offers').select('*').eq('id', params.id).maybeSingle()).data
-  if (!offer) notFound()
+  const r1 = await supabase.from('offers').select('*').eq('custom_id', params.id).single()
+  let offer = r1.data
+  if (!offer) offer = (await supabase.from('offers').select('*').eq('id', params.id).single()).data
+  if (!offer) return <pre style={{ padding: 20 }}>Status-Seite: nicht gefunden ({String(params.id)}) {r1.error?.message || ''}</pre>
   // Noch nicht bestellt -> normales Angebot zeigen
   if (!['confirmed', 'in_production', 'shipped', 'delivered'].includes(offer.status)) redirect(`/angebot/${params.id}`)
   return <Bestellstatus offer={offer} />
