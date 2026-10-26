@@ -30,7 +30,14 @@ export async function POST(request) {
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: offers, error } = await supabase
       .from('offers')
-      .update({ status: 'confirmed', ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}) })
+      .update({
+        status: 'confirmed',
+        ordered_at: draft.completed_at || new Date().toISOString(),
+        ship_name: draft.shipping_address?.name || [draft.shipping_address?.first_name, draft.shipping_address?.last_name].filter(Boolean).join(' ') || null,
+        ship_zip: draft.shipping_address?.zip || null,
+        ship_city: draft.shipping_address?.city || null,
+        ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}),
+      })
       .ilike('checkout_url', `%${token}%`)
       .select('id, project, customer_email, order_email_sent_at, shopify_product_id')
 
