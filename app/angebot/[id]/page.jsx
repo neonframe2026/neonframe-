@@ -2,7 +2,7 @@
 // Die eigentliche Komponente (AngebotPage) wurde in angebot-client.jsx ausgelagert
 
 import { createClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import AngebotPage from './angebot-client'
 import Bestellstatus from './bestellstatus'
 import { expireIfDue } from '../../../lib/discount'
@@ -31,6 +31,9 @@ let { data } = await supabase.from('offers').select('*').eq('custom_id', id).sin
 export default async function Page({ params }) {
   const offer = await getOffer(params.id)
   if (!offer) notFound()
-  if (['confirmed', 'in_production', 'shipped', 'delivered'].includes(offer.status)) return <Bestellstatus offer={offer} />
+  if (['confirmed', 'in_production', 'shipped', 'delivered'].includes(offer.status)) {
+    if (offer.offer_num) redirect(`/status/${offer.offer_num}`)
+    return <Bestellstatus offer={offer} />
+  }
   return <AngebotPage offer={offer} />
 }
