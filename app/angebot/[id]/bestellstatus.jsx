@@ -27,7 +27,7 @@ const STATES = {
 export default function Bestellstatus({ offer: o }) {
   const [n, label, title, sub] = STATES[o.status] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
-  const ordered = o.ordered_at || o.updated_at || o.created_at
+  const ordered = o.ordered_at || (o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at) - 15 * 6e4).toISOString() : null)
   const steps = [['Bestellt', 'ok'], ['In Produktion', 'gear'], ['Versendet', 'truck'], ['Zugestellt', 'home']]
 
   let eta = null
