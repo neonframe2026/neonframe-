@@ -84,10 +84,6 @@ export async function POST(request) {
 }
 
 function buildOrderEmail(firstName, offerNum) {
-  const statusBtn = offerNum ? `<tr><td bgcolor="#0a0d16" align="center" style="background:#0a0d16;padding:6px 24px 30px">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#3aa8ff" style="background:#3aa8ff;border-radius:12px">
-<a href="https://angebote.neonframe.de/status/${offerNum}" target="_blank" style="display:inline-block;padding:16px 38px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700;color:#06121f;text-decoration:none;border-radius:12px">📦 Bestellstatus ansehen</a></td></tr></table>
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8a97ab;margin-top:12px">Hier siehst du jederzeit, wo dein Neonschild gerade ist.</div></td></tr>` : ''
   const img = (file, alt, link) => {
     const tag = `<img src="${EMAIL_ASSETS}/${file}" width="600" alt="${alt}" style="display:block;width:100%;max-width:600px;height:auto;border:0;outline:none;text-decoration:none;font-family:Arial,sans-serif;font-size:16px;color:#ffffff">`
     return `<tr><td bgcolor="#09080a" style="background:#09080a;padding:0;margin:0;font-size:0;line-height:0;mso-line-height-rule:exactly">${link ? `<a href="${link}" style="border:0;text-decoration:none">${tag}</a>` : tag}</td></tr>`
@@ -107,7 +103,7 @@ function buildOrderEmail(firstName, offerNum) {
     <tr><td align="center" style="padding:0">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt">
                ${img('bestellung-1-danke.jpg', 'Danke für deine Bestellung – dein Schild geht in Produktion')}
-        ${statusBtn}
+        ${offerNum ? img('bestellung-status-button.png', 'Bestellstatus ansehen', `https://angebote.neonframe.de/status/${offerNum}`) : ''}
         ${img('bestellung-2-ki-bild.jpg', 'Dein Neon-Schild wird von Hand gefertigt')}
         ${img('bestellung-3-ablauf-v2.jpg', 'So geht es weiter: Produktion (2–4 Werktage), Versand mit Tracking-Link, Auspacken & Leuchten')}
         ${img('bestellung-4-vorteile.jpg', 'Handgefertigt, Premium-LEDs, Plug & Play, kostenloser Versand')}
