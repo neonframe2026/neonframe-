@@ -1,44 +1,25 @@
+// TEST: schickt Produktions-, Versand- und "Heute"-Mail eines Angebots an info@neonframe.de (nie an den Kunden)
+// Aufruf: /api/mail-test?key=DEIN_CRON_SECRET&offer=13287430172
 import { createClient } from '@supabase/supabase-js'
-import { logEmail } from '../../../lib/email-log'
+import { buildShippedEmail, buildTodayEmail, sendMail, SUBJECT_SHIPPED, SUBJECT_TODAY } from '../../../lib/shipping-emails'
 
+export const dynamic = 'force-dynamic'
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
+const TO = 'info@neonframe.de'
 
-// Produktions-Mail für ein Angebot verschicken (aus dem Admin, wenn Status auf "Bestellt" gestellt wird)
-// Body: { offerId, delayMinutes = 15, force = false }
-export async function POST(req) {
-  try {
-    const { offerId, delayMinutes = 15, force = false } = await req.json()
-    if (!offerId) return Response.json({ error: 'offerId fehlt' }, { status: 400 })
-    if (!process.env.RESEND_API_KEY) return Response.json({ error: 'E-Mail nicht konfiguriert' }, { status: 500 })
-
-    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
-    const { data: o, error } = await supabase.from('offers').select('id, project, customer_email, order_email_sent_at, offer_num').eq('id', offerId).maybeSingle()
-    if (error || !o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
-    if (!o.customer_email) return Response.json({ error: 'Keine E-Mail hinterlegt' }, { status: 400 })
-    if (o.order_email_sent_at && !force) return Response.json({ success: true, skipped: 'Produktions-Mail wurde schon verschickt' })
-
-    const delay = Math.max(0, Number(delayMinutes) || 0)
-    const sendAt = new Date(Date.now() + delay * 60 * 1000).toISOString()
-    const html = buildOrderEmail(o.project?.split(' ')[0], o.offer_num)
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'NeonFrame <info@neonframe.de>',
-        to: [o.customer_email],
-        subject: 'Danke für deine Bestellung – dein Schild geht in Produktion ✨',
-        ...(delay > 0 ? { scheduled_at: sendAt } : {}),
-        html,
-      }),
-    })
-    if (!res.ok) return Response.json({ error: 'Versand fehlgeschlagen: ' + (await res.text()).slice(0, 200) }, { status: 500 })
-
-    await logEmail(o.id, 'produktion', 'Danke für deine Bestellung – dein Schild geht in Produktion ✨', html, o.customer_email)
-    await supabase.from('offers').update({ order_email_sent_at: sendAt }).eq('id', o.id)
-    return Response.json({ success: true, delay })
-  } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
-  }
+export async function GET(req) {
+  const u = new URL(req.url)
+  if (!process.env.CRON_SECRET || u.searchParams.get('key') !== process.env.CRON_SECRET) return Response.json({ error: 'Nicht erlaubt' }, { status: 401 })
+  const num = String(u.searchParams.get('offer') || '').trim()
+  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const { data } = await db.from('offers').select('*').eq('offer_num', num).limit(1)
+  const o = data?.[0]
+  if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
+  const t = { ...o, tracking_number: o.tracking_number || 'JVGL00000000000000000000', tracking_company: o.tracking_company || 'DHL' }
+  await sendMail(TO, '[TEST] Danke für deine Bestellung – dein Schild geht in Produktion ✨', buildOrderEmail(o.project?.split(' ')[0], o.offer_num))
+  await sendMail(TO, '[TEST] ' + SUBJECT_SHIPPED, buildShippedEmail(t))
+  await sendMail(TO, '[TEST] ' + SUBJECT_TODAY, buildTodayEmail(t))
+  return Response.json({ success: true, an: TO, mails: 3, statusLink: `https://angebote.neonframe.de/status/${o.offer_num}` })
 }
 
 function buildOrderEmail(firstName, offerNum) {
