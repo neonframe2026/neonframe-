@@ -69,7 +69,7 @@ function colorDot(s = '') {
 // hochgeladen oder in eine Anfrage gepackt wird. Ohne das können z.B. KI-generierte
 // Bilder (ElevenLabs, Canva AI, etc.) mehrere MB groß sein und die Server-Anfrage
 // sprengen ("Request Entity Too Large" -> Vorschau-Fehler).
-function compressImage(file, maxDim = 1600, quality = 0.82) {
+function compressImage(file, maxDim = 2560, quality = 0.92) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (ev) => {
