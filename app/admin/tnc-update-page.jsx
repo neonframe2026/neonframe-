@@ -9,17 +9,17 @@ const r2 = n => Math.round(n * 100) / 100
 const num = v => { const t = String(v ?? '').trim(); if (!t) return NaN; return t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t) }
 const eur = n => (Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 
-// Eigenes Bild verkleinern (max. 1800 px), damit der Upload schnell geht
+// Eigenes Bild verkleinern (max. 2560 px), damit der Upload schnell geht
 function shrink(file) {
   return new Promise((res, rej) => {
     const rd = new FileReader()
     rd.onload = () => {
       const img = new Image()
       img.onload = () => {
-        const s = Math.min(1, 1800 / Math.max(img.width, img.height))
+        const s = Math.min(1, 2560 / Math.max(img.width, img.height))
         const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s)
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
-        res(c.toDataURL('image/jpeg', 0.88))
+        res(c.toDataURL('image/jpeg', 0.92))
       }
       img.onerror = rej; img.src = rd.result
     }
