@@ -760,8 +760,8 @@ const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
 const mBought = (o) => ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
 // Zeitpunkt der Bestellung (Produktions-Mail geht 15 Min. danach raus)
 const mOrderedAt = (o) => o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at).getTime() - 15 * 60000).toISOString() : null
-// Bewertung: 3 Tage nach Zustellung – ohne Zustelldatum (z. B. anderer Paketdienst) 10 Tage nach Bestellung
-const mReviewOk = (o) => mBought(o) && (o.delivered_at ? mHours(o.delivered_at) >= 72 : (!!mOrderedAt(o) && mHours(mOrderedAt(o)) >= 240))
+// Bewertung: erst 3 Tage nach echter Zustellung (nur wenn wirklich zugestellt)
+const mReviewOk = (o) => o.status === 'delivered' && !!o.delivered_at && mHours(o.delivered_at) >= 72
 const mReviewDue = (o) => !o.review_email_sent_at && mReviewOk(o)
 // Rabatt-Erinnerung: 3 Tage nach der Rabatt-Mail (1 Tag bevor der Extra-Rabatt abläuft), solange nicht bestellt
 const mDiscReminderOk = (o) => !!o.extra_discount_at && o.status !== 'unsubscribed' && !mBought(o) && mHours(o.extra_discount_at) >= 72
