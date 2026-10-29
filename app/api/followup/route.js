@@ -56,9 +56,9 @@ function step(o) {
   if (!o.customer_email || o.status === 'unsubscribed' || o.unsubscribed) return null
   if (BOUGHT.includes(o.status)) {
     if (o.review_email_sent_at) return null
-    const ordered = o.order_email_sent_at ? t(o.order_email_sent_at) - 15 * 60000 : 0
-    const due = o.delivered_at ? t(o.delivered_at) + 72 * H : ordered ? ordered + 240 * H : 0
-    return due ? { kind: 'bewertung', due } : null
+    // Bewertung nur, wenn das Schild wirklich zugestellt ist (3 Tage danach)
+    if (o.status !== 'delivered' || !o.delivered_at) return null
+    return { kind: 'bewertung', due: t(o.delivered_at) + 72 * H }
   }
   if (o.status === 'offer_sent') return { kind: 'erinnerung', due: t(o.created_at) + 12 * H }
   if (o.status === 'recontacted' && !o.extra_discount_applied) {
