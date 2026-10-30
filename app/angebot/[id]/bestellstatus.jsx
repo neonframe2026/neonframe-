@@ -53,6 +53,7 @@ export default function Bestellstatus({ offer: o }) {
   if (n >= 3) ups.push(['home', 'Zugestellt', 'Dein Paket ist angekommen', o.delivered_at && dLong(o.delivered_at)])
   if (n >= 2 || o.tracking_number) ups.push(['truck', 'Versendet', <>Dein Paket ist unterwegs{o.tracking_number && <><br /><a href={trackingLink(o)} target="_blank" rel="noopener noreferrer">Sendung verfolgen · {o.tracking_company || 'DHL'} {o.tracking_number} ↗</a></>}</>, (o.shipped_at || o.label_at) && dLong(o.shipped_at || o.label_at)])
   if (n >= 1) ups.push(['gear', 'Produktion gestartet', 'Dein Neonschild wird jetzt für dich gefertigt', o.production_at && dLong(o.production_at)])
+    if (o.payment_received !== false) ups.push(['ok', 'Zahlung erhalten', 'Danke für deine Zahlung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
   ups.push(['ok', 'Bestellung eingegangen', 'Danke für deine Bestellung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
 
   const colors = String(o.colors || '').split(',').map(c => c.trim()).filter(Boolean).join(', ')
