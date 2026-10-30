@@ -216,6 +216,24 @@ export async function GET(req) {
           await db().from('agent_tasks').insert(fresh.map(i => ({ type: 'push_sent', tnc_id: i.id, status: 'log', done_at: new Date().toISOString() })))
         }
       }
+      // Push aufs Handy, wenn eine WhatsApp-Nachricht ansteht (jede nur einmal)
+      try {
+        const W = await waList()
+        const all = [...W.lisa.map(w => ({ ...w, dep: 'Angebote' })), ...W.emma.map(w => ({ ...w, dep: 'Follow-up & CRM' }))]
+        if (all.length) {
+          const { data: pw } = await db().from('agent_tasks').select('tnc_id').eq('type', 'push_sent').in('tnc_id', all.map(w => w.id))
+          const had = new Set((pw || []).map(p => p.tnc_id))
+          const neu = all.filter(w => !had.has(w.id))
+          if (neu.length) {
+            await sendPush({
+              title: neu.length === 1 ? `WhatsApp senden: ${neu[0].label}` : `${neu.length} WhatsApp-Nachrichten senden`,
+              body: neu.length === 1 ? `${neu[0].name} wartet. Abteilung ${neu[0].dep}.` : `${neu.slice(0, 3).map(w => w.name).join(', ')}${neu.length > 3 ? ' und weitere' : ''}. Abteilung ${[...new Set(neu.map(w => w.dep))].join(' / ')}.`,
+              tag: 'whatsapp',
+            }).catch(() => {})
+            await db().from('agent_tasks').insert(neu.map(w => ({ type: 'push_sent', tnc_id: w.id, status: 'log', done_at: new Date().toISOString() })))
+          }
+        }
+      } catch {}
       const open = inWindow(Date.now())
       const done = [], failed = []
       // Außerhalb 8:10 bis 20:00 nur das, was du selbst auf diese Uhrzeit geplant hast
