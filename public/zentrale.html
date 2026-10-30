@@ -960,7 +960,7 @@ let lisaOpen=null;
 function lisaList(){ const W=waOff(), rows=DATA.orders.slice(0,6);
   const extra=W.filter(w=>!rows.some(o=>o.oid===w.offerId)).map(w=>({nr:w.nr,name:w.name,status:'Angebot gesendet',cls:'open',oid:w.offerId}));
   const all=[...extra,...rows]; if(!all.length) return '<p class="isub">Noch keine Angebote.</p>';
-  return `<div class="olist">${all.map(o=>{ const w=W.find(x=>x.offerId===o.oid), op=lisaOpen===o.oid;
+  return `<div class="olist">${all.map(o=>{ const w=W.find(x=>String(x.offerId)===String(o.oid)), op=lisaOpen!=null&&String(lisaOpen)===String(o.oid);
     return `<div><button class="orow" data-lisao="${esc(o.oid||'')}" style="text-align:left;width:100%"><span class="inum">${esc(o.nr)}</span><span>${esc(o.name)}</span>${w?'<span class="badge" style="background:#25d366;color:#fff">1</span>':`<span class="s ${o.cls}">${esc(o.status)}</span>`}</button>
      ${op?`<div class="iacts" style="padding:8px 2px 4px">${w?`<a class="b pri" style="background:#25d366;border-color:#25d366;color:#fff;text-decoration:none" href="${esc(w.url)}" target="_blank" rel="noopener" data-wa="${w.id}">WhatsApp</a>`:''}<button class="b" data-offer="${esc(o.oid)}">Angebot ansehen</button></div>`:''}</div>`; }).join('')}</div>`; }
 const pCount=(p)=>p===EMMA?DATA.due.length+((DATA.fu&&DATA.fu.wa)||[]).length:p===LISA?offerTasks().length+waOff().length:p===TOM?updTasks().length:p===ANNA?ekOpen().length:p===SARAH?shOpen().length:p===JONAS?joOpen().length:p===NOAH?crQueue().length:p===DAVID?stNew().length:0;
