@@ -1855,10 +1855,6 @@ if (draftData.checkoutUrl) {
     try {
       const res = await fetch('/api/offers'); const data = await res.json()
       let list = Array.isArray(data) ? data : []
-      // Produktions-Mail ist raus (15 Min. nach der Bestellung) -> Status automatisch auf "In Produktion"
-      const due = list.filter(o => o.status === 'confirmed' && o.order_email_sent_at && new Date(o.order_email_sent_at).getTime() <= Date.now())
-      await Promise.all(due.map(o => fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'in_production' }) }).catch(() => {})))
-      if (due.length) list = list.map(o => due.some(d => d.id === o.id) ? { ...o, status: 'in_production' } : o)
       setOffers(list)
     }
     catch { setOffers([]) }
