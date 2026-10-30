@@ -937,6 +937,31 @@ function MContactMenu({ o, onContact, onReview, onDiscount, onDiscReminder, onMa
 }
 
 // Interne Notiz – nur im Admin sichtbar, wird beim Verlassen des Feldes gespeichert
+function MPaid({ o }) {
+  const [on, setOn] = useState(o.payment_received !== false)
+  const [st, setSt] = useState('')
+  useEffect(() => { setOn(o.payment_received !== false); setSt('') }, [o.id])
+  async function toggle() {
+    const v = !on
+    setOn(v); setSt('Speichert …')
+    try {
+      const r = await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payment_received: v }) })
+      const d = await r.json()
+      if (d.error) throw new Error(d.error)
+      o.payment_received = v
+      setSt('✓ Gespeichert')
+    } catch (e) { setOn(!v); setSt('Fehler: ' + e.message) }
+  }
+  return (
+    <div onClick={toggle} role="switch" aria-checked={on} style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', cursor: 'pointer', fontSize: 13, userSelect: 'none' }}>
+      <span>Zahlung erhalten{st && <span style={{ fontSize: 11, marginLeft: 8, color: st.startsWith('Fehler') ? '#ef4444' : '#22c55e' }}>{st}</span>}</span>
+      <span style={{ width: 34, height: 20, borderRadius: 10, background: on ? '#10b981' : '#4b5563', position: 'relative', flex: 'none', transition: 'background .15s' }}>
+        <span style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+      </span>
+    </div>
+  )
+}
+
 function MInternalNote({ o }) {
   const [v, setV] = useState(o.internal_note || '')
   const [st, setSt] = useState('')
@@ -1026,6 +1051,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
             <select value={o.status || 'offer_sent'} onChange={e => onStatus(e.target.value)} style={{ fontSize: 13, padding: '10px 12px', borderRadius: 10, border: `1px solid ${mStatus(o.status).color}88`, background: 'var(--input-bg)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
               {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
+            {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && <MPaid o={o} />}
           </div>
           <MInternalNote o={o} />
         </MCard>
