@@ -57,7 +57,9 @@ export async function GET(request) {
 
   // ---- TNC-Stand übernehmen: In Produktion, Versendet (Sendungsnummer), Zugestellt ----
   let tnc = []
-  try { tnc = await syncTnc(supabase) } catch (e) { tnc = ['Fehler: ' + e.message] }  
+  try { tnc = await syncTnc(supabase) } catch (e) { tnc = ['Fehler: ' + e.message] }
+    // Schneller Lauf alle 10 Min. (&nur=tnc): nur TNC, kein DHL
+  if (searchParams.get('nur') === 'tnc') return Response.json({ success: true, tnc })
   // Nur tagsüber prüfen (spart DHL-Abfragen)
   const hour = Number(new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hour12: false, timeZone: 'Europe/Berlin' }).format(new Date()))
   if (hour < 5 || hour > 21) return Response.json({ skipped: 'Nachtruhe', cleaned })
@@ -80,6 +82,12 @@ export async function GET(request) {
       const code = s?.status?.statusCode || ''
       const text = [s?.status?.status, s?.status?.description, ...(s?.events || []).slice(0, 2).map(e => `${e.status || ''} ${e.description || ''}`)].join(' ')
 
+            // Versand-Mail erst, wenn DHL das Paket wirklich hat (abgeholt / unterwegs), nie doppelt, nur bei frischem Versand (max. 7 Tage)
+      if (!o.shipped_email_sent_at && code && code !== 'pre-transit' && code !== 'unknown') {
+        const fresh = Date.now() - new Date(o.shipped_at || 0).getTime() < 7 * 864e5
+        if (fresh && code !== 'delivered' && o.customer_email) await sendMail(o.customer_email, SUBJECT_SHIPPED, buildShippedEmail(o), { offerId: o.id, type: 'versand' })
+        await supabase.from('offers').update({ shipped_email_sent_at: new Date().toISOString() }).eq('id', o.id)
+      }
       if (code === 'delivered') {
         await supabase.from('offers').update({ status: 'delivered', delivered_at: s.status.timestamp || new Date().toISOString() }).eq('id', o.id)
         results.push({ id: o.id, status: 'delivered' })
