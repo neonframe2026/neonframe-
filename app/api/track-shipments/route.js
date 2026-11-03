@@ -16,7 +16,7 @@ export const maxDuration = 60
 // Test (schickt die Mail an die Kunden-E-Mail des Angebots, ohne Status zu ändern):
 //   ...?key=DEIN_CRON_SECRET&test=ANGEBOTS-ID&mail=versand   oder   &mail=heute
 
-const OUT_FOR_DELIVERY = /out for delivery|with delivery courier|with the courier|loaded onto the delivery vehicle|in zustellung|zustellfahrzeug|wird heute zugestellt|voraussichtlich heute|bezorger|onderweg naar/i
+const OUT_FOR_DELIVERY = /out for delivery|with delivery courier|with the courier|loaded onto the delivery vehicle|in (der )?zustellung|zustellung durch|zustellfahrzeug|wird heute zugestellt|voraussichtlich heute|bezorger|onderweg naar/i
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
