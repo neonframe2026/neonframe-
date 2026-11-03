@@ -757,6 +757,13 @@ const mLink = (o) => `${typeof window !== 'undefined' ? window.location.origin :
 const mId = (o) => String(o.custom_id || String(o.id).slice(0, 8))
 const mDays = (d) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 const mHours = (d) => (Date.now() - new Date(d).getTime()) / 3600000
+// Wann verschickt die Automatik (8:10 bis 20:00 Uhr, alle 10 Min.) die nächste fällige Mail?
+const mAutoWhen = () => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date()).map(x => [x.type, x.value]))
+  const m = (+p.hour % 24) * 60 + +p.minute
+  if (m >= 490 && m < 1200) return 'in den nächsten Minuten'
+  return m < 490 ? 'heute um 8:10 Uhr' : 'morgen um 8:10 Uhr'
+}
 const mBought = (o) => ['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)
 // Zeitpunkt der Bestellung (Produktions-Mail geht 15 Min. danach raus)
 const mOrderedAt = (o) => o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at).getTime() - 15 * 60000).toISOString() : null
@@ -1012,8 +1019,8 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
       </div>
 
       {mIsRed(o) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
-          ⚠️ {mDiscReminderDue(o) ? 'Extra-Rabatt läuft morgen ab – Zeit für die Rabatt-Erinnerung.' : mReviewDue(o) ? 'Seit 3 Tagen zugestellt – Zeit, nach einer Bewertung zu fragen.' : o.status === 'recontacted' ? 'Seit 12 Stunden nach der Erinnerung keine Bestellung – Zeit für den Extra-Rabatt.' : 'Seit über 12 Stunden keine Rückmeldung – Zeit zum Nachfassen.'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0a9bff1a', border: '1px solid #0a9bff55', color: '#3bb4ff', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
+          🤖 {mDiscReminderDue(o) ? 'Rabatt-Erinnerung' : mReviewDue(o) ? 'Bewertungs-Mail' : o.status === 'recontacted' ? 'Rabatt-Mail' : 'Erinnerungs-Mail'} geht automatisch {mAutoWhen()} raus. Du musst nichts tun.
         </div>
       )}
 
