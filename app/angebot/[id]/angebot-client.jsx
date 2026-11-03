@@ -562,6 +562,193 @@ function Stepper({ status }) {
 }
 
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
+const VIDEO_TABS = [
+  {
+    tab: 'Montage',
+    src: 'https://cdn.shopify.com/videos/c/o/v/1d8d6e0862bc43ae8c3c9735c3de3be0.mp4',
+    title: 'In wenigen Minuten an der Wand',
+    text: 'Du entscheidest, wie dein Schild hängt: verschraubt mit Abstandshaltern, abgehängt an Stahlseilen oder einfach mit Klettstreifen befestigt.',
+    feats: [
+      ['screw', 'Abstandshalter', 'Edel verschraubt, mit Abstand zur Wand'],
+      ['cable', 'Stahlseile', 'Frei hängend von der Decke'],
+      ['strip', 'Klettstreifen', 'Ohne Bohren, versteckt hinter der Röhre'],
+      ['clock', 'Schnell erledigt', 'Montage in wenigen Minuten'],
+    ],
+  },
+  {
+    tab: 'Rückwand',
+    src: 'https://cdn.shopify.com/videos/c/o/v/c9bbe759165f43f8aa3143e2a3afcb88.mp4',
+    title: 'Die Rückwand, die zu dir passt',
+    text: 'Wähle zwischen konturgeschnitten, rechteckig oder ganz ohne Rückwand. Jede Rückwand gibt es in transparent, weiß oder schwarz.',
+    feats: [
+      ['shape', 'Konturgeschnitten', 'Folgt der Form deines Schriftzugs', true],
+      ['square', 'Rechteckig', 'Klare Form mit 4 Abstandshaltern'],
+      ['none', 'Ohne Rückwand', 'Möglich, wenn alle Buchstaben verbunden sind'],
+      ['palette', '3 Farben', 'Transparent, weiß oder schwarz'],
+    ],
+  },
+  {
+    tab: 'RGB',
+    src: 'https://cdn.shopify.com/videos/c/o/v/c38532349ef944abaced26f334323fd0.mp4',
+    title: 'Jede Farbe auf Knopfdruck',
+    text: 'Bei RGB-Schildern wechselst du die Farbe mit der mitgelieferten Fernbedienung, dimmst dein Schild oder machst es heller.',
+    feats: [
+      ['colors', 'Viele Farben', 'Von Ice Blue bis Pink'],
+      ['sun', 'Dimmbar', 'Heller und dunkler per Taste'],
+      ['spark', 'Lichteffekte', 'Farbwechsel und verschiedene Modi'],
+      ['remote', 'Ohne App', 'Einfach per Fernbedienung'],
+    ],
+  },
+]
+
+const VT_ICONS = {
+  screw: <path d="M12 3v4M8 7h8M10 7l-1 13h6l-1-13" />,
+  cable: <><path d="M12 2v12" /><circle cx="12" cy="17" r="3" /><path d="M9 2h6" /></>,
+  strip: <><rect x="8" y="3" width="8" height="18" rx="4" /><path d="M12 7v10" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
+  shape: <path d="M5 15c0-5 3-9 7-9s7 3 7 6-2 3-2 5-2 3-5 3-7-1-7-5z" />,
+  square: <><rect x="4" y="5" width="16" height="14" rx="1.5" /><circle cx="7" cy="8" r=".8" /><circle cx="17" cy="8" r=".8" /><circle cx="7" cy="16" r=".8" /><circle cx="17" cy="16" r=".8" /></>,
+  none: <path d="M5 12c2-4 4-4 6 0s4 4 6 0" />,
+  palette: <><circle cx="12" cy="12" r="9" /><circle cx="8.5" cy="10" r="1.2" /><circle cx="12" cy="7.5" r="1.2" /><circle cx="15.5" cy="10" r="1.2" /></>,
+  colors: <><circle cx="8" cy="9" r="4" /><circle cx="16" cy="9" r="4" /><circle cx="12" cy="15" r="4" /></>,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
+  spark: <path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" />,
+  remote: <><rect x="7" y="2" width="10" height="20" rx="5" /><circle cx="12" cy="7" r="1.5" /><path d="M10 12h4M10 15h4M10 18h4" /></>,
+}
+
+function VideoTabs() {
+  const [cur, setCur] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const rootRef = useRef(null)
+  const barRef = useRef(null)
+  const fillRef = useRef(null)
+  const knobRef = useRef(null)
+  const vids = useRef([])
+  const visible = useRef(false)
+  const dragging = useRef(false)
+  const pausedRef = useRef(false)
+  const curRef = useRef(0)
+
+  const play = useCallback(() => {
+    const v = vids.current[curRef.current]
+    if (!v || !visible.current || pausedRef.current) return
+    const p = v.play(); if (p && p.catch) p.catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    curRef.current = cur
+    vids.current.forEach((v, i) => {
+      if (!v) return
+      if (i === cur) { v.preload = 'auto'; v.currentTime = 0 } else v.pause()
+    })
+    play()
+  }, [cur, play])
+
+  useEffect(() => {
+    let raf
+    const loop = () => {
+      const v = vids.current[curRef.current]
+      const pct = v && v.duration ? Math.min(100, (v.currentTime / v.duration) * 100) : 0
+      if (fillRef.current) fillRef.current.style.width = pct + '%'
+      if (knobRef.current) knobRef.current.style.left = pct + '%'
+      raf = requestAnimationFrame(loop)
+    }
+    loop()
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  useEffect(() => {
+    if (!rootRef.current || !('IntersectionObserver' in window)) { visible.current = true; play(); return }
+    const io = new IntersectionObserver(([e]) => {
+      visible.current = e.isIntersecting
+      const v = vids.current[curRef.current]
+      if (!v) return
+      if (e.isIntersecting) play(); else v.pause()
+    }, { threshold: 0.35 })
+    io.observe(rootRef.current)
+    return () => io.disconnect()
+  }, [play])
+
+  function selectTab(i) { pausedRef.current = false; setPaused(false); if (i === cur) { const v = vids.current[i]; if (v) { v.currentTime = 0; play() } } else setCur(i) }
+
+  function toggle() {
+    const v = vids.current[curRef.current]; if (!v) return
+    if (v.paused) { pausedRef.current = false; setPaused(false); visible.current = true; play() }
+    else { pausedRef.current = true; setPaused(true); v.pause() }
+  }
+
+  function seekTo(x) {
+    const v = vids.current[curRef.current]; if (!v || !v.duration || !barRef.current) return
+    const r = barRef.current.getBoundingClientRect()
+    v.currentTime = Math.max(0, Math.min(1, (x - r.left) / r.width)) * v.duration * 0.999
+  }
+
+  return (
+    <div className="vt-section" ref={rootRef}>
+      <span className="video-badge">Montage, Rückwand &amp; Farben</span>
+      <h2 className="vt-h2">So hängt, wirkt und leuchtet dein Schild</h2>
+      <div className="vt-card">
+        <div className="vt-media" onClick={(e) => { if (barRef.current && barRef.current.contains(e.target)) return; toggle() }}>
+          {VIDEO_TABS.map((t, i) => (
+            <video
+              key={t.tab}
+              ref={(el) => { vids.current[i] = el }}
+              className={'vt-vid' + (i === cur ? ' is-on' : '')}
+              src={t.src}
+              muted
+              playsInline
+              preload={i === 0 ? 'auto' : 'none'}
+              onEnded={() => { if (!dragging.current) setCur((i + 1) % VIDEO_TABS.length) }}
+            />
+          ))}
+          <button type="button" className="vt-state" aria-label="Video pausieren oder abspielen" onClick={(e) => { e.stopPropagation(); toggle() }}>
+            {paused
+              ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+              : <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>}
+          </button>
+          <div
+            className="vt-progress"
+            ref={barRef}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); dragging.current = true; barRef.current.classList.add('is-drag'); if (barRef.current.setPointerCapture) barRef.current.setPointerCapture(e.pointerId); seekTo(e.clientX) }}
+            onPointerMove={(e) => { if (dragging.current) seekTo(e.clientX) }}
+            onPointerUp={() => { dragging.current = false; barRef.current.classList.remove('is-drag'); play() }}
+            onPointerCancel={() => { dragging.current = false; barRef.current.classList.remove('is-drag') }}
+          >
+            <div className="vt-fill" ref={fillRef} />
+            <div className="vt-knob" ref={knobRef} />
+          </div>
+        </div>
+
+        <div className="vt-body">
+          <div className="vt-tabs" role="tablist">
+            {VIDEO_TABS.map((t, i) => (
+              <button key={t.tab} type="button" role="tab" className={'vt-tab' + (i === cur ? ' is-on' : '')} onClick={() => selectTab(i)}>{t.tab}</button>
+            ))}
+          </div>
+          <div className="vt-panels">
+            {VIDEO_TABS.map((t, i) => (
+              <div key={t.tab} className={'vt-panel' + (i === cur ? ' is-on' : '')}>
+                <h3 className="vt-h3">{t.title}</h3>
+                <p className="vt-text">{t.text}</p>
+                <div className="vt-grid">
+                  {t.feats.map(([ic, title, text, pop]) => (
+                    <div key={title} className="vt-feat">
+                      {pop && <span className="vt-pop">Beliebt</span>}
+                      <div className="vt-ic"><svg viewBox="0 0 24 24" aria-hidden="true">{VT_ICONS[ic]}</svg></div>
+                      <div><b>{title}</b><span>{text}</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function FaqSection() {
   const [activeCat, setActiveCat] = useState('order-payment')
   const [openIds, setOpenIds] = useState([])
@@ -965,21 +1152,51 @@ const final = final0 + expAmt
           .compare-row, .compare-row-head { grid-template-columns:1.2fr 1fr 1fr; padding-left:16px; padding-right:16px; }
           .cmp-feat, .cmp-brand-val, .cmp-other-val { font-size:12.5px; }
         }
-        .video-section { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
-        @media(max-width:960px){ .video-section { padding:0 14px 40px; } }
-        .video-card { display:grid; grid-template-columns:1.1fr 1fr; border:1px solid #eaeaea; border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(0,0,0,.04); }
-        .video-wrap { position:relative; background:#000; }
-        .montage-video { width:100%; height:100%; display:block; object-fit:cover; }
-        .video-text { padding:36px 40px; display:flex; flex-direction:column; justify-content:center; }
-        .video-badge { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#0091c9; background:rgba(96,200,240,.12); padding:5px 12px; border-radius:20px; width:fit-content; margin-bottom:14px; text-transform:uppercase; letter-spacing:.05em; }
-        .video-text h3 { font-size:22px; font-weight:800; margin:0 0 14px; letter-spacing:-.01em; color:#111; }
-        .video-steps { display:flex; flex-direction:column; gap:12px; margin:0; padding:0; list-style:none; }
-        .video-steps li { display:flex; align-items:flex-start; gap:12px; font-size:14px; color:#444; line-height:1.5; }
-        .step-num { width:24px; height:24px; border-radius:50%; background:#60c8f0; color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+        .vt-section { max-width:1380px; margin:0 auto; padding:0 52px 60px; }
+        @media(max-width:960px){ .vt-section { padding:0 14px 40px; } }
+        .video-badge { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; color:#0091c9; background:rgba(96,200,240,.12); padding:5px 12px; border-radius:20px; width:fit-content; margin-bottom:12px; text-transform:uppercase; letter-spacing:.05em; }
+        .vt-h2 { font-size:clamp(24px,3.4vw,32px); font-weight:900; color:#111; letter-spacing:-.02em; margin:0 0 22px; }
+        .vt-card { display:grid; grid-template-columns:1.2fr 1fr; border:1px solid #eaeaea; border-radius:18px; overflow:hidden; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.03), 0 12px 32px rgba(0,0,0,.05); }
+        .vt-media { position:relative; aspect-ratio:4/3; background:#e9ebee; cursor:pointer; overflow:hidden; }
+        .vt-vid { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; opacity:0; transition:opacity .45s ease; pointer-events:none; }
+        .vt-vid.is-on { opacity:1; }
+        .vt-state { position:absolute; left:16px; bottom:22px; width:40px; height:40px; border:0; border-radius:50%; display:grid; place-items:center; cursor:pointer; background:rgba(17,17,17,.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); color:#fff; transition:background .2s, transform .2s; }
+        .vt-state:hover { background:#60c8f0; transform:scale(1.06); }
+        .vt-state svg { width:18px; height:18px; fill:currentColor; }
+        .vt-progress { position:absolute; left:0; right:0; bottom:0; height:16px; cursor:pointer; touch-action:none; }
+        .vt-progress::before { content:""; position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(255,255,255,.45); transition:height .15s; }
+        .vt-fill { position:absolute; left:0; bottom:0; height:4px; width:0; background:#60c8f0; box-shadow:0 0 10px rgba(96,200,240,.7); transition:height .15s; }
+        .vt-knob { position:absolute; bottom:-4px; left:0; width:14px; height:14px; margin-left:-7px; border-radius:50%; background:#fff; box-shadow:0 0 0 3px #60c8f0; opacity:0; transform:scale(.6); transition:opacity .15s, transform .15s; }
+        .vt-progress:hover::before, .vt-progress:hover .vt-fill, .vt-progress.is-drag::before, .vt-progress.is-drag .vt-fill { height:6px; }
+        .vt-progress:hover .vt-knob, .vt-progress.is-drag .vt-knob { opacity:1; transform:scale(1); }
+        .vt-body { padding:30px; display:flex; flex-direction:column; justify-content:center; }
+        .vt-tabs { display:flex; gap:4px; padding:5px; border-radius:14px; background:#f3f4f6; border:1px solid #ececec; }
+        .vt-tab { flex:1 1 auto; appearance:none; border:0; background:transparent; font-family:inherit; font-size:14px; font-weight:600; color:#6b6b6b; padding:11px 8px; border-radius:10px; cursor:pointer; white-space:nowrap; transition:background .25s, color .25s; }
+        .vt-tab:hover { color:#111; }
+        .vt-tab.is-on { background:#fff; color:#111; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+        .vt-panels { display:grid; }
+        .vt-panel { grid-area:1/1; visibility:hidden; opacity:0; transform:translateY(6px); transition:opacity .35s ease, transform .35s ease, visibility 0s .35s; }
+        .vt-panel.is-on { visibility:visible; opacity:1; transform:none; transition:opacity .35s ease, transform .35s ease; }
+        .vt-h3 { font-size:22px; font-weight:800; letter-spacing:-.01em; margin:24px 0 8px; color:#111; }
+        .vt-text { color:#555; font-size:15px; line-height:1.6; margin:0; }
+        .vt-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+        .vt-feat { position:relative; display:flex; gap:12px; align-items:center; padding:13px 14px; border-radius:14px; background:#fff; border:1px solid #ececec; }
+        .vt-feat b { display:block; font-size:14.5px; font-weight:700; color:#111; }
+        .vt-feat span { display:block; font-size:12.5px; line-height:1.35; color:#777; margin-top:2px; }
+        .vt-ic { flex:none; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:rgba(96,200,240,.14); }
+        .vt-ic svg { width:19px; height:19px; fill:none; stroke:#0091c9; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .vt-feat .vt-pop { position:absolute; top:-9px; right:12px; margin:0; font-size:10.5px; line-height:1.2; font-weight:700; color:#fff; background:#60c8f0; padding:3px 9px; border-radius:999px; }
         @media(max-width:760px){
-          .video-card { grid-template-columns:1fr; }
-          .montage-video { aspect-ratio:16/9; }
-          .video-text { padding:26px 24px; }
+          .vt-card { grid-template-columns:1fr; }
+          .vt-knob { opacity:1; transform:scale(.85); }
+          .vt-body { padding:20px 16px 22px; }
+          .vt-tab { font-size:13px; padding:10px 6px; }
+          .vt-h3 { font-size:19px; margin-top:20px; }
+          .vt-text { font-size:14.5px; }
+          .vt-grid { gap:9px; }
+          .vt-feat { flex-direction:column; align-items:flex-start; gap:8px; padding:12px; }
+          .vt-feat b { font-size:13.5px; }
+          .vt-feat span { font-size:12px; }
         }
         .faq-section { max-width:1380px; margin:0 auto; padding:0 52px 90px; }
         @media(max-width:960px){ .faq-section { padding:0 14px 60px; } }
@@ -1310,25 +1527,8 @@ const final = final0 + expAmt
         </div>
       </div>
 
-      {/* MONTAGE VIDEO */}
-      <div className="video-section">
-        <div className="video-card">
-          <div className="video-wrap">
-            <video className="montage-video" autoPlay muted loop playsInline>
-              <source src="https://cdn.shopify.com/videos/c/o/v/b0a9e0702e6d4969aee87f2499310f52.mp4" type="video/mp4" />
-            </video>
-          </div>
-          <div className="video-text">
-            <span className="video-badge">In 3 Schritten montiert</span>
-            <h3>So einfach geht's</h3>
-            <ul className="video-steps">
-              <li><span className="step-num">1</span><span>Schild auspacken und Position an der Wand markieren</span></li>
-              <li><span className="step-num">2</span><span>Mit dem mitgelieferten Montagematerial befestigen</span></li>
-              <li><span className="step-num">3</span><span>Netzteil anschließen – fertig zum Leuchten</span></li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      {/* VIDEOS: MONTAGE, RÜCKWAND, RGB */}
+      <VideoTabs />
 
       {/* KUNDENGALERIE */}
       <div className="gallery-section">
