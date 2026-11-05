@@ -474,6 +474,18 @@ function ContactCard({ displayId, projectName }) {
           <div style={{ fontSize: 14, color: '#999', lineHeight: 1.4 }}>Teilen Sie uns diese direkt hier mit – wir melden uns schnellstmöglich.</div>
         </div>
       </div>
+      {status === 'ok' ? (
+        <div style={{ textAlign: 'center', padding: '26px 18px 20px', border: '1px solid #e8f0f7', borderRadius: 14, background: '#f8fbfe' }}>
+          <div style={{ width: 54, height: 54, borderRadius: '50%', background: '#16a34a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: '0 6px 16px rgba(22,163,74,.3)' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: 26, height: 26 }}><path d="M5 12l5 5L20 7" /></svg>
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#111', marginBottom: 6 }}>Vielen Dank für deine Nachricht!</div>
+          <div style={{ fontSize: 14.5, color: '#666', lineHeight: 1.5 }}>Wir melden uns schnellstmöglich bei dir.</div>
+          <div style={{ borderTop: '1px solid #e6edf3', margin: '18px 0 14px' }} />
+          <div style={{ fontSize: 14, color: '#555' }}>Wir antworten in der Regel innerhalb weniger Stunden.</div>
+          <button onClick={() => setStatus(null)} style={{ marginTop: 12, background: 'none', border: 'none', fontSize: 13, color: '#999', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Weitere Nachricht schreiben</button>
+        </div>
+      ) : (<>
       <textarea className="contact-ta" value={msg} onChange={e => setMsg(e.target.value)} placeholder="z.B. Kann die Farbe noch angepasst werden? Ich benötige Expressversand..." rows={3} style={{ width: '100%', background: '#fafafa', border: '1px solid #e8e8e8', borderRadius: 10, padding: '13px 15px', fontSize: 14, color: '#111', resize: 'vertical', minHeight: 88, fontFamily: 'inherit', outline: 'none', display: 'block', marginBottom: 12, boxSizing: 'border-box' }} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button onClick={send} disabled={loading} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 22px', fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.5 : 1 }}>
@@ -495,7 +507,7 @@ function ContactCard({ displayId, projectName }) {
           <a href="tel:+4917656197641" style={{ fontSize: 14, fontWeight: 600, color: '#111', textDecoration: 'none' }}>+49 176 56197641</a>
         </div>
       </div>
-      {status === 'ok' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>Nachricht gesendet! Wir melden uns bald.</div>}
+      </>)}
       {status === 'err' && <div style={{ fontSize: 13, marginTop: 10, padding: '9px 13px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>{msg.trim() ? 'Fehler. Bitte direkt an info@neonframe.de schreiben.' : 'Bitte eine Nachricht eingeben.'}</div>}
     </div>
   )
