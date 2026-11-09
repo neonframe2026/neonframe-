@@ -511,13 +511,19 @@ function EditModal({ offer, onClose, onSaved }) {
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               {[0,1,2].map(idx => (
-                <label key={idx} htmlFor={`edit-img-${idx}`} style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: 8, textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--input-bg)' }}>
-                  <input id={`edit-img-${idx}`} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImage(e, idx)} />
-                  {imgSrcs[idx]
-                    ? <img src={imgSrcs[idx]} style={{ width: '100%', height: 64, objectFit: 'cover', borderRadius: 6 }} alt="" />
-                    : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{ fontSize: 10, color: 'var(--text-faint)' }}>Bild {idx+1}</span></>
-                  }
-                </label>
+                <div key={idx} style={{ position: 'relative' }}>
+                  <label htmlFor={`edit-img-${idx}`} style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: 8, textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'var(--input-bg)' }}>
+                    <input id={`edit-img-${idx}`} type="file" accept="image/*" style={{ display: 'none' }} onClick={e => { e.target.value = '' }} onChange={e => handleImage(e, idx)} />
+                    {imgSrcs[idx]
+                      ? <img src={imgSrcs[idx]} style={{ width: '100%', height: 64, objectFit: 'cover', borderRadius: 6 }} alt="" />
+                      : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style={{ fontSize: 10, color: 'var(--text-faint)' }}>Bild {idx+1}</span></>
+                    }
+                  </label>
+                  {imgSrcs[idx] && (
+                    <button type="button" title={`Bild ${idx+1} entfernen`} onClick={e => { e.preventDefault(); e.stopPropagation(); setImgSrcs(prev => { const next = [...prev]; next[idx] = null; return next }) }}
+                      style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: '50%', border: 'none', background: '#dc2626', color: '#fff', fontSize: 14, lineHeight: '22px', fontWeight: 700, cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(0,0,0,.4)' }}>×</button>
+                  )}
+                </div>
               ))}
             </div>
           </div>
