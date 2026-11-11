@@ -42,7 +42,9 @@ const rnd = i => { const x = Math.sin(i * 9301 + 49297) * 233280; return x - Mat
 
 export default function Bestellstatus({ offer: o }) {
   // Label erstellt, aber noch nicht bei DHL -> "Prüfung & Verpackung"
-  const st = o.status === 'in_production' && o.label_at ? 'packing' : o.status
+  // Nach 3 Tagen ohne DHL-Scan zeigt der Kunde schon "Versendet" (Mail kommt trotzdem erst beim echten Scan)
+  const packDays = o.label_at ? (Date.now() - new Date(o.label_at).getTime()) / 864e5 : 0
+  const st = o.status === 'in_production' && o.label_at ? (packDays > 3 ? 'shipped' : 'packing') : o.status
   const [n, label, title, sub] = STATES[st] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
   const ordered = o.ordered_at || (o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at) - 15 * 6e4).toISOString() : null)
