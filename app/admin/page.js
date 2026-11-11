@@ -1000,9 +1000,9 @@ function MInternalNote({ o }) {
 }
 
 // Bestellstatus von Hand setzen (auch zurück). Datum wird mitgespeichert, spätere Schritte werden geleert.
-const M_STEPS = [['confirmed', 'Bestellt', 'ordered_at'], ['in_production', 'In Produktion', 'production_at'], ['shipped', 'Versendet', 'shipped_at'], ['delivered', 'Zugestellt', 'delivered_at']]
+const M_STEPS = [['confirmed', 'Bestellt', 'ordered_at'], ['in_production', 'In Produktion', 'production_at'], ['packing', 'Prüfung & Verpackung', 'label_at'], ['shipped', 'Versendet', 'shipped_at'], ['delivered', 'Zugestellt', 'delivered_at']]
 function MOrderStatus({ o, onReload }) {
-  const cur = M_STEPS.findIndex(s => s[0] === o.status)
+  const cur = M_STEPS.findIndex(s => s[0] === (o.status === 'in_production' && o.label_at ? 'packing' : o.status))
   const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
   const ymd = (v) => v ? new Date(v).toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' }) : ''
   const de = (v) => v ? new Date(v).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''
@@ -1010,11 +1010,11 @@ function MOrderStatus({ o, onReload }) {
   const [date, setDate] = useState('')
   const [trk, setTrk] = useState(o.tracking_number || '')
   const [st, setSt] = useState('')
-  useEffect(() => { setSel(cur); setDate(cur >= 0 ? (ymd(o[M_STEPS[cur][2]]) || today()) : today()); setTrk(o.tracking_number || ''); setSt('') }, [o.id, o.status])
+  useEffect(() => { setSel(cur); setDate(cur >= 0 ? (ymd(o[M_STEPS[cur][2]]) || today()) : today()); setTrk(o.tracking_number || ''); setSt('') }, [o.id, o.status, o.label_at])
   function pick(k) { setSel(k); setDate(ymd(o[M_STEPS[k][2]]) || today()); setSt('') }
   async function save() {
     if (sel < 0) return
-    const body = { status: M_STEPS[sel][0] }
+    const body = { status: M_STEPS[sel][0] === 'packing' ? 'in_production' : M_STEPS[sel][0] }
     body[M_STEPS[sel][2]] = date === today() ? new Date().toISOString() : new Date(date + 'T12:00:00').toISOString()
     for (let j = sel + 1; j < M_STEPS.length; j++) body[M_STEPS[j][2]] = null
     if (sel >= 2) body.tracking_number = trk.trim() || null
