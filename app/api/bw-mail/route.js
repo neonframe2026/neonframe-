@@ -54,6 +54,7 @@ function buildHtml({ kind, firstName, link, personal, unsub }) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#08080b" style="background:#08080b"><tr><td align="center" style="padding:0">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse">
 ${img(`${ASSETS}/${HERO[kind]}`, 'NeonFrame Black Friday: 40% auf dein Neon-Schild', link)}
+${kind === 'mail2' ? img(`${SITE}/api/bw-countdown?m=${Date.now()}`, 'Countdown: Black Friday endet bald', link) : ''}
 ${img(personal, `Hallo ${firstName}, dein Angebot mit 40% Black Friday Rabatt ansehen`, link)}
 ${img(`${ASSETS}/${WHY[kind]}`, kind === 'mail2' ? 'Warum du nicht warten solltest' : 'Warum jetzt? Bestpreis des Jahres, Änderungen gratis, kostenloser Versand, ein Klick', link)}
 ${img(`${ASSETS}/kontakt.png`, 'Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de', 'mailto:info@neonframe.de')}
