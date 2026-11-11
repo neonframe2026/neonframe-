@@ -56,8 +56,7 @@ function buildHtml({ kind, firstName, link, personal, unsub }) {
 ${img(`${ASSETS}/${HERO[kind]}`, 'NeonFrame Black Friday: 40% auf dein Neon-Schild', link)}
 ${img(personal, `Hallo ${firstName}, dein Angebot mit 40% Black Friday Rabatt ansehen`, link)}
 ${img(`${ASSETS}/${WHY[kind]}`, kind === 'mail2' ? 'Warum du nicht warten solltest' : 'Warum jetzt? Bestpreis des Jahres, Änderungen gratis, kostenloser Versand, ein Klick', link)}
-<tr><td align="center" bgcolor="#08080b" style="${FONT}background:#08080b;padding:6px 34px 0;font-size:14px;line-height:22px;color:#c4cdd8"><b style="color:#22d3ee">Noch etwas ändern?</b> Antworte einfach auf diese E-Mail. Wir passen dein Design kostenlos an.</td></tr>
-<tr><td align="center" bgcolor="#08080b" style="${FONT}background:#08080b;padding:28px 20px 0;font-size:15px;line-height:24px;color:#c4cdd8">Viele Grüße<br><b style="color:#ffffff">Dein NeonFrame-Team</b></td></tr>
+${img(`${ASSETS}/kontakt.png`, 'Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de', 'mailto:info@neonframe.de')}
 <tr><td align="center" bgcolor="#08080b" style="${FONT}background:#08080b;padding:26px 20px 30px;font-size:12px;line-height:18px;color:#4b5563">
 <a href="https://neonframe.de" style="color:#22d3ee;text-decoration:none">neonframe.de</a> &nbsp;·&nbsp; <a href="mailto:info@neonframe.de" style="color:#22d3ee;text-decoration:none">info@neonframe.de</a>
 <div style="${FONT}padding-top:12px;font-size:11px;line-height:17px;color:#4b5563">Du erhältst diese E-Mail, weil du bei NeonFrame ein Angebot angefragt hast.<br>Keine Erinnerungen mehr erhalten? <a href="${unsub}" target="_blank" style="color:#6b7280;text-decoration:underline">Hier abmelden</a></div>
