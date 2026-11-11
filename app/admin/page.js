@@ -999,7 +999,67 @@ function MInternalNote({ o }) {
   )
 }
 
-function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, onMail, onToggle, onDelete, onStatus }) {
+// Bestellstatus von Hand setzen (auch zurück). Datum wird mitgespeichert, spätere Schritte werden geleert.
+const M_STEPS = [['confirmed', 'Bestellt', 'ordered_at'], ['in_production', 'In Produktion', 'production_at'], ['shipped', 'Versendet', 'shipped_at'], ['delivered', 'Zugestellt', 'delivered_at']]
+function MOrderStatus({ o, onReload }) {
+  const cur = M_STEPS.findIndex(s => s[0] === o.status)
+  const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
+  const ymd = (v) => v ? new Date(v).toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' }) : ''
+  const de = (v) => v ? new Date(v).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''
+  const [sel, setSel] = useState(cur)
+  const [date, setDate] = useState('')
+  const [trk, setTrk] = useState(o.tracking_number || '')
+  const [st, setSt] = useState('')
+  useEffect(() => { setSel(cur); setDate(cur >= 0 ? (ymd(o[M_STEPS[cur][2]]) || today()) : today()); setTrk(o.tracking_number || ''); setSt('') }, [o.id, o.status])
+  function pick(k) { setSel(k); setDate(ymd(o[M_STEPS[k][2]]) || today()); setSt('') }
+  async function save() {
+    if (sel < 0) return
+    const body = { status: M_STEPS[sel][0] }
+    body[M_STEPS[sel][2]] = date === today() ? new Date().toISOString() : new Date(date + 'T12:00:00').toISOString()
+    for (let j = sel + 1; j < M_STEPS.length; j++) body[M_STEPS[j][2]] = null
+    if (sel >= 2) body.tracking_number = trk.trim() || null
+    setSt('Speichert …')
+    try {
+      const r = await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const d = await r.json()
+      if (d.error) throw new Error(d.error)
+      Object.assign(o, body)
+      setSt('✓ Gespeichert')
+      onReload && onReload()
+    } catch (e) { setSt('Fehler: ' + e.message) }
+  }
+  const changed = sel !== cur || (sel >= 0 && date !== ymd(o[M_STEPS[sel][2]])) || (sel >= 2 && trk.trim() !== (o.tracking_number || ''))
+  const inp = { width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'inherit', outline: 'none' }
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+        {M_STEPS.map((s, k) => {
+          const done = k <= sel, on = k === sel
+          return (
+            <div key={s[0]} onClick={() => pick(k)} style={{ cursor: 'pointer', textAlign: 'center', padding: '12px 10px', borderRadius: 12, border: `1px solid ${on ? '#0a9bff' : 'var(--border)'}`, background: 'var(--input-bg)', boxShadow: on ? '0 0 0 3px rgba(10,155,255,.18)' : 'none' }}>
+              <span style={{ display: 'grid', placeItems: 'center', width: 28, height: 28, margin: '0 auto 6px', borderRadius: '50%', border: `1.5px solid ${done ? '#0a9bff' : 'var(--border)'}`, background: done ? '#0a9bff' : 'transparent', color: done ? '#fff' : 'var(--text-faint)', fontSize: 12, fontWeight: 800 }}>{done ? '✓' : k + 1}</span>
+              <div style={{ fontSize: 13, fontWeight: 700, color: done ? 'var(--text)' : 'var(--text-muted)' }}>{s[1]}</div>
+              <div style={{ fontSize: 11, marginTop: 2, color: 'var(--text-faint)' }}>{k <= cur && o[s[2]] ? de(o[s[2]]) : (k === sel ? 'wird gesetzt' : '–')}</div>
+            </div>
+          )
+        })}
+      </div>
+      {sel >= 0 && (
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+          <div style={{ flex: 1, minWidth: 150 }}><MLbl>Datum {M_STEPS[sel][1]}</MLbl><input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} /></div>
+          {sel >= 2 && <div style={{ flex: 2, minWidth: 200 }}><MLbl>DHL-Sendungsnummer</MLbl><input value={trk} onChange={e => setTrk(e.target.value)} placeholder="z. B. JVGL0627…" style={inp} /></div>}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+        <MB kind="edit" onClick={save} style={{ opacity: changed ? 1 : .5, pointerEvents: changed ? 'auto' : 'none' }}>Status speichern</MB>
+        {st && <span style={{ fontSize: 12, color: st.startsWith('Fehler') ? '#ef4444' : '#22c55e' }}>{st}</span>}
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-faint)', marginTop: 8 }}>Klick auf einen Schritt setzt den Status, auch zurück. Spätere Schritte werden dabei geleert. Die Automatik stellt nur weiter, nie zurück. Hier gehen keine Mails raus.</div>
+    </div>
+  )
+}
+
+function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, onMail, onToggle, onDelete, onStatus, onReload }) {
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, o.extra_disc_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
   return (
@@ -1069,6 +1129,8 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
           <MInternalNote o={o} />
         </MCard>
       </div>
+
+      {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && <MCard title="Bestellstatus"><MOrderStatus o={o} onReload={onReload} /></MCard>}
 
       <div className="nf-g3" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
         <MCard title="Links">
@@ -1251,6 +1313,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
               onToggle={() => toggleOffer(o.id, o.published)}
               onDelete={() => deleteOffer(o.id)}
               onStatus={(v) => updateStatus(o.id, v)}
+              onReload={loadOffers}
             />
           ) : <div style={{ padding: 40, color: 'var(--text-faint)' }}>Kein Angebot ausgewählt.</div>}
         </div>
