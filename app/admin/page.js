@@ -1130,8 +1130,6 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
         </MCard>
       </div>
 
-      {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && <MCard title="Bestellstatus"><MOrderStatus o={o} onReload={onReload} /></MCard>}
-
       <div className="nf-g3" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 16 }}>
         <MCard title="Links">
           <MLinkRow label="Angebotslink" url={mLink(o)} on={o.published} offText="Angebot deaktiviert – Link nicht erreichbar" />
@@ -1149,6 +1147,8 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
           <div style={{ marginTop: 14, fontSize: 13, lineHeight: 1.6, color: o.customer_note ? 'var(--text)' : 'var(--text-faint)', whiteSpace: 'pre-wrap' }}>{o.customer_note || 'Keine Notiz hinterlegt.'}</div>
         </MCard>
       </div>
+
+      {['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && <MCard title="Bestellstatus"><MOrderStatus o={o} onReload={onReload} /></MCard>}
     </div>
   )
 }
