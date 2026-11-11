@@ -785,7 +785,7 @@ const mRecontacted = (o) => !!o.recontacted_at || ['recontacted', 'discount_offe
 // Zeitpunkt der Erinnerung (Status manuell umgestellt, ohne Mail: 12 Std. nach dem Angebot)
 const mRecAt = (o) => o.recontacted_at || new Date(new Date(o.created_at).getTime() + 12 * 3600000).toISOString()
 const mDiscOk = (o) => mRecontacted(o) && mHours(mRecAt(o)) >= 12
-const mIsRed = (o) => (mHours(o.created_at) >= 12 && o.status === 'offer_sent') || (o.status === 'recontacted' && !o.extra_discount_applied && mDiscOk(o)) || mReviewDue(o) || mDiscReminderDue(o)
+const mIsRed = (o) => !(o.black_week && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)) && ((mHours(o.created_at) >= 12 && o.status === 'offer_sent') || (o.status === 'recontacted' && !o.extra_discount_applied && mDiscOk(o)) || mReviewDue(o) || mDiscReminderDue(o))
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -1059,6 +1059,64 @@ function MOrderStatus({ o, onReload }) {
   )
 }
 
+// ---------- Black Week (Etikett + Schalter am Angebot) ----------
+const BW_ANTON = 'Anton, Impact, "Arial Narrow", sans-serif'
+const BWTag = ({ small }) => (
+  <span style={{ display: 'inline-flex', transform: 'rotate(-2deg)', whiteSpace: 'nowrap', verticalAlign: 'middle', flexShrink: 0, boxShadow: small ? 'none' : '2px 2px 0 #000' }}>
+    <span style={{ fontFamily: BW_ANTON, fontWeight: 900, fontSize: small ? 9.5 : 12, background: '#fff', color: '#000', padding: small ? '1px 4px' : '2px 6px', letterSpacing: '.03em' }}>BLACK WEEK</span>
+    <span style={{ fontFamily: BW_ANTON, fontWeight: 900, fontSize: small ? 9.5 : 12, background: '#22d3ee', color: '#03121a', padding: small ? '1px 3px' : '2px 5px' }}>-40%</span>
+  </span>
+)
+function MBlackWeek({ o, onReload }) {
+  const [ask, setAsk] = useState(false)
+  const [mail, setMail] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const on = !!o.black_week
+  if (['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status) && !on) return null
+  const cur = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, o.extra_disc_pct).total
+  const plain = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, 0).total
+  const mk = 1 + ((o.markup != null && o.markup !== '' ? +o.markup : 10) / 100)
+  const vk = Math.round(plain / mk * 100) / 100
+  const pm = o.bw_prev && o.bw_prev.markup != null && o.bw_prev.markup !== '' ? +o.bw_prev.markup : 10
+  const next = on ? Math.round(vk * (1 + pm / 100) * 100) / 100 : vk
+  const canMail = !on && o.customer_email && !o.unsubscribed && o.status !== 'unsubscribed'
+  async function go() {
+    setBusy(true)
+    try {
+      const r = await fetch('/api/black-week', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, on: !on, mail: canMail && mail }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+      if (j.mailError) alert('Umgestellt, aber die Mail ging nicht raus: ' + j.mailError)
+      setAsk(false); await onReload?.()
+    } catch (e) { alert('Fehler: ' + e.message) }
+    setBusy(false)
+  }
+  const sw = (v) => <span style={{ width: 36, height: 20, borderRadius: 12, background: v ? '#22d3ee' : 'var(--border)', position: 'relative', flexShrink: 0, boxShadow: v ? '0 0 10px rgba(34,211,238,.45)' : 'none' }}><span style={{ position: 'absolute', top: 3, left: v ? 19 : 3, width: 14, height: 14, borderRadius: '50%', background: '#fff' }} /></span>
+  return (
+    <>
+      <MB onClick={() => setAsk(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, ...(on ? { borderColor: '#22d3ee', background: 'rgba(34,211,238,.08)', boxShadow: '0 0 14px rgba(34,211,238,.2)' } : {}) }}>{sw(on)}Black Week</MB>
+      {ask && (
+        <div onClick={() => !busy && setAsk(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'grid', placeItems: 'center', padding: 16, zIndex: 100 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(440px,100%)', background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 18, padding: 24, boxShadow: '0 30px 80px rgba(0,0,0,.6)' }}>
+            <BWTag />
+            <div style={{ fontSize: 20, fontWeight: 800, marginTop: 14 }}>{on ? `Angebot #${mId(o)} zurück auf normal?` : `Angebot #${mId(o)} auf Black Week umstellen?`}</div>
+            <div style={{ marginTop: 14, background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', fontSize: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}><span>Bisher{on ? ' (Black Week 40%)' : ` (${o.disc_val || 20}%)`}</span><s>{mEur(cur)}</s></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontWeight: 800 }}><span style={{ color: on ? 'var(--text)' : '#22d3ee' }}>{on ? `Normal (${o.bw_prev?.disc_val || 20}%)` : 'Black Week (40%)'}</span><span>{mEur(next)}</span></div>
+            </div>
+            {canMail && <div onClick={() => setMail(!mail)} style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, cursor: 'pointer' }}>{sw(mail)}<span>Mail "Dein Angebot jetzt mit 40%" an Kunden senden</span></div>}
+            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 10, lineHeight: '18px' }}>{on ? 'Der Checkout-Link wird automatisch angepasst. Ein Extra-Rabatt kommt nicht zurück.' : 'Der Checkout-Link wird automatisch angepasst. Ein laufender Extra-Rabatt fällt weg. Am Ende der Black Week wird das Angebot deaktiviert.'}</div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <MB onClick={() => setAsk(false)} style={{ flex: 1 }}>Abbrechen</MB>
+              <MB kind="neon" onClick={() => !busy && go()} style={{ flex: 1 }}>{busy ? 'Wird umgestellt …' : on ? 'Zurückstellen' : 'Umstellen'}</MB>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, onMail, onToggle, onDelete, onStatus, onReload }) {
   const p = calcPrices(o.base_price, o.disc_type, o.disc_val, o.vat_pct, o.extra_disc_pct)
   const colors = (o.colors || '').split(',').map(c => c.trim()).filter(Boolean)
@@ -1070,6 +1128,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
             <span className="nf-mtitle" style={{ fontSize: 30, fontWeight: 900 }}>#{mId(o)}</span>
             <span className="nf-msub" style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-muted)' }}>{o.project}</span>
             <MAktiv o={o} />
+            {o.black_week && <BWTag />}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
             {o.offer_num && <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px' }}>Nr. {o.offer_num}</span>}
@@ -1077,6 +1136,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <MBlackWeek o={o} onReload={onReload} />
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
                     <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} onDiscReminder={onDiscReminder} onMail={onMail} />
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
@@ -1286,6 +1346,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: mStatus(x.status).color, flexShrink: 0 }} />
                       <span style={{ fontWeight: 800 }}>#{mId(x)}</span>
                       <span style={{ color: 'var(--text-muted)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{x.project}</span>
+                      {x.black_week && <BWTag small />}
                       <span style={{ marginLeft: 'auto', fontWeight: 800, whiteSpace: 'nowrap' }}>{x.final_price > 0 ? mEur(x.final_price) : '–'}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4 }}>
@@ -1478,8 +1539,10 @@ export default function AdminPage() {
   const [origVk, setOrigVk] = useState('')
   // Aufschlag für neue Angebote (Einstellungen, Standard 15 %)
   const [markup, setMarkup] = useState(15)
-  useEffect(() => { fetch('/api/settings').then(r => r.json()).then(s => { const m = parseFloat(s?.pricing?.markup); if (m >= 0) setMarkup(m) }).catch(() => {}) }, [])
-  const mk = 1 + markup / 100
+  // Black Week aktiv + "neue Angebote automatisch" -> Endpreis = empf. VK, 40 % Rabatt
+  const [bwNew, setBwNew] = useState(false)
+  useEffect(() => { fetch('/api/settings').then(r => r.json()).then(s => { const m = parseFloat(s?.pricing?.markup); if (m >= 0) setMarkup(m); const b = s?.black_week; if (b && b.active && b.auto_new !== false) { setBwNew(true); setPriceInputs(p => ({ ...p, discVal: '40' })) } }).catch(() => {}) }, [])
+  const mk = 1 + (bwNew ? 0 : markup) / 100
   const [imgSrcs, setImgSrcs] = useState([])
   const [checkoutImg, setCheckoutImg] = useState(null)
   const [parseStatus, setParseStatus] = useState(null)
@@ -1527,7 +1590,7 @@ export default function AdminPage() {
       sizeWarningText: 'Für dieses Design benötigen wir leider eine Mindestgröße von 120 x 25 CM, da sonst Details und Lesbarkeit darunter leiden würden. Kleiner gewünscht? Kontaktiere uns - wir können dein Design eventuell vereinfachen.',
     }
     setSelects({ backplate: 'Ausgeschnitten', backplate_color: 'Transparent', usage: 'Innen', discType: 'pct', status: 'offer_sent', sizeWarningEnabled: false })
-    setPriceInputs({ basePrice: '', discVal: '20', vat: '19' })
+    setPriceInputs({ basePrice: '', discVal: bwNew ? '40' : '20', vat: '19' })
     setEndPrice('')
     setSizeRows([{ w: '', h: '', vk: '' }])
     setOrigVk('')
@@ -1846,7 +1909,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
         status: f.status || 'offer_sent',
         size_warning_enabled: f.sizeWarningEnabled || false,
         size_warning_text: f.sizeWarningText || null,
-        size_options: cleanSizeRows(sizeRows),
+        size_options: cleanSizeRows(sizeRows), markup: bwNew ? 0 : markup, black_week: bwNew,
         preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
         published: true,
       }
@@ -2083,6 +2146,7 @@ if (tab === 'create') return (
 
       <div className="nf-cmain" style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px 60px',display:'flex',flexDirection:'column',gap:16}}>
         <h1 style={{margin:0,fontSize:30,fontWeight:900}}>Neues Angebot</h1>
+        {bwNew && <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',background:'#080709',border:'1px solid #22d3ee',borderRadius:12,padding:'12px 16px',fontSize:13,fontWeight:700,color:'#e5e7eb'}}><BWTag />Black Week läuft: Endpreis = empf. VK, 40% Rabatt. Das Angebot wird automatisch als Black Week erstellt.</div>}
 
         <CCard t="Dateien">
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
@@ -2152,7 +2216,7 @@ if (tab === 'create') return (
                 const t = v.trim(); const n = (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0
                 if (n > 0) setEndPrice((Math.round(n * mk * 100) / 100).toFixed(2))
               }} />
-              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ {markup}% → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
+              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ {bwNew ? 0 : markup}% → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
             </div>
             <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
               <span style={{...cLbl,marginBottom:8,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
@@ -2253,7 +2317,7 @@ if (tab === 'create') return (
                       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
                       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
                       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_options: cleanSizeRows(sizeRows),
+      size_options: cleanSizeRows(sizeRows), markup: bwNew ? 0 : markup, black_week: bwNew,
                       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
                       published: false,
                     }
@@ -2652,7 +2716,7 @@ onClick={async () => {
       customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
       valid_until: f.validUntil || null, status: f.status || 'offer_sent',
       size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_options: cleanSizeRows(sizeRows),
+      size_options: cleanSizeRows(sizeRows), markup: bwNew ? 0 : markup, black_week: bwNew,
       preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
       published: false,
     }
