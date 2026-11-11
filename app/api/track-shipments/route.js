@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
 import { expireAll } from '../../../lib/discount'
 import { syncTnc } from '../../../lib/tnc-status'
+import { sendPush } from '../../../lib/push'
 import { buildShippedEmail, buildTodayEmail, sendMail, SUBJECT_SHIPPED, SUBJECT_TODAY } from '../../../lib/shipping-emails'
 
 export const dynamic = 'force-dynamic'
@@ -66,7 +67,7 @@ export async function GET(request) {
 
   if (!process.env.DHL_API_KEY) return Response.json({ error: 'DHL_API_KEY fehlt' }, { status: 500 })
 
-  const { data: list } = await supabase.from('offers').select('*').eq('status', 'shipped').not('tracking_number', 'is', null)
+  const { data: list } = await supabase.from('offers').select('*').in('status', ['in_production', 'shipped']).not('tracking_number', 'is', null)
   const results = []
 
   for (const o of list || []) {
@@ -81,6 +82,29 @@ export async function GET(request) {
       const s = (await r.json()).shipments?.[0]
       const code = s?.status?.statusCode || ''
       const text = [s?.status?.status, s?.status?.description, ...(s?.events || []).slice(0, 2).map(e => `${e.status || ''} ${e.description || ''}`)].join(' ')
+
+      // Label erstellt, aber DHL hat das Paket noch nicht -> bleibt bei "Prüfung & Verpackung"
+      const moving = code && code !== 'pre-transit' && code !== 'unknown'
+      if (o.status === 'in_production' && !moving) {
+        // Länger als 5 Tage ohne DHL-Scan -> einmal Push an die Zentrale
+        if (o.label_at && Date.now() - new Date(o.label_at).getTime() > 5 * 864e5) {
+          const tag = 'stau-' + o.id
+          const { data: pw } = await supabase.from('agent_tasks').select('id').eq('type', 'push_sent').eq('tnc_id', tag).limit(1)
+          if (!pw?.length) {
+            await sendPush({ title: 'Paket hängt: #' + (o.offer_num || o.id), body: `${o.project || 'Bestellung'}: seit über 5 Tagen Label, aber noch kein DHL-Scan. Bitte bei TNC nachfragen.`, tag })
+            await supabase.from('agent_tasks').insert([{ type: 'push_sent', tnc_id: tag, status: 'log', done_at: new Date().toISOString() }])
+          }
+        }
+        results.push({ id: o.id, status: 'Prüfung & Verpackung (wartet auf DHL)' })
+        await new Promise(res => setTimeout(res, 5500))
+        continue
+      }
+      // Erster echter DHL-Scan -> jetzt "Versendet"
+      if (o.status === 'in_production') {
+        const at = new Date().toISOString()
+        await supabase.from('offers').update({ status: 'shipped', shipped_at: at }).eq('id', o.id)
+        o.status = 'shipped'; o.shipped_at = at
+      }
 
             // Versand-Mail erst, wenn DHL das Paket wirklich hat (abgeholt / unterwegs), nie doppelt, nur bei frischem Versand (max. 7 Tage)
       if (!o.shipped_email_sent_at && code && code !== 'pre-transit' && code !== 'unknown') {
