@@ -1325,7 +1325,6 @@ const final = final0 + expAmt
             {offer.black_week && (
               <div className="oc-head bw">
                 <div className="bw-l">
-                  <span className="oc-star">✦</span>
                   <div style={{ minWidth: 0 }}><small>INDIVIDUELL ANGEFERTIGT FÜR</small><b>{offer.project || 'dich'}</b></div>
                 </div>
                 <div className="bw-r">
