@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendPush } from '../../../lib/push'
-import { checkBlackWeekEnd } from '../../../lib/blackweek'
+import { checkBlackWeekEnd, getBW } from '../../../lib/blackweek'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -20,7 +20,8 @@ const START = new Date('2026-10-17T18:00:00Z').getTime() // Start der Automatik 
 const MAX_OLD_DAYS = 14 // ältere liegengebliebene Angebote gar nicht mehr anzeigen
 const BOUGHT = ['confirmed', 'in_production', 'shipped', 'delivered']
 const H = 3600000
-const KIND = { erinnerung: 'Erinnerung', rabatt: 'Rabatt-Mail', rabatt_erinnerung: 'Rabatt-Erinnerung', bewertung: 'Bewertung' }
+const KIND = { erinnerung: 'Erinnerung', rabatt: 'Rabatt-Mail', rabatt_erinnerung: 'Rabatt-Erinnerung', bewertung: 'Bewertung', bw_mail1: 'Black Week Mail', bw_mail2: 'Black Week Letzte Chance' }
+let BWS = null // Black-Week-Einstellungen (werden bei jedem Aufruf frisch geladen)
 
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 const t = (d) => (d ? new Date(d).getTime() : 0)
@@ -53,10 +54,24 @@ function when(ms) {
 }
 
 // ---------- Was ist bei welchem Angebot dran? ----------
+// Black Week: Mail 1 (24 Std. nach dem Angebot, nur bei neu erstellten) und Mail 2 (Letzte Chance, fester Zeitpunkt)
+function bwStep(o) {
+  const bw = BWS
+  if (!bw || !bw.active) return null
+  const end = t(bw.end), m2 = t(bw.mail2_at)
+  const mail2Open = bw.mail2 !== false && !o.bw_mail2_sent_at && m2 < end && t(o.created_at) < m2 - 12 * H
+  if (bw.mail1 !== false && !o.bw_prev && !o.bw_mail1_sent_at) {
+    const due = t(o.created_at) + 24 * H
+    if (due < end && !(mail2Open && due >= m2)) return { kind: 'bw_mail1', due }
+  }
+  if (mail2Open) return { kind: 'bw_mail2', due: m2 }
+  return null
+}
+
 function step(o) {
   if (!o.customer_email || o.status === 'unsubscribed' || o.unsubscribed) return null
-  // Black-Week-Angebote bekommen keine normalen Erinnerungs- und Rabatt-Mails
-  if (o.black_week && !BOUGHT.includes(o.status)) return null
+  // Black-Week-Angebote bekommen keine normalen Erinnerungs- und Rabatt-Mails, sondern die zwei Black-Week-Mails
+  if (o.black_week && !BOUGHT.includes(o.status)) return bwStep(o)
   if (BOUGHT.includes(o.status)) {
     if (o.review_email_sent_at) return null
     // Bewertung nur, wenn das Schild wirklich zugestellt ist (3 Tage danach)
@@ -77,6 +92,7 @@ function step(o) {
 
 async function load() {
   const sb = db()
+  BWS = await getBW(sb).catch(() => null)
   const { data: offers, error } = await sb.from('offers').select('*').order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   const { data: logs } = await sb.from('agent_tasks').select('*').in('type', ['fu_sent', 'fu_skip']).order('created_at', { ascending: false }).limit(300)
@@ -112,7 +128,9 @@ async function send(o, kind) {
     const j = await r.json().catch(() => ({}))
     if (!j.success) throw new Error(j.error || `${path} fehlgeschlagen`)
   }
-  if (kind === 'erinnerung') {
+  if (kind === 'bw_mail1' || kind === 'bw_mail2') {
+    await post('bw-mail', { offerId: o.id, kind: kind.slice(3) })
+  } else if (kind === 'erinnerung') {
     await post('recontact', { offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink, price: o.final_price, width: o.width, height: o.height, colors: o.colors })
     await db().from('offers').update({ recontacted_at: new Date().toISOString() }).eq('id', o.id)
   } else if (kind === 'rabatt') {
@@ -297,6 +315,7 @@ export async function POST(req) {
     }
     const { data: o } = await db().from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
+    BWS = await getBW(db()).catch(() => null)
     const s = step(o)
     if (!s || s.kind !== kind) return Response.json({ error: 'Diese Mail ist nicht mehr fällig' }, { status: 400 })
     // Nachts nicht stören: zwischen 20:00 und 8:10 Uhr wird die Mail für 8:10 Uhr eingeplant
