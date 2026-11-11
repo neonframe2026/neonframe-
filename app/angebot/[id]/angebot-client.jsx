@@ -111,8 +111,8 @@ function InfoTip({ img, text, wide, warn }) {
 // Größen: Endpreis (brutto, nach Rabatt) je Breite.
 // Feste Punkte: Mindestbreite = Empf. VK + 10 % · Originalgröße = Angebots-Endpreis · 300 cm = Empf. VK + 10 %
 // Dazwischen linear. Daraus wird der Listenpreis (netto, vor Rabatt) zurückgerechnet.
-const VK_AUFSCHLAG = 1.10
 function sizeModel(offer) {
+  const VK_AUFSCHLAG = 1 + ((offer.markup != null && offer.markup !== '' ? +offer.markup : 10) / 100)
   // NEU: feste Größen aus dem Admin (Breite, Höhe, Empf. VK) – exakte Preise
   const rows = Array.isArray(offer.size_options) ? offer.size_options.filter(r => +r.w > 0 && +r.h > 0 && +r.vk > 0) : []
   if (rows.length) {
