@@ -20,13 +20,17 @@ export default function BlackWeekSettings() {
   const [stats, setStats] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
+  const [testOffer, setTestOffer] = useState(null)
+  const [testTo, setTestTo] = useState('info@neonframe.de')
 
   const load = async () => {
     const s = await (await fetch('/api/settings', { cache: 'no-store' })).json()
     setBw(s.black_week || {}); setMarkup(String(s.pricing?.markup ?? 15))
     try {
       const all = await (await fetch('/api/offers', { cache: 'no-store' })).json()
-      const list = (Array.isArray(all) ? all : []).filter(o => o.black_week)
+      const arr = Array.isArray(all) ? all : []
+      setTestOffer(arr.find(o => o.preview_image && parseFloat(o.base_price) > 0) || null)
+      const list = arr.filter(o => o.black_week)
       const bought = list.filter(o => BOUGHT.includes(o.status))
       setStats({ n: list.length, b: bought.length, sum: bought.reduce((a, o) => a + (parseFloat(o.final_price) || 0), 0) })
     } catch {}
@@ -95,6 +99,25 @@ export default function BlackWeekSettings() {
             Am Enddatum schaltet sich Black Week automatisch aus. Alle nicht bestellten Black-Week-Angebote werden dann <b>deaktiviert</b> (nicht gelöscht) und zeigen die Abgelaufen-Seite. Bestellte bleiben aktiv.
           </div>
           {msg && <div className={msg.ok ? 'ok' : 'err'}>{msg.t}</div>}
+          <div style={{ borderTop: '1px solid var(--l)', paddingTop: 14, display: 'grid', gap: 10 }}>
+            <span style={lbl}>Testmails {testOffer ? `(mit Angebot #${testOffer.custom_id || testOffer.id} ${testOffer.project || ''})` : ''}</span>
+            <input type="email" value={testTo} onChange={e => setTestTo(e.target.value)} placeholder="An diese Adresse" />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[['switch', 'Umstell-Mail'], ['mail1', 'Mail 1 (24 Std.)'], ['mail2', 'Mail 2 (Letzte Chance)']].map(([k, l]) => (
+                <button key={k} type="button" className="ghost" disabled={busy || !testOffer} onClick={async () => {
+                  setBusy(true); setMsg(null)
+                  try {
+                    const r = await fetch('/api/bw-mail', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: testOffer.id, kind: k, to: testTo }) })
+                    const j = await r.json().catch(() => ({}))
+                    if (!j.success) throw new Error(j.error || 'Fehler')
+                    setMsg({ ok: true, t: `${l} als Test an ${testTo} gesendet.` })
+                  } catch (e) { setMsg({ ok: false, t: e.message }) }
+                  setBusy(false)
+                }}>{l} testen</button>
+              ))}
+            </div>
+            <div className="hint">Testmails ändern nichts am Angebot und gehen nur an die Adresse oben. Die Preise werden als Black Week berechnet.</div>
+          </div>
         </div>
       </div>
 
