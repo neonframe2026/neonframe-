@@ -6,6 +6,8 @@ import { notFound, redirect } from 'next/navigation'
 import AngebotPage from './angebot-client'
 import Bestellstatus from './bestellstatus'
 import { expireIfDue } from '../../../lib/discount'
+import { getBW } from '../../../lib/blackweek'
+import Abgelaufen from './abgelaufen'
 
 export const revalidate = 0
 export const maxDuration = 60
@@ -30,10 +32,14 @@ let { data } = await supabase.from('offers').select('*').eq('custom_id', id).sin
 
 export default async function Page({ params }) {
   const offer = await getOffer(params.id)
-  if (!offer) notFound()
+  // Gelöscht oder nach Black Week deaktiviert -> Abgelaufen-Seite statt 404
+  if (!offer) return <Abgelaufen />
   if (['confirmed', 'in_production', 'shipped', 'delivered'].includes(offer.status)) {
     if (offer.offer_num) redirect(`/status/${offer.offer_num}`)
     return <Bestellstatus offer={offer} />
   }
-  return <AngebotPage offer={offer} />
+  if (!offer.published && offer.expired_at) return <Abgelaufen nr={offer.custom_id || offer.id} />
+  let bwEnd = null
+  if (offer.black_week) { try { bwEnd = (await getBW(createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)))).end } catch {} }
+  return <AngebotPage offer={offer} bwEnd={bwEnd} />
 }
