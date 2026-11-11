@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendPush } from '../../../lib/push'
+import { checkBlackWeekEnd } from '../../../lib/blackweek'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -54,6 +55,8 @@ function when(ms) {
 // ---------- Was ist bei welchem Angebot dran? ----------
 function step(o) {
   if (!o.customer_email || o.status === 'unsubscribed' || o.unsubscribed) return null
+  // Black-Week-Angebote bekommen keine normalen Erinnerungs- und Rabatt-Mails
+  if (o.black_week && !BOUGHT.includes(o.status)) return null
   if (BOUGHT.includes(o.status)) {
     if (o.review_email_sent_at) return null
     // Bewertung nur, wenn das Schild wirklich zugestellt ist (3 Tage danach)
@@ -200,6 +203,8 @@ export async function GET(req) {
 
     if (sp.get('run')) {
       if (process.env.FOLLOWUP_KEY && sp.get('key') !== process.env.FOLLOWUP_KEY) return Response.json({ error: 'Falscher Schlüssel' }, { status: 401 })
+      // Black Week am Enddatum automatisch beenden (Angebote deaktivieren)
+      try { await checkBlackWeekEnd(db()) } catch (e) { console.error('Black Week Ende:', e.message) }
       // Push aufs Handy, sobald etwas zur Freigabe bereit liegt (rund um die Uhr, jede Mail nur einmal)
       const ready = items.filter(i => i.manual && i.due <= Date.now())
       if (ready.length) {
