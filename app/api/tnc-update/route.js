@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { syncOfferShopify } from '../../../lib/shopify-admin'
+import { markupFactor } from '../../../lib/pricing'
 import { logEmail } from '../../../lib/email-log'
 
 export const dynamic = 'force-dynamic'
@@ -26,7 +27,7 @@ async function load(req, id) {
   const row = rows.find(r => r.w === cur?.w) || rows[0]
   if (!row) throw new Error('Keine Preise von TNC erhalten')
   const next = {
-    width: row.w, height: row.h, vk: row.vk, final: r2(row.vk * 1.10),
+    width: row.w, height: row.h, vk: row.vk, final: r2(row.vk * markupFactor(offer)),
     colors: tnc.colors || offer.colors, backplate: tnc.backplate || offer.backplate, usage: tnc.usage || offer.usage,
     realistic_image: tnc.realistic_image || '', design_image: tnc.design_image || '',
     size_options: rows.filter(r => r.w !== row.w).map(r => ({ w: r.w, h: r.h, vk: r.vk })),
