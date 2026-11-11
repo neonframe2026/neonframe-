@@ -220,7 +220,7 @@ const PAYMENT_ICONS_HTML = `
 
 
 // Größen-Tabelle (Breite, Höhe, Empf. VK) – Kunde zahlt Empf. VK + 10 %
-function SizeTable({ rows, onChange, lblStyle, inStyle }) {
+function SizeTable({ rows, onChange, lblStyle, inStyle, factor = 1.10 }) {
   const upd = (i, k, v) => onChange(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)))
   const num = (v) => { const t = String(v ?? '').trim(); return (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0 }
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
@@ -233,11 +233,11 @@ function SizeTable({ rows, onChange, lblStyle, inStyle }) {
         <span className="nf-sz-h" style={{ ...lblStyle, marginBottom: 0 }}>Kunde zahlt</span>
         <span />
         {rows.map((r, i) => (
-          <SizeRow key={i} r={r} i={i} upd={upd} inStyle={inStyle} pay={num(r.vk) > 0 ? eur(num(r.vk) * 1.10) : '–'} onDel={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ w: '', h: '', vk: '' }])} />
+          <SizeRow key={i} r={r} i={i} upd={upd} inStyle={inStyle} pay={num(r.vk) > 0 ? eur(num(r.vk) * factor) : '–'} onDel={() => onChange(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ w: '', h: '', vk: '' }])} />
         ))}
       </div>
       <button type="button" onClick={() => onChange([...rows, { w: '', h: '', vk: '' }])} style={{ marginTop: 10, background: 'transparent', border: '1px dashed #22d3ee', color: '#22d3ee', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Größe hinzufügen</button>
-      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>Kleinste Größe = Mindestgröße (ⓘ auf der Angebotsseite). Kunde zahlt = Empf. VK + 10 % (inkl. MwSt.). Leer lassen = feste Größe.</div>
+      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>Kleinste Größe = Mindestgröße (ⓘ auf der Angebotsseite). Kunde zahlt = Empf. VK + {Math.round((factor - 1) * 100)}% (inkl. MwSt.). Leer lassen = feste Größe.</div>
     </div>
   )
 }
@@ -551,7 +551,7 @@ function EditModal({ offer, onClose, onSaved }) {
               </div>
               <div>
                 <label style={lbl}>Größen-Auswahl für den Kunden (optional)</label>
-                <SizeTable rows={form.size_options} onChange={v => set('size_options', v)} lblStyle={lbl} inStyle={inp} />
+                <SizeTable rows={form.size_options} onChange={v => set('size_options', v)} lblStyle={lbl} inStyle={inp} factor={1 + ((offer.markup != null && offer.markup !== '' ? +offer.markup : 10) / 100)} />
               </div>
               <div><label style={lbl}>Farbe(n) – kommagetrennt</label><input style={inp} value={form.colors} onChange={e => set('colors', e.target.value)} /></div>
             </div>
@@ -1476,6 +1476,10 @@ export default function AdminPage() {
   const [endPrice, setEndPrice] = useState('')
   const [sizeRows, setSizeRows] = useState([{ w: '', h: '', vk: '' }])
   const [origVk, setOrigVk] = useState('')
+  // Aufschlag für neue Angebote (Einstellungen, Standard 15 %)
+  const [markup, setMarkup] = useState(15)
+  useEffect(() => { fetch('/api/settings').then(r => r.json()).then(s => { const m = parseFloat(s?.pricing?.markup); if (m >= 0) setMarkup(m) }).catch(() => {}) }, [])
+  const mk = 1 + markup / 100
   const [imgSrcs, setImgSrcs] = useState([])
   const [checkoutImg, setCheckoutImg] = useState(null)
   const [parseStatus, setParseStatus] = useState(null)
@@ -1750,7 +1754,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       if (d.backplate) updSelect('backplate', d.backplate)
       if (d.usage) updSelect('usage', d.usage)
       const first = rows.find(r => r.w === cur?.w) || rows[0]
-      if (first) { setOrigVk(de(first.vk)); setEndPrice((Math.round(first.vk * 1.10 * 100) / 100).toFixed(2)) }
+      if (first) { setOrigVk(de(first.vk)); setEndPrice((Math.round(first.vk * mk * 100) / 100).toFixed(2)) }
             const extra = rows.filter(r => r.w !== cur?.w)
       if (extra.length) setSizeRows(extra.map(r => ({ w: String(r.w), h: String(r.h), vk: de(r.vk) })))       // Bilder von TNC: 1 = realistische 3D-Vorschau, 2 = Design
       const pics = [d.realistic_image, d.design_image].filter(Boolean)
@@ -2146,13 +2150,13 @@ if (tab === 'create') return (
               <input className="nf-cin" type="text" inputMode="decimal" style={cIn} value={origVk} placeholder="z.B. 673,65" onChange={e => {
                 const v = e.target.value; setOrigVk(v)
                 const t = v.trim(); const n = (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0
-                if (n > 0) setEndPrice((Math.round(n * 1.10 * 100) / 100).toFixed(2))
+                if (n > 0) setEndPrice((Math.round(n * mk * 100) / 100).toFixed(2))
               }} />
-              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ 10 % → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
+              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ {markup}% → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
             </div>
             <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
               <span style={{...cLbl,marginBottom:8,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
-              <SizeTable rows={sizeRows} onChange={setSizeRows} lblStyle={cLbl} inStyle={cIn} />
+              <SizeTable rows={sizeRows} onChange={setSizeRows} lblStyle={cLbl} inStyle={cIn} factor={mk} />
             </div>
           </div>
         </CCard>
