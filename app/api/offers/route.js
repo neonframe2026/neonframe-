@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
 import { expireIfDue, discountExpired } from '../../../lib/discount'
+import { currentMarkup } from '../../../lib/pricing'
 
 export const maxDuration = 60
 
@@ -34,6 +35,8 @@ export async function GET(request) {
 export async function POST(request) {
   const body = await request.json()
   const supabase = getSupabase()
+  // Neues Angebot: aktuellen Aufschlag aus den Einstellungen merken (alte Angebote bleiben bei 10 %)
+  if (body.markup == null) body.markup = await currentMarkup(supabase)
   const { data, error } = await supabase.from('offers').insert([body]).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
