@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { syncOfferShopify } from '../../../lib/shopify-admin'
+import { markupFactor } from '../../../lib/pricing'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -36,7 +37,8 @@ export async function POST(req) {
     const dVal = parseFloat(o.disc_val) || 0
     const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
     const ex = (parseFloat(o.extra_disc_pct) || 0) / 100
-    const target = +row.vk * 1.10 // Gesamtbetrag ohne Extra-Rabatt = Empf. VK + 10 %
+    const mk = markupFactor(o)
+    const target = +row.vk * mk // Gesamtbetrag ohne Extra-Rabatt = Empf. VK + Aufschlag des Angebots
     const base = Math.round((dType === 'pct' ? target / vat / (1 - dVal / 100) : target / vat + dVal) * 10000) / 10000
     const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
     const final = Math.round(net * vat * 100) / 100
@@ -44,7 +46,7 @@ export async function POST(req) {
     // Originalgröße als Zeile behalten, damit der Kunde zurückwechseln kann
     const newRows = rows.filter(r => +r.w !== w)
     const b0 = parseFloat(o.base_price) || 0
-    const vkOrig = Math.round(((dType === 'pct' ? b0 * (1 - dVal / 100) : Math.max(0, b0 - dVal)) * vat / 1.10) * 100) / 100
+    const vkOrig = Math.round(((dType === 'pct' ? b0 * (1 - dVal / 100) : Math.max(0, b0 - dVal)) * vat / mk) * 100) / 100
     if (W0 && vkOrig > 0 && !newRows.some(r => +r.w === W0)) newRows.push({ w: W0, h: parseFloat(o.height) || 0, vk: vkOrig })
 
     const updated = {
