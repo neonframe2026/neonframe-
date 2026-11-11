@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { authClient } from '../../lib/admin-auth'
+import BlackWeekSettings from './blackweek-settings'
 
 // Einstellungen: Benutzer verwalten (nur Administratoren)
 export default function SettingsPage({ onBack }) {
@@ -135,6 +136,8 @@ export default function SettingsPage({ onBack }) {
             </div>
           ))}
         </div>
+
+        <BlackWeekSettings />
 
         <div className="t"><div><h2>TNC-Verbindung</h2><div className="sub">Damit Anna im Einkauf Anfragen direkt ins TNC-Portal senden kann</div></div></div>
         <div className="card"><div className="tnc">
