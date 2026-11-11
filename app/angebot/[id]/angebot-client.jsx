@@ -808,7 +808,7 @@ function FaqSection() {
 }
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
-export default function AngebotPage({ offer }) {
+export default function AngebotPage({ offer, bwEnd }) {
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
@@ -917,6 +917,21 @@ const final = final0 + expAmt
         @media (hover:hover) and (min-width:961px) { .ii-modal { display:none; } }
         /* Angebots-Karte */
         .offer-card { border:1px solid #e8e8e8; border-radius:18px; box-shadow:0 10px 30px rgba(0,0,0,.05); margin-bottom:14px; }
+        @font-face { font-family:NFAnton; src:url('/email/anton-400.woff') format('woff'); font-display:swap; }
+        .oc-head.bw { padding:0; background:#080709; overflow:hidden; align-items:stretch; gap:0; }
+        .oc-head.bw .bw-l { flex:1; display:flex; align-items:center; gap:14px; padding:15px 34px 15px 20px; background:linear-gradient(90deg,#0a0a0a,#13303a); min-width:0; }
+        .oc-head.bw .bw-r { position:relative; flex:0 0 44%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 6px 10px 20px; }
+        .oc-head.bw .bw-r:before { content:""; position:absolute; top:0; bottom:0; left:-14px; right:-10px; background:#080709; transform:skewX(-14deg); box-shadow:-5px 0 0 #22d3ee; }
+        .bw-tag { position:relative; display:inline-flex; align-items:center; gap:8px; }
+        .bw-tag i { font-style:normal; font-family:NFAnton,Impact,sans-serif; background:#fff; color:#000; font-size:16px; line-height:1; padding:4px 7px; transform:rotate(-3deg); box-shadow:2px 2px 0 #22d3ee; white-space:nowrap; }
+        .bw-tag em { font-style:normal; font-family:NFAnton,Impact,sans-serif; font-size:24px; color:#22d3ee; text-shadow:0 0 12px rgba(34,211,238,.7); }
+        .bw-until { position:relative; font-size:9px; font-weight:800; letter-spacing:.14em; color:#94a3b8; margin-top:6px; white-space:nowrap; }
+        .oc-row.bwrow { align-items:center; padding:8px 0; }
+        .oc-row.bwrow b { color:#0a6bff; font-weight:800; }
+        .bw-pill { display:inline-flex; transform:rotate(-2deg); box-shadow:3px 3px 0 #000; white-space:nowrap; }
+        .bw-pill i { font-style:normal; font-family:NFAnton,Impact,sans-serif; font-size:15px; letter-spacing:.03em; padding:5px 9px; background:#000; color:#fff; }
+        .bw-pill i + i { background:#22d3ee; color:#03121a; }
+        @media(max-width:500px){ .oc-head.bw .bw-l { padding:14px 26px 14px 14px; gap:8px; } .oc-head.bw small { font-size:8.5px; letter-spacing:.12em; } .oc-head.bw b { font-size:18px; } .oc-head.bw .bw-r { padding-left:16px; } .bw-tag i { font-size:12px; } .bw-tag em { font-size:19px; } .bw-until { font-size:7.5px; } }
         .oc-head { border-radius:17px 17px 0 0; background:linear-gradient(90deg,#0a0a0a,#13303a); color:#fff; padding:15px 20px; display:flex; align-items:center; gap:14px; }
         .oc-head small { display:block; font-size:10px; letter-spacing:.18em; color:#60c8f0; font-weight:800; }
         .oc-head b { display:block; font-size:21px; font-weight:800; line-height:1.2; word-break:break-word; }
@@ -1301,10 +1316,22 @@ const final = final0 + expAmt
 
           {/* ANGEBOTS-KARTE: Name + Konfiguration + Preis + Button */}
           <div className="offer-card">
-            {offer.project && (
+            {offer.project && !offer.black_week && (
               <div className="oc-head">
                 <span className="oc-star">✦</span>
                 <div><small>INDIVIDUELL ANGEFERTIGT FÜR</small><b>{offer.project}</b></div>
+              </div>
+            )}
+            {offer.black_week && (
+              <div className="oc-head bw">
+                <div className="bw-l">
+                  <span className="oc-star">✦</span>
+                  <div style={{ minWidth: 0 }}><small>INDIVIDUELL ANGEFERTIGT FÜR</small><b>{offer.project || 'dich'}</b></div>
+                </div>
+                <div className="bw-r">
+                  <div className="bw-tag"><i>BLACK WEEK</i><em>-40%</em></div>
+                  {bwEnd && <div className="bw-until">NUR BIS {new Date(bwEnd).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit' })} · {new Date(bwEnd).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })}</div>}
+                </div>
               </div>
             )}
             <div className="oc-body">
@@ -1374,7 +1401,9 @@ const final = final0 + expAmt
 
               <div className="oc-price">
                 {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
-                {discAmt > 0 && <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>}
+                {discAmt > 0 && (offer.black_week
+                  ? <div className="oc-row bwrow"><span className="bw-pill"><i>BLACK WEEK</i><i>-{discDisplay}</i></span><b>− {eur(discBrutto)}</b></div>
+                  : <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>)}
                 {extraAmt > 0 && <div className="oc-row disc"><span>Extra-Rabatt ({extraPct}%)</span><span>− {eur(extraBrutto)}</span></div>}
                 {expAmt > 0 && <div className="oc-row exp"><span>Expresslieferung (+{EXPRESS_PCT}%)</span><span>+ {eur(expAmt)}</span></div>}
                 <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
