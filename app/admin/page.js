@@ -314,8 +314,7 @@ function CropModal({ src, onDone, onClose }) {
     setSq(q => clamp({ ...q, x: d.x + (e.clientX - d.px) / k, y: d.y + (e.clientY - d.py) / k }))
   }
   async function apply() {
-    const img = await new Promise((r, j) => { const im = new Image(); im.onload = () => r(im); im.onerror = j; im.src = src })
-    const out = Math.min(1200, Math.round(sq.s))
+    const img = await new Promise((r, j) => { const im = new Image(); im.onload = () => r(im); im.onerror = j; im.src = src })    const img = await new Promise((r, j) => { const im = new Image(); if (!String(src).startsWith('data')) im.crossOrigin = 'anonymous'; im.onload = () => r(im); im.onerror = j; im.src = src })    const out = Math.min(1200, Math.round(sq.s))
     const c = document.createElement('canvas'); c.width = out; c.height = out
     c.getContext('2d').drawImage(img, sq.x, sq.y, sq.s, sq.s, 0, 0, out, out)
     onDone(c.toDataURL('image/jpeg', 0.9))
@@ -342,8 +341,9 @@ function CropModal({ src, onDone, onClose }) {
   )
 }
 // Feld für das Checkout-Bild (1:1)
-function CheckoutImageField({ src, onChange, inputId, dark, cropSrc }) {
+function CheckoutImageField({ src, onChange, inputId, dark, cropSrc, cropSrcs }) {
   const [crop, setCrop] = useState(false)
+  const [cropFrom, setCropFrom] = useState(null)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, border: '1px dashed #22d3ee', borderRadius: 12, background: dark ? 'rgba(34,211,238,.05)' : 'var(--input-bg)' }}>
       <label htmlFor={inputId} style={{ width: 84, height: 84, borderRadius: 10, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
@@ -356,8 +356,10 @@ function CheckoutImageField({ src, onChange, inputId, dark, cropSrc }) {
           <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>
           {src && <span onClick={() => onChange(null)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#ef4444', border: '1px solid #ef444466', borderRadius: 8, padding: '5px 10px' }}>Entfernen</span>}
                       {cropSrc && <span onClick={() => setCrop(true)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild 1 zuschneiden</span>}
+          {cropSrcs && cropSrcs.map((c, i) => c ? <span key={i} onClick={() => setCropFrom(c)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild {i + 1}</span> : null)}
         </div>
       </div>
+      {cropFrom && <CropModal src={cropFrom} onClose={() => setCropFrom(null)} onDone={d => { onChange(d); setCropFrom(null) }} />}
       {crop && <CropModal src={cropSrc} onClose={() => setCrop(false)} onDone={d => { onChange(d); setCrop(false) }} />}                  
       <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
         const f = e.target.files?.[0]; e.target.value = ''
@@ -508,7 +510,7 @@ function EditModal({ offer, onClose, onSaved }) {
 
         <div style={{ overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
-            <div style={{ marginBottom: 14 }}><CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="edit-checkout-img" /></div>
+            <div style={{ marginBottom: 14 }}><CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="edit-checkout-img" cropSrcs={[imgSrcs[0], imgSrcs[1]]} /></div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>Vorschaubilder</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               {[0,1,2].map(idx => (
