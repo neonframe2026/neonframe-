@@ -878,7 +878,7 @@ function MTimeline({ o }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: e.done ? 'var(--text)' : 'var(--text-faint)' }}>{e.t}</div>
               {e.done && e.k && (
-                <button type="button" onClick={() => window.open(`/api/email-log?offerId=${o.id}&type=${e.k}`, '_blank')} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Anschauen</button>
+                <button type="button" onClick={async () => { const w = window.open('', '_blank'); const h = await (await fetch(`/api/email-log?offerId=${o.id}&type=${e.k}`)).text(); if (w) { w.document.open(); w.document.write(h); w.document.close() } }} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Anschauen</button>
               )}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{e.d}</div>
