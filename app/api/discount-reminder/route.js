@@ -40,7 +40,7 @@ export async function POST(req) {
         from: 'NeonFrame <info@neonframe.de>',
         to: [o.customer_email],
         subject,
-        headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:info@neonframe.de?subject=Abmelden>` },
+        headers: { 'List-Unsubscribe': `<${unsubscribeUrl.replace('/abmelden/', '/api/unsubscribe?id=')}>, <mailto:info@neonframe.de?subject=Abmelden>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
         html,
       }),
     })
