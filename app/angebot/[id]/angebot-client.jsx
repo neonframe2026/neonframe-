@@ -1328,7 +1328,7 @@ const final = final0 + expAmt
                   <div style={{ minWidth: 0 }}><small>INDIVIDUELL ANGEFERTIGT FÜR</small><b>{offer.project || 'dich'}</b></div>
                 </div>
                 <div className="bw-r">
-                  <div className="bw-tag"><i>BLACK WEEK</i><em>-40%</em></div>
+                  <div className="bw-tag"><i>BLACK WEEK</i><em>-30%</em></div>
                   {bwEnd && <div className="bw-until">NUR BIS {new Date(bwEnd).toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit' })} · {new Date(bwEnd).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })}</div>}
                 </div>
               </div>
