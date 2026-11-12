@@ -124,7 +124,7 @@ async function load() {
 async function send(o, kind) {
   const offerLink = `${SITE}/angebot/${o.custom_id || o.id}`
   const post = async (path, body) => {
-    const r = await fetch(`${SITE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const r = await fetch(`${SITE}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
     if (!j.success) throw new Error(j.error || `${path} fehlgeschlagen`)
   }
