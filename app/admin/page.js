@@ -1232,7 +1232,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
 
   const ql = q.toLowerCase()
   const list = offers.filter(o =>
-    (!ql || (o.project || '').toLowerCase().includes(ql) || String(o.custom_id || '').includes(ql) || String(o.offer_num || '').toLowerCase().includes(ql)) &&
+    (!ql || (o.project || '').toLowerCase().includes(ql) || (o.customer_email || '').toLowerCase().includes(ql) || String(o.custom_id || '').includes(ql) || String(o.offer_num || '').toLowerCase().includes(ql)) &&
     (!st || o.status === st)
   )
   const o = list.find(x => String(x.id) === String(sel)) || list[0]
