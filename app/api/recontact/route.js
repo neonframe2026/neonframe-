@@ -109,7 +109,7 @@ export async function POST(req) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://angebote.neonframe.de'
     await fetch(`${baseUrl}/api/offers?id=${offerId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '' },
       body: JSON.stringify({ status: 'recontacted' }),
     })
 
