@@ -20,7 +20,7 @@ async function load(req, id) {
   const offer = list?.[0]
   if (!offer) throw new Error(`Kein Angebot mit TNC-Nummer ${id} gefunden`)
   const origin = new URL(req.url).origin
-  const tnc = await (await fetch(`${origin}/api/tnc-import?id=${id}`, { cache: 'no-store' })).json()
+  const tnc = await (await fetch(`${origin}/api/tnc-import?id=${id}`, { cache: 'no-store', headers: { 'x-internal-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '' } })).json()
   if (tnc.error) throw new Error(tnc.error)
   const rows = (tnc.size_options || []).filter(r => !r.disabled && r.vk > 0)
   const cur = tnc.current?.w ? tnc.current : tnc.min
