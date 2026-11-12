@@ -1552,6 +1552,8 @@ export default function AdminPage() {
   const [bwNew, setBwNew] = useState(false)
   useEffect(() => { fetch('/api/settings').then(r => r.json()).then(s => { const m = parseFloat(s?.pricing?.markup); if (m >= 0) setMarkup(m); const b = s?.black_week; if (b && b.active && b.auto_new !== false) { setBwNew(true); setPriceInputs(p => ({ ...p, discVal: '30' })) } }).catch(() => {}) }, [])
   const mk = (1 + markup / 100) * (bwNew ? 0.7 / 0.8 : 1) // Black Week: gleicher Listenpreis wie normal, nur 30 % statt 20 % Rabatt
+  // Einstellungen kommen manchmal erst nach dem TNC-Laden an -> Endpreis dann neu aus dem empf. VK rechnen
+  useEffect(() => { const n = parseFloat(String(origVk).replace(/\./g, '').replace(',', '.')); if (n > 0) setEndPrice((Math.round(n * mk * 100) / 100).toFixed(2)) }, [mk])
   const [imgSrcs, setImgSrcs] = useState([])
   const [checkoutImg, setCheckoutImg] = useState(null)
   const [parseStatus, setParseStatus] = useState(null)
