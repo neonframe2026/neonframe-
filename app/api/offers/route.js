@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
 import { expireIfDue, discountExpired } from '../../../lib/discount'
 import { currentMarkup } from '../../../lib/pricing'
+import { requireUser } from '../../../lib/api-auth'
 
 export const maxDuration = 60
 
@@ -14,6 +15,7 @@ function getSupabase() {
 }
 
 export async function GET(request) {
+  const denied = await requireUser(request); if (denied) return denied // nur mit Login
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const supabase = getSupabase()
@@ -33,6 +35,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const denied = await requireUser(request); if (denied) return denied // nur mit Login
   const body = await request.json()
   const supabase = getSupabase()
   // Neues Angebot: aktuellen Aufschlag aus den Einstellungen merken (alte Angebote bleiben bei 10 %)
@@ -43,6 +46,7 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
+  const denied = await requireUser(request); if (denied) return denied // nur mit Login
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const body = await request.json()
@@ -53,6 +57,7 @@ export async function PATCH(request) {
 }
 
 export async function DELETE(request) {
+  const denied = await requireUser(request); if (denied) return denied // nur mit Login
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const supabase = getSupabase()
