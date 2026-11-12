@@ -44,7 +44,7 @@ export default function BlackWeekSettings() {
       const r = await fetch('/api/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (data.session?.access_token || '') }, body: JSON.stringify({ key, value }) })
       const j = await r.json().catch(() => ({}))
       if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
-      setMsg({ ok: true, t: j.deactivated ? `${okText} ${j.deactivated} Black-Week-Angebote wurden deaktiviert.` : okText })
+      setMsg({ ok: true, t: j.deactivated ? `${okText} ${j.deactivated} Black-Week-Angebote wurden auf 20% zurückgestellt.` : okText })
       await load()
     } catch (e) { setMsg({ ok: false, t: e.message }) }
     setBusy(false)
@@ -52,7 +52,7 @@ export default function BlackWeekSettings() {
   const setB = (patch) => setBw(b => ({ ...b, ...patch }))
   const mainSwitch = () => {
     if (bw.on) {
-      if (!confirm('Black Week jetzt beenden?\n\nAlle nicht bestellten Black-Week-Angebote werden deaktiviert (nicht gelöscht) und zeigen die Abgelaufen-Seite.')) return
+      if (!confirm('Black Week jetzt beenden?\n\nAlle nicht bestellten Black-Week-Angebote gehen zurück auf 20% Rabatt und bleiben aktiv. Die Zahlen werden ins Archiv gespeichert.')) return
       save('black_week', { ...bw, on: false }, 'Black Week ist aus.')
     } else {
       if (!confirm('Black Week jetzt starten?\n\nNeue Angebote werden automatisch als Black Week erstellt (normaler Listenpreis, 30% Rabatt).')) return
@@ -96,7 +96,7 @@ export default function BlackWeekSettings() {
             </div>
           )}
           <div className="hint" style={{ background: 'rgba(234,179,8,.08)', border: '1px solid rgba(234,179,8,.3)', borderRadius: 12, padding: '12px 14px' }}>
-            Am Enddatum schaltet sich Black Week automatisch aus. Alle nicht bestellten Black-Week-Angebote werden dann <b>deaktiviert</b> (nicht gelöscht) und zeigen die Abgelaufen-Seite. Bestellte bleiben aktiv.
+            Am Enddatum schaltet sich Black Week automatisch aus. Alle nicht bestellten Black-Week-Angebote gehen dann <b>zurück auf 20%</b> und bleiben aktiv. Die Zahlen werden fürs Archiv gespeichert. Bestellte behalten ihren Black-Week-Preis.
           </div>
           {msg && <div className={msg.ok ? 'ok' : 'err'}>{msg.t}</div>}
           <div style={{ borderTop: '1px solid var(--l)', paddingTop: 14, display: 'grid', gap: 10 }}>
