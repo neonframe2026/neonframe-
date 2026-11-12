@@ -314,7 +314,8 @@ function CropModal({ src, onDone, onClose }) {
     setSq(q => clamp({ ...q, x: d.x + (e.clientX - d.px) / k, y: d.y + (e.clientY - d.py) / k }))
   }
   async function apply() {
-    const img = await new Promise((r, j) => { const im = new Image(); im.onload = () => r(im); im.onerror = j; im.src = src })    const img = await new Promise((r, j) => { const im = new Image(); if (!String(src).startsWith('data')) im.crossOrigin = 'anonymous'; im.onload = () => r(im); im.onerror = j; im.src = src })    const out = Math.min(1200, Math.round(sq.s))
+        const img = await new Promise((r, j) => { const im = new Image(); if (!String(src).startsWith('data')) im.crossOrigin = 'anonymous'; im.onload = () => r(im); im.onerror = j; im.src = src })
+    const out = Math.min(1200, Math.round(sq.s))
     const c = document.createElement('canvas'); c.width = out; c.height = out
     c.getContext('2d').drawImage(img, sq.x, sq.y, sq.s, sq.s, 0, 0, out, out)
     onDone(c.toDataURL('image/jpeg', 0.9))
