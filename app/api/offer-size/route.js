@@ -35,18 +35,19 @@ export async function POST(req) {
     // Gesamtbetrag = Empf. VK + 10 % -> Listenpreis (netto, vor Rabatt) zurückrechnen
     const dType = o.disc_type || 'pct'
     const dVal = parseFloat(o.disc_val) || 0
+    const lDisc = o.black_week ? (parseFloat(o.bw_prev?.disc_val) || 20) : dVal // Listenpreis immer wie normal (Black Week: echter Listenpreis)
     const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
     const ex = (parseFloat(o.extra_disc_pct) || 0) / 100
     const mk = markupFactor(o)
     const target = +row.vk * mk // Gesamtbetrag ohne Extra-Rabatt = Empf. VK + Aufschlag des Angebots
-    const base = Math.round((dType === 'pct' ? target / vat / (1 - dVal / 100) : target / vat + dVal) * 10000) / 10000
+    const base = Math.round((dType === 'pct' ? target / vat / (1 - lDisc / 100) : target / vat + dVal) * 10000) / 10000
     const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
     const final = Math.round(net * vat * 100) / 100
 
     // Originalgröße als Zeile behalten, damit der Kunde zurückwechseln kann
     const newRows = rows.filter(r => +r.w !== w)
     const b0 = parseFloat(o.base_price) || 0
-    const vkOrig = Math.round(((dType === 'pct' ? b0 * (1 - dVal / 100) : Math.max(0, b0 - dVal)) * vat / mk) * 100) / 100
+    const vkOrig = Math.round(((dType === 'pct' ? b0 * (1 - lDisc / 100) : Math.max(0, b0 - dVal)) * vat / mk) * 100) / 100
     if (W0 && vkOrig > 0 && !newRows.some(r => +r.w === W0)) newRows.push({ w: W0, h: parseFloat(o.height) || 0, vk: vkOrig })
 
     const updated = {
