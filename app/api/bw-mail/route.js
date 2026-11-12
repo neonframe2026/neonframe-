@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { logEmail } from '../../../lib/email-log'
-import { getBW, currentVk } from '../../../lib/blackweek'
+import { getBW, bwListNow } from '../../../lib/blackweek'
 
 // Black-Week-Mails
 // POST { offerId, kind: 'switch' | 'mail1' | 'mail2', to?: 'test@...' }
@@ -15,13 +15,13 @@ const ASSETS = `${SITE}/email`
 const FONT = 'font-family:Arial,Helvetica,sans-serif;'
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
 const SUBJECT = {
-  switch: 'Gute Nachricht: Dein Neon-Schild jetzt mit 40% Rabatt',
+  switch: 'Gute Nachricht: Dein Neon-Schild jetzt mit 30% Rabatt',
   mail1: 'Black Friday: Du sparst auf dein Neon-Schild',
   mail2: 'Nur noch 2 Tage: Dein Black Friday Preis läuft ab',
 }
 const PRE = {
-  switch: 'Dein Angebot gibt es jetzt mit 40% Black Friday Rabatt.',
-  mail1: 'Dein Angebot ist noch reserviert, jetzt mit 40% Black Friday Rabatt.',
+  switch: 'Dein Angebot gibt es jetzt mit 30% Black Friday Rabatt.',
+  mail1: 'Dein Angebot ist noch reserviert, jetzt mit 30% Black Friday Rabatt.',
   mail2: 'Dein Black Friday Preis ist noch reserviert, aber nicht mehr lange.',
 }
 const HERO = { switch: 'bw-hero-switch.jpg', mail1: 'bw-hero-1.jpg', mail2: 'bw-hero-2.jpg' }
@@ -53,9 +53,9 @@ function buildHtml({ kind, firstName, link, personal, unsub }) {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#08080b">Hallo ${firstName}, ${PRE[kind]}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#08080b" style="background:#08080b"><tr><td align="center" style="padding:0">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;border-collapse:collapse">
-${img(`${ASSETS}/${HERO[kind]}`, 'NeonFrame Black Friday: 40% auf dein Neon-Schild', link)}
+${img(`${ASSETS}/${HERO[kind]}`, 'NeonFrame Black Friday: 30% auf dein Neon-Schild', link)}
 ${kind === 'mail2' ? img(`${SITE}/api/bw-countdown?m=${Date.now()}`, 'Countdown: Black Friday endet bald', link) : ''}
-${img(personal, `Hallo ${firstName}, dein Angebot mit 40% Black Friday Rabatt ansehen`, link)}
+${img(personal, `Hallo ${firstName}, dein Angebot mit 30% Black Friday Rabatt ansehen`, link)}
 ${img(`${ASSETS}/${WHY[kind]}`, kind === 'mail2' ? 'Warum du nicht warten solltest' : 'Warum jetzt? Bestpreis des Jahres, Änderungen gratis, kostenloser Versand, ein Klick', link)}
 ${img(`${ASSETS}/kontakt.png`, 'Noch Fragen? Antworte einfach auf diese E-Mail oder schreib an info@neonframe.de', 'mailto:info@neonframe.de')}
 <tr><td align="center" bgcolor="#08080b" style="${FONT}background:#08080b;padding:26px 20px 30px;font-size:12px;line-height:18px;color:#4b5563">
@@ -84,8 +84,8 @@ export async function POST(req) {
     const personal = await storeImage(o.id, kind)
     // Betreff mit echter Ersparnis bzw. Resttagen
     let subj = SUBJECT[kind]
-    const vk = currentVk(o)
-    if (kind === 'mail1' && vk > 0) subj = `Black Friday: Du sparst ${(Math.round((vk / 0.6 - vk) * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € auf dein Neon-Schild`
+    const { list, now } = bwListNow(o)
+    if (kind === 'mail1' && now > 0) subj = `Black Friday: Du sparst ${(Math.round((list - now) * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € auf dein Neon-Schild`
     if (kind === 'mail2') {
       const days = Math.floor((new Date((await getBW(sb)).end).getTime() - Date.now()) / 864e5)
       subj = days >= 2 ? `Nur noch ${days} Tage: Dein Black Friday Preis läuft ab` : days === 1 ? 'Nur noch 1 Tag: Dein Black Friday Preis läuft ab' : 'Nur noch heute: Dein Black Friday Preis läuft ab'
