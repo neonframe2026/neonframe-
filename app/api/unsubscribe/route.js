@@ -2,7 +2,12 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req) {
   try {
-    const { id, reason, comment } = await req.json()
+    // JSON von der Abmelde-Seite oder "Ein-Klick-Abmelden" aus Gmail/Apple Mail (?id=..., ohne JSON)
+    const url = new URL(req.url)
+    const body = (req.headers.get('content-type') || '').includes('application/json') ? await req.json() : {}
+    const id = body.id || url.searchParams.get('id')
+    const reason = body.reason || (url.searchParams.get('id') ? 'Abmelde-Button im Mailprogramm' : '')
+    const comment = body.comment
     if (!id || !reason) {
       return Response.json({ error: 'Angaben fehlen' }, { status: 400 })
     }
