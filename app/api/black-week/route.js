@@ -20,7 +20,7 @@ export async function POST(req) {
     let mailSent = false, mailError = null
     if (on && mail && o.customer_email && !o.unsubscribed && o.status !== 'unsubscribed') {
       try {
-        const r = await fetch(`${SITE}/api/bw-mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, kind: 'switch' }) })
+        const r = await fetch(`${SITE}/api/bw-mail`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.SUPABASE_SERVICE_ROLE_KEY || '' }, body: JSON.stringify({ offerId: o.id, kind: 'switch' }) })
         const j = await r.json().catch(() => ({}))
         if (!j.success) throw new Error(j.error || 'Mail fehlgeschlagen')
         mailSent = true
