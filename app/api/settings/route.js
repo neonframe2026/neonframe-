@@ -43,6 +43,7 @@ export async function PATCH(req) {
         await sb.from('settings').upsert({ key, value: { ...clean, on: true }, updated_at: new Date().toISOString() })
         deactivated = await endBlackWeek(sb)
       } else {
+        if (!before.on && clean.on) clean.started_at = new Date().toISOString()
         const { error } = await sb.from('settings').upsert({ key, value: clean, updated_at: new Date().toISOString() })
         if (error) throw new Error(error.message)
       }
