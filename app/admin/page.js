@@ -1437,6 +1437,367 @@ function CSeg({ label, value, opts, onChange }) {
 }
 // =================== ENDE ERSTELLEN (Design) ===================
 
+// ===================== ERSTELLEN (neu: Studio-Layout) =====================
+function NPCSS() {
+  return <style>{`
+    .np-grid{display:grid;grid-template-columns:420px minmax(0,1fr);gap:22px;max-width:1300px;margin:0 auto;padding:26px 24px 30px}
+    .np-left{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;gap:12px}
+    .np-card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .np-ttl{font-weight:800;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .np-num{width:22px;height:22px;border-radius:50%;background:${C_NEON}26;color:${C_NEON};font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .np-r3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px}
+    .np-r2{display:grid;grid-template-columns:1fr 1.4fr;gap:12px}
+    .np-seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+    .np-slot{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--input-bg)}
+    .np-slot img{width:100%;height:100%;object-fit:cover;display:block}
+    .np-slot .np-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,.45);opacity:0;transition:.15s}
+    .np-slot:hover .np-ov{opacity:1}
+    .np-ov button{background:rgba(255,255,255,.9);border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:13px}
+    .np-empty{border:1px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-faint);font-size:12px;font-weight:600;cursor:pointer}
+    .np-empty:hover{border-color:${C_NEON};color:${C_NEON}}
+    .np-badge{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:7px}
+    .np-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text);background:var(--input-bg);cursor:pointer;font-family:inherit}
+    .np-sbtn{cursor:pointer;font-size:12px;font-weight:700;color:${C_NEON};border:1px solid ${C_NEON}88;border-radius:8px;padding:5px 9px;background:transparent;font-family:inherit;white-space:nowrap}
+    .np-sbtn:disabled{opacity:.35;cursor:not-allowed}
+    .np-bar{position:sticky;bottom:0;z-index:40;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(8px);border-top:1px solid var(--border);padding:12px 24px}
+    .np-bar-in{max-width:1300px;margin:0 auto;display:flex;align-items:center;gap:18px}
+    .np-price{font-size:28px;font-weight:900;white-space:nowrap}
+    .np-more{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border:1px dashed var(--border);border-radius:14px;color:var(--text-muted);font-weight:600;cursor:pointer;background:transparent;width:100%;font-family:inherit;font-size:14px;text-align:left}
+    .np-spin{width:54px;height:54px;border-radius:50%;border:4px solid ${C_NEON}33;border-top-color:${C_NEON};animation:npspin 1s linear infinite;margin:6px auto 0}
+    @keyframes npspin{to{transform:rotate(360deg)}}
+    .np-only-m{display:none}
+    @media (max-width: 900px){
+      .np-grid{grid-template-columns:minmax(0,1fr);padding:14px 12px 20px;gap:14px}
+      .np-left{position:static}
+      .np-r3{grid-template-columns:1fr 1fr}
+      .np-r3 > :last-child{grid-column:1 / 3}
+      .np-r2,.np-seg3{grid-template-columns:minmax(0,1fr)}
+      .np-bar{padding:10px 12px}
+      .np-only-d{display:none !important}
+      .np-only-m{display:block}
+      .np-price{font-size:22px}
+    }
+  `}</style>
+}
+
+const npNum = (v) => { const t = String(v ?? '').trim(); return (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0 }
+const npEur = (n) => (Math.round(n * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+
+// Bilder: 3 Stück im 16:9-Format + kleines Checkout-Bild (1:1)
+function NPImages({ imgSrcs, setImgSrcs, checkoutImg, setCheckoutImg }) {
+  const [crop, setCrop] = useState(null)
+  const fill = (files) => {
+    Promise.all(Array.from(files).map(f => compressImage(f))).then(list => setImgSrcs(prev => {
+      const n = [prev[0] || null, prev[1] || null, prev[2] || null]
+      for (const d of list) { const i = n.findIndex(x => !x); if (i < 0) break; n[i] = d }
+      while (n.length && !n[n.length - 1]) n.pop()
+      return n
+    })).catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
+  }
+  const swap = (a, b) => setImgSrcs(prev => { const n = [prev[0] || null, prev[1] || null, prev[2] || null]; [n[a], n[b]] = [n[b], n[a]]; while (n.length && !n[n.length - 1]) n.pop(); return n })
+  const del = (i) => setImgSrcs(prev => { const n = [prev[0] || null, prev[1] || null, prev[2] || null]; n[i] = null; while (n.length && !n[n.length - 1]) n.pop(); return n })
+  const slot = (i) => {
+    const src = imgSrcs[i]
+    if (!src) return (
+      <label key={i} className="np-slot np-empty" htmlFor="np-img-upload">
+        <span style={{ fontSize: 22, lineHeight: 1 }}>+</span>Bild {i + 1}
+      </label>
+    )
+    return (
+      <div key={i} className="np-slot">
+        <img src={src} alt="" />
+        <span className="np-badge">{i + 1}</span>
+        <div className="np-ov">
+          {i > 0 && <button type="button" onClick={() => swap(i, i - 1)}>←</button>}
+          <button type="button" onClick={() => del(i)} style={{ background: 'rgba(220,38,38,.92)', color: '#fff' }}>✕</button>
+          {i < 2 && <button type="button" onClick={() => swap(i, i + 1)}>→</button>}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <>
+      <input id="np-img-upload" type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => { fill(e.target.files); e.target.value = '' }} />
+      {slot(0)}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>{slot(1)}{slot(2)}</div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-faint)', marginTop: -4 }}>3 Bilder · 16:9 · Bild 1 ist das Hauptbild</div>
+      <div className="np-card" style={{ padding: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+        <label htmlFor="np-checkout-upload" style={{ width: 84, height: 84, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', position: 'relative' }}>
+          {checkoutImg ? <img src={checkoutImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : imgSrcs[1] ? <><img src={imgSrcs[1]} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: .55 }} /><span style={{ position: 'absolute', bottom: 4, fontSize: 9.5, fontWeight: 800, color: '#fff', background: 'rgba(0,0,0,.6)', padding: '1px 6px', borderRadius: 6 }}>AUTO</span></>
+            : <span style={{ fontSize: 26 }}>🛒</span>}
+        </label>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 13.5 }}>Checkout-Bild <span style={{ color: 'var(--text-faint)', fontWeight: 600 }}>1:1</span></div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            <label htmlFor="np-checkout-upload" className="np-sbtn">⬆ Hochladen</label>
+            <button type="button" className="np-sbtn" disabled={!imgSrcs[0]} onClick={() => setCrop(imgSrcs[0])}>✂ Aus Bild 1</button>
+            <button type="button" className="np-sbtn" disabled={!imgSrcs[1]} onClick={() => setCrop(imgSrcs[1])}>✂ Aus Bild 2</button>
+            {checkoutImg && <button type="button" className="np-sbtn" onClick={() => setCheckoutImg(null)} style={{ color: '#ef4444', borderColor: '#ef444466' }}>✕</button>}
+          </div>
+          {!checkoutImg && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Ohne eigenes Bild wird Bild 2 genommen.</div>}
+        </div>
+        <input id="np-checkout-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+          const f = e.target.files?.[0]; e.target.value = ''
+          if (f) compressImage(f).then(setCheckoutImg).catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
+        }} />
+      </div>
+      {crop && <CropModal src={crop} onClose={() => setCrop(null)} onDone={d => { setCheckoutImg(d); setCrop(null) }} />}
+    </>
+  )
+}
+
+// Popup: Bestätigen -> Wird veröffentlicht -> Fertig
+function NPPublishModal({ info, onClose, onPublish, onNew, onOpen }) {
+  const [stage, setStage] = useState('confirm')
+  const [step, setStep] = useState(0)
+  const [res, setRes] = useState(null)
+  const [err, setErr] = useState('')
+  const [copied, setCopied] = useState(false)
+  const steps = ['Bilder hochladen', 'Angebotsseite erstellen', 'Shopify-Checkout erstellen', info.email ? `Mail an ${info.name || 'Kunden'}` : 'Abschluss']
+  async function go() {
+    setStage('run'); setStep(0); setErr('')
+    try { const r = await onPublish(i => setStep(i)); setRes(r); setStage('done') }
+    catch (e) { setErr(e.message || 'Fehler'); setStage('confirm') }
+  }
+  const row = (l, v, st) => <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px dashed var(--border)', fontSize: 14, ...st }}><span style={{ color: 'var(--text-muted)' }}>{l}</span><span style={{ fontWeight: 700, textAlign: 'right', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{v}</span></div>
+  const btn = { flex: 1, borderRadius: 12, padding: '12px 14px', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }
+  const busy = stage === 'run'
+  return (
+    <div onClick={() => !busy && stage !== 'done' && onClose()} style={{ position: 'fixed', inset: 0, background: 'rgba(3,6,12,.72)', display: 'grid', placeItems: 'center', padding: 16, zIndex: 10000 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(440px,100%)', background: 'var(--panel)', border: `1px solid ${C_NEON}55`, borderRadius: 22, padding: 24, boxShadow: `0 30px 80px rgba(0,0,0,.6),0 0 40px ${C_NEON}1f`, color: 'var(--text)' }}>
+        {stage === 'confirm' && <>
+          <div style={{ fontSize: 20, fontWeight: 800 }}>Angebot veröffentlichen?</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Bitte kurz prüfen.</div>
+          <div style={{ marginTop: 14 }}>
+            {row('Kunde', info.name || '–')}
+            {row('Schild', info.size || '–')}
+            {row('Preis', <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{info.bw && <BWTag small />}{info.list > info.total + 0.01 && <s style={{ color: 'var(--text-faint)', fontWeight: 400, fontSize: 12 }}>{npEur(info.list)}</s>}{npEur(info.total)}</span>)}
+            {info.gain != null && row('Dein Gewinn ca.', npEur(info.gain), { color: info.gain > 0 ? '#22c55e' : '#ef4444', borderBottom: 0 })}
+          </div>
+          <div style={{ marginTop: 12, background: `${C_NEON}14`, border: `1px solid ${C_NEON}4d`, borderRadius: 12, padding: 12, fontSize: 12.5, lineHeight: 1.7 }}>
+            {info.email ? <div>✉️ {info.name || 'Der Kunde'} bekommt <b>sofort</b> die Angebots-Mail an <b>{info.email}</b></div> : <div style={{ color: '#f59e0b' }}>⚠️ Keine E-Mail eingetragen: es wird <b>keine</b> Mail verschickt.</div>}
+            <div>🛒 Der Shopify-Checkout wird automatisch erstellt</div>
+            {info.bw && info.email && <div>⏰ Black-Week-Erinnerung kommt automatisch nach 24 Std.</div>}
+          </div>
+          {info.missing.length > 0 && <div style={{ marginTop: 12, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 12px', fontSize: 12.5 }}>Es fehlt noch: <b>{info.missing.join(', ')}</b></div>}
+          {err && <div style={{ marginTop: 12, background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '10px 12px', fontSize: 12.5 }}>Fehler: {err}</div>}
+          <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+            <button onClick={onClose} style={{ ...btn, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}>Abbrechen</button>
+            <button disabled={info.missing.length > 0} onClick={go} style={{ ...btn, border: 'none', background: C_NEON, color: '#04101f', opacity: info.missing.length ? .4 : 1, cursor: info.missing.length ? 'not-allowed' : 'pointer' }}>🚀 Veröffentlichen</button>
+          </div>
+        </>}
+        {stage === 'run' && <div style={{ textAlign: 'center' }}>
+          <div className="np-spin" />
+          <div style={{ fontSize: 19, fontWeight: 800, marginTop: 16 }}>Wird veröffentlicht …</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>Bitte Fenster offen lassen.</div>
+          <div style={{ textAlign: 'left', margin: '18px auto 6px', width: 'fit-content', fontSize: 13.5, lineHeight: 2.1 }}>
+            {steps.map((s, i) => <div key={i} style={{ color: i < step ? '#22c55e' : i === step ? C_NEON : 'var(--text-faint)', fontWeight: i === step ? 700 : 500 }}>{i < step ? '✓' : i === step ? '◌' : '○'}&nbsp; {s}{i === step ? ' …' : ''}</div>)}
+          </div>
+          <div style={{ height: 6, borderRadius: 6, background: 'var(--input-bg)', overflow: 'hidden', marginTop: 10 }}><div style={{ height: '100%', width: `${Math.round(step / steps.length * 100)}%`, background: C_NEON, transition: 'width .4s' }} /></div>
+        </div>}
+        {stage === 'done' && res && <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 58, height: 58, borderRadius: '50%', background: '#22c55e22', color: '#22c55e', fontSize: 30, display: 'grid', placeItems: 'center', margin: '4px auto 0' }}>✓</div>
+          <div style={{ fontSize: 20, fontWeight: 800, marginTop: 12 }}>Angebot ist raus!</div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{res.mailTo ? `Mail an ${res.mailTo} gesendet.` : 'Es wurde keine Mail verschickt.'}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, alignItems: 'center' }}>
+            <input readOnly value={res.link} style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: '#22c55e', fontSize: 12, fontFamily: 'monospace' }} />
+            <button onClick={() => { navigator.clipboard.writeText(res.link).catch(() => {}); setCopied(true) }} className="np-sbtn">{copied ? '✓ Kopiert' : 'Kopieren'}</button>
+          </div>
+          {res.warnings?.length > 0 && <div style={{ marginTop: 10, textAlign: 'left', background: '#f59e0b1a', border: '1px solid #f59e0b55', color: '#f59e0b', borderRadius: 10, padding: '8px 12px', fontSize: 12.5 }}>{res.warnings.map((w, i) => <div key={i}>⚠️ {w}</div>)}</div>}
+          <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+            <button onClick={onNew} style={{ ...btn, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)' }}>Neues Angebot</button>
+            <button onClick={() => onOpen(res.dbId)} style={{ ...btn, border: 'none', background: C_NEON, color: '#04101f' }}>Zum Angebot</button>
+          </div>
+        </div>}
+      </div>
+    </div>
+  )
+}
+
+function CreatePage(p) {
+  const { fRef, formKey, updText, updSelect, selects, toggleColor, imgSrcs, setImgSrcs, checkoutImg, setCheckoutImg,
+    tncLink, setTncLink, handleTNC, parseStatus, handlePDF, resetForm, origVk, setOrigVk, endPrice, setEndPrice, mk, markup, bwNew,
+    sizeRows, setSizeRows, priceInputs, updPrice, prices, openPreview, previewLoading, showPreviewModal, setShowPreviewModal,
+    publish, offers, setTab, theme, toggleTheme, onLogout, onOpenOffer } = p
+  const [showSizes, setShowSizes] = useState(false)
+  const [showMore, setShowMore] = useState(false)
+  const [allColors, setAllColors] = useState(false)
+  const [ask, setAsk] = useState(false)
+  const f = fRef.current
+  const vk = npNum(origVk)
+  const vat = 1 + (parseFloat(priceInputs.vat) || 19) / 100
+  const gain = vk > 0 && prices.total > 0 ? prices.total / vat - vk / 1.35 : null
+  const loading = parseStatus?.type === 'loading'
+
+  const selColors = f.color.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  const shownColors = allColors ? COLOR_OPTIONS : COLOR_OPTIONS.filter((c, i) => i < 8 || selColors.includes(c.toLowerCase()))
+  const extraColors = COLOR_OPTIONS.length - shownColors.length
+
+  const sz = cleanSizeRows(sizeRows) || []
+  const allW = [npNum(f.w), ...sz.map(r => r.w)].filter(Boolean)
+  const pays = sz.map(r => r.vk * mk)
+  const sizeSum = sz.length ? `${sz.length + 1} Größen · ${Math.min(...allW)} bis ${Math.max(...allW)} cm · bis ${npEur(Math.max(...pays))}` : 'Nur eine feste Größe'
+
+  const missing = []
+  if (!String(f.project || '').trim()) missing.push('Kundenname')
+  if (!(prices.total > 0)) missing.push('Preis')
+  if (!imgSrcs[0]) missing.push('Bild 1')
+  const info = { name: f.project, email: f.customerEmail, size: f.w && f.h ? `${f.w} × ${f.h} cm` : '', total: prices.total, list: prices.rrp, bw: bwNew, gain, missing }
+
+  const red = offers.filter(mIsRed).length
+  const seg = (v) => ({ value: v, label: v })
+  return (
+    <div className="nf-admin" data-theme={theme} style={{ position: 'fixed', inset: 0, overflowY: 'auto', background: 'var(--bg)', color: 'var(--text)', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif' }}>
+      <ThemeVars /><CCSS /><NPCSS />
+      {showPreviewModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--panel)', borderBottom: '1px solid var(--border)', padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <span style={{ fontWeight: 700, fontSize: 15 }}>👁 Vorschau</span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowPreviewModal(null)} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>✕ Schließen</button>
+              <button onClick={() => { setShowPreviewModal(null); setAsk(true) }} style={{ background: C_NEON, color: '#0a0a0a', border: 'none', borderRadius: 8, padding: '8px 20px', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>🚀 Veröffentlichen</button>
+            </div>
+          </div>
+          <iframe src={showPreviewModal} style={{ flex: 1, border: 'none', width: '100%', background: '#fff' }} title="Vorschau" />
+        </div>
+      )}
+      {ask && <NPPublishModal info={info} onClose={() => setAsk(false)} onPublish={publish} onNew={() => { setAsk(false); resetForm(); setTncLink('') }} onOpen={(id) => { setAsk(false); resetForm(); setTncLink(''); onOpenOffer(id) }} />}
+
+      <div className="nf-top" style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', borderBottom: '1px solid #1f2937', position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{ height: 40, cursor: 'pointer' }} />
+          <button style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, border: `1px solid ${C_NEON}66`, background: `${C_NEON}1a`, color: C_NEON, cursor: 'default', fontFamily: 'inherit' }}>Erstellen</button>
+          <button onClick={() => setTab('manage')} style={{ position: 'relative', padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: 'transparent', color: '#9ca3af', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Verwalten
+            {red > 0 && <span style={{ position: 'absolute', top: -6, right: -8, background: '#dc2626', color: '#fff', borderRadius: 10, minWidth: 18, height: 18, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', lineHeight: 1 }}>{red}</span>}
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          <button className="nf-logout" onClick={onLogout} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#9ca3af', borderRadius: 8, padding: '8px 14px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Abmelden</button>
+        </div>
+      </div>
+
+      <div className="np-grid">
+        <div className="np-left">
+          <NPImages imgSrcs={imgSrcs} setImgSrcs={setImgSrcs} checkoutImg={checkoutImg} setCheckoutImg={setCheckoutImg} />
+          <div className="np-card np-only-d">
+            <div style={cLbl}>So sieht es der Kunde</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed var(--border)', fontSize: 14 }}><span style={{ color: 'var(--text-muted)' }}>Listenpreis</span><s style={{ color: 'var(--text-faint)' }}>{prices.rrp > 0 ? npEur(prices.rrp) : '–'}</s></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px dashed var(--border)', fontSize: 14 }}>{bwNew ? <BWTag /> : <span style={{ color: 'var(--text-muted)' }}>Rabatt {selects.discType === 'pct' ? `${priceInputs.discVal}%` : ''}</span>}<span style={{ color: C_NEON, fontWeight: 800 }}>{prices.rrp > prices.total ? `− ${npEur(prices.rrp - prices.total)}` : '–'}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 0', fontSize: 14 }}><b>Gesamt</b><b style={{ fontSize: 18 }}>{prices.total > 0 ? npEur(prices.total) : '–'}</b></div>
+          </div>
+        </div>
+
+        <div key={formKey} style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+          <div className="np-card">
+            <div className="np-ttl"><span className="np-num">1</span>TNC-Angebot</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input className="nf-cin" style={{ ...cIn, flex: 1, minWidth: 0 }} value={tncLink} onChange={e => setTncLink(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleTNC() }} placeholder="TNC-Nummer oder Link aus Kenzos Mail" />
+              <button className="nf-cb" onClick={() => handleTNC()} disabled={loading} style={{ background: C_NEON, border: 'none', color: '#04101f', borderRadius: 12, padding: '0 18px', fontSize: 14, fontWeight: 800, cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', opacity: loading ? .7 : 1 }}>{loading ? '⏳ Lädt …' : '⚡ Laden'}</button>
+            </div>
+            {parseStatus && <div style={{ fontSize: 12.5, marginTop: 10, color: parseStatus.type === 'ok' ? '#22c55e' : parseStatus.type === 'err' ? '#ef4444' : '#f59e0b' }}>{parseStatus.type === 'ok' ? '✓ ' : ''}{parseStatus.msg}</div>}
+          </div>
+
+          <div className="np-card">
+            <div className="np-ttl"><span className="np-num">2</span>Kunde</div>
+            <div className="np-r2">
+              <div><label style={cLbl}>Name</label><input className="nf-cin" style={cIn} defaultValue={f.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" /></div>
+              <div><label style={cLbl}>E-Mail</label><input className="nf-cin" type="email" style={cIn} defaultValue={f.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" /></div>
+            </div>
+          </div>
+
+          <div className="np-card">
+            <div className="np-ttl"><span className="np-num">3</span>Schild</div>
+            <div className="np-r3">
+              <div><label style={cLbl}>Breite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={f.w} onChange={e => updText('w', e.target.value)} /></div>
+              <div><label style={cLbl}>Höhe (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={f.h} onChange={e => updText('h', e.target.value)} /></div>
+              <div><label style={cLbl}>Empf. VK (TNC)</label><input className="nf-cin" type="text" inputMode="decimal" style={cIn} value={origVk} placeholder="z.B. 673,65" onChange={e => {
+                const v = e.target.value; setOrigVk(v)
+                const n = npNum(v); if (n > 0) setEndPrice((Math.round(n * mk * 100) / 100).toFixed(2))
+              }} /></div>
+            </div>
+            <label style={{ ...cLbl, marginTop: 14 }}>Farben</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {shownColors.map(c => {
+                const act = selColors.includes(c.toLowerCase())
+                return <button key={c} type="button" className="np-chip" onClick={() => toggleColor(c)} style={act ? { borderColor: colorDot(c), background: colorDot(c) + '22', boxShadow: `0 0 10px ${colorDot(c)}55` } : null}><span style={{ width: 9, height: 9, borderRadius: '50%', background: colorDot(c) }} />{c}</button>
+              })}
+              {extraColors > 0 && <button type="button" className="np-chip" onClick={() => setAllColors(true)}>+{extraColors}</button>}
+            </div>
+            <div className="np-seg3">
+              <CSeg label="Rückwand" value={selects.backplate} opts={BACKPLATE_OPTIONS.map(seg)} onChange={v => updSelect('backplate', v)} />
+              <CSeg label="Rückwandfarbe" value={selects.backplate_color} opts={BACKPLATE_COLOR_OPTIONS.map(seg)} onChange={v => updSelect('backplate_color', v)} />
+              <CSeg label="Verwendung" value={selects.usage} opts={USAGE_OPTIONS.map(v => ({ value: v, label: v.replace(' IP65', '') }))} onChange={v => updSelect('usage', v)} />
+            </div>
+          </div>
+
+          <div className="np-card">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <div className="np-ttl" style={{ margin: 0 }}><span className="np-num">4</span>Größen für den Kunden</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-faint)', marginTop: 6, marginLeft: 30 }}>{sizeSum}</div>
+              </div>
+              <button type="button" className="np-sbtn" onClick={() => setShowSizes(s => !s)} style={{ padding: '8px 14px' }}>{showSizes ? 'Zuklappen ▴' : 'Anzeigen ▾'}</button>
+            </div>
+            {showSizes && <div style={{ marginTop: 14 }}><SizeTable rows={sizeRows} onChange={setSizeRows} lblStyle={cLbl} inStyle={cIn} factor={mk} /></div>}
+          </div>
+
+          <button type="button" className="np-more" onClick={() => setShowMore(s => !s)}>
+            <span>⚙️ Erweitert <span style={{ fontWeight: 400, color: 'var(--text-faint)' }}>· Rabatt, MwSt., Lieferdatum, Notiz, PDF</span></span><span>{showMore ? '▾' : '▸'}</span>
+          </button>
+          {showMore && <div className="np-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="np-r2">
+              <div><label style={cLbl}>Angebotsnummer (TNC)</label><input className="nf-cin" style={cIn} defaultValue={f.num} onChange={e => updText('num', e.target.value)} /></div>
+              <div><label style={cLbl}>Endpreis brutto (selbst festlegen)</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" /></div>
+            </div>
+            <div className="np-r3">
+              <CSeg label="Rabatt-Typ" value={selects.discType} opts={[{ value: 'pct', label: '%' }, { value: 'eur', label: '€' }]} onChange={v => updSelect('discType', v)} />
+              <div><label style={cLbl}>{`Rabatt (${selects.discType === 'pct' ? '%' : '€'})`}</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={priceInputs.discVal} onChange={e => updPrice('discVal', e.target.value)} /></div>
+              <div><label style={cLbl}>MwSt. (%)</label><input className="nf-cin" type="number" step="0.1" style={cIn} value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} /></div>
+            </div>
+            <div><label style={cLbl}>Lieferdatum</label><input className="nf-cin" style={cIn} defaultValue={f.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" /></div>
+            <div><label style={cLbl}>Notiz für den Kunden</label>
+              <select className="nf-cin" style={{ ...cIn, marginBottom: 8, cursor: 'pointer' }} value="" onChange={e => { const t = e.target.value; if (!t) return; const ta = document.getElementById('nf-customer-note'); const v = ta.value ? ta.value + '\n' + t : t; ta.value = v; updText('customerNote', v); ta.focus() }}>
+                <option value="">Fertigen Text einfügen …</option>
+                <option value={'"TEXT" wird hochwertig per UV-Druck umgesetzt.'}>UV-Druck</option>
+                <option value="Das Neonschild muss mit einer Rückwand geliefert werden. Dies ist bei diesem Entwurf die einzig mögliche Ausführung und sorgt gleichzeitig für das schönste Ergebnis.">Rückwand notwendig</option>
+              </select>
+              <textarea id="nf-customer-note" className="nf-cin" style={{ ...cIn, minHeight: 80, resize: 'vertical', lineHeight: 1.5 }} defaultValue={f.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <label className="nf-cdrop" htmlFor="pdf-upload" style={{ ...cDrop, flex: 1, padding: '11px 14px' }}>
+                <input id="pdf-upload" type="file" accept=".pdf" style={{ display: 'none' }} onChange={handlePDF} />📄 PDF hochladen <span style={{ color: 'var(--text-faint)' }}>(automatisch ausfüllen)</span>
+              </label>
+              <button className="nf-cb" onClick={() => { if (confirm('Alles zurücksetzen?')) { resetForm(); setTncLink('') } }} style={{ background: '#ef44441a', border: '1px solid #ef444455', color: '#ef4444', borderRadius: 12, padding: '0 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>↺ Reset</button>
+            </div>
+          </div>}
+        </div>
+      </div>
+
+      <div className="np-bar">
+        <div className="np-bar-in">
+          <div style={{ minWidth: 0 }}>
+            <div className="np-only-d" style={{ ...cLbl, margin: 0 }}>Kunde zahlt</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              {prices.rrp > prices.total + 0.01 && <s className="np-only-d" style={{ color: 'var(--text-faint)', fontSize: 14 }}>{npEur(prices.rrp)}</s>}
+              <span className="np-price">{prices.total > 0 ? npEur(prices.total) : '–'}</span>
+              {bwNew && <BWTag small />}
+            </div>
+            {gain != null && <div className="np-only-m" style={{ whiteSpace: 'nowrap', fontSize: 11.5, color: gain > 0 ? '#22c55e' : '#ef4444', fontWeight: 700 }}>Gewinn ca. {npEur(gain)}</div>}
+          </div>
+          {gain != null && <div className="np-only-d" style={{ marginLeft: 8 }}><div style={{ ...cLbl, margin: 0 }}>Dein Gewinn ca.</div><div style={{ fontWeight: 800, color: gain > 0 ? '#22c55e' : '#ef4444', fontSize: 18 }}>{npEur(gain)}</div></div>}
+          <span style={{ flex: 1 }} />
+          <button className="nf-cb" onClick={openPreview} disabled={previewLoading} style={{ background: 'transparent', border: `1px solid ${C_NEON}`, color: C_NEON, borderRadius: 12, padding: '12px 16px', fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: previewLoading ? 'wait' : 'pointer', whiteSpace: 'nowrap', opacity: previewLoading ? .7 : 1 }}>{previewLoading ? '⏳' : '👁'}<span className="np-only-d" style={{ display: 'inline' }}> {previewLoading ? 'Lädt …' : 'Vorschau'}</span></button>
+          <button className="nf-cb" onClick={() => setAsk(true)} style={{ background: C_NEON, border: 'none', color: '#04101f', borderRadius: 12, padding: '12px 18px', fontSize: 14, fontWeight: 900, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>🚀 Veröffentlichen</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+// =================== ENDE ERSTELLEN (neu) ===================
+
 // Änderung von TNC: Vorher/Nachher anzeigen und mit einem Klick übernehmen
 function TncUpdatePage({ id, onBack }) {
   const [d, setD] = useState(null)
@@ -1890,69 +2251,93 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
     }
   }
 
-  async function publish() {
+  // Vorschau: Entwurf (nicht veröffentlicht) speichern und Angebotsseite im Popup zeigen
+  async function uploadOfferImages(tag) {
+    const out = [null, null, null]
+    for (let i = 0; i < 3; i++) {
+      const src = imgSrcs[i]
+      if (!src) continue
+      if (!src.startsWith('data')) { out[i] = src; continue }
+      const blob = await (await fetch(src)).blob()
+      const fd = new FormData(); fd.append('file', blob, `offer-${tag}${Date.now()}-${i}.jpg`); fd.append('offerId', fRef.current.num || 'new')
+      const up = await fetch('/api/upload', { method: 'POST', body: fd })
+      const upData = await up.json()
+      if (!upData.url) throw new Error(`Bild ${i + 1} konnte nicht hochgeladen werden`)
+      out[i] = upData.url
+    }
+    return out
+  }
+  function offerPayload(f, imgs, published) {
+    return {
+      offer_num: f.num, project: f.project,
+      width: f.w, height: f.h,
+      backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
+      colors: f.color,
+      base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
+      disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
+      net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
+      delivery: f.delivery,
+      checkout_url: f.url || null,
+      customer_note: f.customerNote || null,
+      customer_email: f.customerEmail || null,
+      valid_until: f.validUntil || null,
+      status: f.status || 'offer_sent',
+      size_warning_enabled: f.sizeWarningEnabled || false,
+      size_warning_text: f.sizeWarningText || null,
+      size_options: cleanSizeRows(sizeRows), markup, black_week: bwNew,
+      preview_image: imgs[0], preview_image_2: imgs[1], preview_image_3: imgs[2],
+      published,
+    }
+  }
+  async function saveOffer(payload) {
+    if (previewOfferDbId) {
+      const res = await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) throw new Error(data.error || 'Speichern fehlgeschlagen')
+      return { offerId: previewOfferId, dbId: previewOfferDbId }
+    }
+    const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || data.error) throw new Error(data.error || 'Speichern fehlgeschlagen')
+    const offerId = data.custom_id || data.id
+    setPreviewOfferId(offerId); setPreviewOfferDbId(data.id)
+    return { offerId, dbId: data.id }
+  }
+  async function openPreview() {
+    setPreviewLoading(true)
+    try {
+      const f = { ...fRef.current, ...selects, ...priceInputs }
+      const imgs = await uploadOfferImages('prev-')
+      const { offerId } = await saveOffer(offerPayload(f, imgs, false))
+      setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
+    } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
+    finally { setPreviewLoading(false) }
+  }
+
+  // Veröffentlichen: onStep(0..4) meldet den Fortschritt fürs Lade-Popup, Fehler werden geworfen
+  async function publish(onStep = () => {}) {
     setPublishing(true)
     const f = { ...fRef.current, ...selects, ...priceInputs }
+    const warnings = []
     try {
-      const uploadedImgs = [null, null, null]
-      for (let i = 0; i < 3; i++) {
-        if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
-          const blob = await (await fetch(imgSrcs[i])).blob()
-          const fd = new FormData(); fd.append('file', blob, `offer-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'new')
-          const up = await fetch('/api/upload', { method: 'POST', body: fd })
-          const upData = await up.json()
-          if (upData.url) uploadedImgs[i] = upData.url
-        }
-      }
-
-      const payload = {
-        offer_num: f.num, project: f.project,
-        width: f.w, height: f.h,
-        backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
-        colors: f.color,
-        base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
-        disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
-        net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-        delivery: f.delivery,
-        checkout_url: f.url,
-        customer_note: f.customerNote || null,
-        customer_email: f.customerEmail || null,
-        valid_until: f.validUntil || null,
-        status: f.status || 'offer_sent',
-        size_warning_enabled: f.sizeWarningEnabled || false,
-        size_warning_text: f.sizeWarningText || null,
-        size_options: cleanSizeRows(sizeRows), markup, black_week: bwNew,
-        preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
-        published: true,
-      }
-
-let offerId = previewOfferId
-      let dbId = previewOfferDbId
-      if (offerId) {
-        const res = await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        const data = await res.json()
-        if (data.error) throw new Error(data.error)
-      } else {
-        const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        const data = await res.json()
-        if (data.error) throw new Error(data.error)
-offerId = data.custom_id || data.id
-        dbId = data.id
-        setPreviewOfferDbId(data.id)
-      }
+      onStep(0)
+      const uploadedImgs = await uploadOfferImages('')
+      onStep(1)
+      const { offerId, dbId } = await saveOffer(offerPayload(f, uploadedImgs, true))
       const offerLink = `${window.location.origin}/angebot/${offerId}`
+      onStep(2)
 
       // Shopify: verstecktes Produkt mit Kundenbild + Bestellentwurf automatisch anlegen
       let checkoutUrl = f.url || null
-      let shopifyMsg = ''
       try {
-        const squareUrl = checkoutImg ? await uploadCheckoutImage(checkoutImg, dbId) : await makeSquareUpload(imgSrcs[1] || uploadedImgs[1] || imgSrcs[0] || uploadedImgs[0], dbId)
+        const squareUrl = checkoutImg ? await uploadCheckoutImage(checkoutImg, dbId) : await makeSquareUpload(uploadedImgs[1] || uploadedImgs[0], dbId)
         if (checkoutImg && squareUrl) await fetch(`/api/offers?id=${dbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checkout_image: squareUrl }) })
         const sr = await fetch('/api/offer-shopify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: dbId, imageUrl: squareUrl, refreshImage: true }) })
         const sd = await sr.json()
-        if (sd.checkoutUrl) { checkoutUrl = sd.checkoutUrl; shopifyMsg = '\n\n✅ Shopify-Bestellentwurf erstellt' }
-        else shopifyMsg = `\n\n⚠️ Shopify: ${sd.error || 'Fehler'}`
-      } catch (e) { shopifyMsg = `\n\n⚠️ Shopify: ${e.message}` }
+        if (sd.checkoutUrl) checkoutUrl = sd.checkoutUrl
+        else warnings.push(`Shopify: ${sd.error || 'Fehler'}`)
+      } catch (e) { warnings.push(`Shopify: ${e.message}`) }
+      onStep(3)
 
       const draftRes = await fetch('/api/draft-order', {
         method: 'POST',
@@ -1980,29 +2365,22 @@ offerId = data.custom_id || data.id
           variant: f.usage,
         }),
       })
-
-      const draftData = await draftRes.json()
-      let statusMsg = `Veröffentlicht!\n\nAngebotslink\n${offerLink}` + shopifyMsg
-
+      const draftData = await draftRes.json().catch(() => ({}))
+      let mailTo = null
       if (draftData.success) {
-if (draftData.checkoutUrl) {
-          await fetch(`/api/offers?id=${previewOfferDbId || offerId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ checkout_url: draftData.checkoutUrl }),
-          })
+        if (draftData.checkoutUrl) {
+          await fetch(`/api/offers?id=${dbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checkout_url: draftData.checkoutUrl }) })
         }
-        if (f.customerEmail) statusMsg += `\n\nKunden-E-Mail gesendet an ${f.customerEmail}`
+        if (f.customerEmail) mailTo = f.customerEmail
       } else {
-        statusMsg += `\n\n⚠️ Draft Order Fehler: ${draftData.error}`
+        warnings.push(`Mail/Bestellentwurf: ${draftData.error || 'Fehler'}`)
       }
+      onStep(4)
 
       setPublishedLink(offerLink)
       await navigator.clipboard.writeText(offerLink).catch(() => {})
-      alert(statusMsg)
-
-    } catch (err) { alert('Fehler: ' + err.message) }
-    finally { setPublishing(false) }
+      return { link: offerLink, dbId, mailTo, warnings }
+    } finally { setPublishing(false) }
   }
 
   async function loadOffers() {
@@ -2124,643 +2502,14 @@ if (tab === 'manage') return (
     />
   )
 
-if (tab === 'create') return (
-    <div className="nf-admin" data-theme={theme} style={{position:'fixed',inset:0,overflowY:'auto',background:'var(--bg)',color:'var(--text)',fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
-      <ThemeVars />
-      <CCSS />
-      {showPreviewModal && showPreviewModal !== null && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
-          <div style={{background:'var(--panel)',borderBottom:'1px solid var(--border)',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-            <span style={{fontWeight:700,fontSize:15,color:'var(--text)'}}>👁 Vorschau</span>
-            <div style={{display:'flex',gap:10}}>
-              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
-              <button onClick={() => { setShowPreviewModal(null); publish() }} style={{background:C_NEON,color:'#0a0a0a',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:800,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
-            </div>
-          </div>
-          <iframe src={showPreviewModal} style={{flex:1,border:'none',width:'100%',background:'#fff'}} title="Vorschau" />
-        </div>
-      )}
-
-      <div className="nf-top" style={{background:'#0a0a0a',height:64,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',borderBottom:'1px solid #1f2937',position:'sticky',top:0,zIndex:50}}>
-        <div style={{display:'flex',alignItems:'center',gap:18}}>
-          <img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NeonFrame" title="Zur Startseite" onClick={() => setTab('home')} style={{height:40,cursor:'pointer'}} />
-          <button style={{padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:700,border:`1px solid ${C_NEON}66`,background:`${C_NEON}1a`,color:C_NEON,cursor:'default',fontFamily:'inherit'}}>Erstellen</button>
-          <button onClick={() => setTab('manage')} style={{position:'relative',padding:'7px 16px',borderRadius:8,fontSize:13,fontWeight:600,border:'none',background:'transparent',color:'#9ca3af',cursor:'pointer',fontFamily:'inherit'}}>
-            Verwalten
-            {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:10,minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
-          </button>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button className="nf-logout" onClick={() => setAuthed(false)} style={{background:'transparent',border:'1px solid #2b2e36',color:'#9ca3af',borderRadius:8,padding:'8px 14px',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Abmelden</button>
-        </div>
-      </div>
-
-      <div className="nf-cmain" style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px 60px',display:'flex',flexDirection:'column',gap:16}}>
-        <h1 style={{margin:0,fontSize:30,fontWeight:900}}>Neues Angebot</h1>
-        {bwNew && <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',background:'#080709',border:'1px solid #22d3ee',borderRadius:12,padding:'12px 16px',fontSize:13,fontWeight:700,color:'#e5e7eb'}}><BWTag />Black Week läuft: normaler Listenpreis (empf. VK +{markup}%), darauf 30% Rabatt. Das Angebot wird automatisch als Black Week erstellt.</div>}
-
-        <CCard t="Dateien">
-          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="checkout-img-upload" dark cropSrc={imgSrcs[0]} />
-            <label className="nf-cdrop" htmlFor="multi-img-upload" style={{...cDrop,padding:'14px 16px',justifyContent:'center'}}>
-              <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
-                const files = Array.from(e.target.files)
-                Promise.all(files.map(file => compressImage(file)))
-                  .then(compressed => setImgSrcs(prev => [...prev, ...compressed]))
-                  .catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
-                e.target.value = ''
-              }} />
-              <span style={{fontSize:18}}>🖼️</span><span><b style={{color:'var(--text)'}}>Bilder hochladen</b> (max. 3 möglich)</span>
-            </label>
-            {imgSrcs.filter(Boolean).length > 0 && (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
-                {imgSrcs.map((src, idx) => src ? (
-                  <div key={idx} style={{position:'relative',borderRadius:10,overflow:'hidden',border:'1px solid var(--border)'}}>
-                    <img src={src} style={{width:'100%',height:90,objectFit:'cover',display:'block'}} alt="" />
-                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:4,background:'rgba(0,0,0,0.35)',opacity:0,transition:'.15s'}}
-                      onMouseEnter={e => e.currentTarget.style.opacity=1}
-                      onMouseLeave={e => e.currentTarget.style.opacity=0}>
-                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx>0){[n[idx-1],n[idx]]=[n[idx],n[idx-1]]}; return n })}
-                        style={{background:'rgba(255,255,255,0.85)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>←</button>
-                      <button onClick={() => setImgSrcs(prev => prev.filter((_,i) => i !== idx))}
-                        style={{background:'rgba(220,38,38,0.9)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12,color:'#fff'}}>✕</button>
-                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx<n.length-1){[n[idx],n[idx+1]]=[n[idx+1],n[idx]]}; return n })}
-                        style={{background:'rgba(255,255,255,0.85)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>→</button>
-                    </div>
-                    <div style={{position:'absolute',top:4,left:4,background:'rgba(0,0,0,0.6)',color:'#fff',fontSize:10,padding:'1px 6px',borderRadius:4}}>{idx+1}</div>
-                  </div>
-                ) : null)}
-              </div>
-            )}
-                          <div style={{display:'flex',gap:8}}>
-              <input className="nf-cin" style={{...cIn,flex:1}} value={tncLink} onChange={e => setTncLink(e.target.value)} placeholder="TNC-Link aus Kenzos Mail einfügen" />
-              <button className="nf-cb" onClick={handleTNC} style={{background:C_NEON,border:'none',color:'#04101f',borderRadius:12,padding:'0 16px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>⚡ Von TNC laden</button>
-            </div>
-            <div style={{display:'flex',gap:8}}>
-              <label className="nf-cdrop" htmlFor="pdf-upload" style={{...cDrop,flex:1,padding:'11px 14px'}}>
-                <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
-                📄 PDF hochladen <span style={{color:'var(--text-faint)'}}>(automatisch ausfüllen)</span>
-              </label>
-              <button className="nf-cb" onClick={resetForm} style={{background:'#ef44441a',border:'1px solid #ef444455',color:'#ef4444',borderRadius:12,padding:'0 16px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>↺ Reset</button>
-            </div>
-            {parseStatus && (
-              <div style={{fontSize:12,padding:'8px 12px',borderRadius:8,...(parseStatus.type==='ok'?{background:'#22c55e1a',border:'1px solid #22c55e55',color:'#22c55e'}:parseStatus.type==='err'?{background:'#ef44441a',border:'1px solid #ef444455',color:'#ef4444'}:{background:'#f59e0b1a',border:'1px solid #f59e0b55',color:'#f59e0b'})}}>{parseStatus.msg}</div>
-            )}
-          </div>
-        </CCard>
-
-        <CCard t="Angebotsdaten">
-          <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <div><label style={cLbl}>Angebotsnummer</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.num} onChange={e => updText('num', e.target.value)} placeholder="NF-1001" /></div>
-              <div><label style={cLbl}>Projekt / Kundenname</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" /></div>
-            </div>
-            <div><label style={cLbl}>Kunden-E-Mail</label><input className="nf-cin" type="email" style={{...cIn,borderColor:C_NEON+'55',background:C_NEON+'0d'}} defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" /></div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <div><label style={cLbl}>Breite (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></div>
-              <div><label style={cLbl}>Höhe (cm)</label><input className="nf-cin" type="number" style={cIn} defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></div>
-            </div>
-            <div>
-              <label style={cLbl}>Empf. VK (TNC) für diese Maße</label>
-              <input className="nf-cin" type="text" inputMode="decimal" style={cIn} value={origVk} placeholder="z.B. 673,65" onChange={e => {
-                const v = e.target.value; setOrigVk(v)
-                const t = v.trim(); const n = (t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t)) || 0
-                if (n > 0) setEndPrice((Math.round(n * mk * 100) / 100).toFixed(2))
-              }} />
-              {endPrice && origVk && <div style={{fontSize:11,color:'#22c55e',marginTop:5}}>+ {markup}%{bwNew ? ', Black Week -30%' : ''} → Endpreis € {endPrice} (unten automatisch eingetragen)</div>}
-            </div>
-            <div style={{borderTop:'1px solid rgba(128,128,128,.18)',paddingTop:12}}>
-              <span style={{...cLbl,marginBottom:8,display:'block'}}>Größen-Auswahl für den Kunden (optional)</span>
-              <SizeTable rows={sizeRows} onChange={setSizeRows} lblStyle={cLbl} inStyle={cIn} factor={mk} />
-            </div>
-          </div>
-        </CCard>
-
-        <CCard t="Farben" sub="klick zum Auswählen">
-          <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-              {COLOR_OPTIONS.map(c => {
-                const act = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
-                return (
-                  <button key={c} type="button" onClick={() => toggleColor(c)} style={{display:'inline-flex',alignItems:'center',gap:6,padding:'6px 11px',borderRadius:20,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',border:`1px solid ${act ? colorDot(c) : 'var(--border)'}`,background:act ? colorDot(c)+'22' : 'var(--input-bg)',color:'var(--text)',boxShadow:act ? `0 0 10px ${colorDot(c)}66` : 'none'}}>
-                    <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c)}} />{c}
-                  </button>
-                )
-              })}
-            </div>
-            <input className="nf-cin" style={cIn} defaultValue={fRef.current.color} onChange={e => updText('color', e.target.value)} placeholder="oder selbst eintippen, kommagetrennt – z.B. Soft Orange, Pink" />
-          </div>
-        </CCard>
-
-        <CCard t="Konfiguration">
-          <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            <CSeg label="Rückwandform" value={selects.backplate} opts={BACKPLATE_OPTIONS} onChange={v => updSelect('backplate', v)} />
-            <CSeg label="Rückwandfarbe" value={selects.backplate_color} opts={BACKPLATE_COLOR_OPTIONS} onChange={v => updSelect('backplate_color', v)} />
-            <CSeg label="Verwendungszweck" value={selects.usage} opts={USAGE_OPTIONS} onChange={v => updSelect('usage', v)} />
-          </div>
-        </CCard>
-
-        <div className="nf-g3" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
-          <CCard t="Preiskalkulation">
-            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div><label style={cLbl}>Endpreis (brutto)</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" />{parseFloat(priceInputs.basePrice) > 0 && <div style={{fontSize:11,color:'var(--text-faint)',marginTop:5}}>Listenpreis (netto) automatisch: € {parseFloat(priceInputs.basePrice).toFixed(2)}</div>}</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <CSeg label="Rabatt-Typ" value={selects.discType} opts={[{value:'pct',label:'Prozent %'},{value:'eur',label:'Euro €'}]} onChange={v => updSelect('discType', v)} />
-                <div><label style={cLbl}>{`Rabatt (${selects.discType==='pct'?'%':'€'})`}</label><input className="nf-cin" type="number" step="0.01" style={cIn} value={priceInputs.discVal} onChange={e => updPrice('discVal', e.target.value)} /></div>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <div><label style={cLbl}>MwSt. (%)</label><input className="nf-cin" type="number" step="0.1" style={cIn} value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} /></div>
-                <div><label style={cLbl}>Lieferdatum</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" /></div>
-              </div>
-              <div style={{background:`linear-gradient(135deg,${C_NEON}14,transparent)`,border:`1px solid ${C_NEON}44`,borderRadius:14,padding:14,display:'grid',gridTemplateColumns:'1fr 1fr 1.2fr',gap:10,alignItems:'end'}}>
-                <div><div style={{...cLbl,marginBottom:3}}>Netto</div><div style={{fontSize:15,fontWeight:800}}>{prices.net > 0 ? `€ ${prices.net.toFixed(2)}` : '–'}</div></div>
-                <div><div style={{...cLbl,marginBottom:3}}>+ MwSt.</div><div style={{fontSize:15,fontWeight:800}}>{prices.vatAmt > 0 ? `€ ${prices.vatAmt.toFixed(2)}` : '–'}</div></div>
-                <div style={{textAlign:'right'}}><div style={{...cLbl,marginBottom:3,color:C_NEON}}>Endpreis</div><div style={{fontSize:22,fontWeight:900,color:C_NEON,textShadow:`0 0 12px ${C_NEON}66`}}>{prices.total > 0 ? `€ ${prices.total.toFixed(2)}` : '–'}</div></div>
-              </div>
-            </div>
-          </CCard>
-
-          <CCard t="Weitere Einstellungen">
-            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:12}}>
-              <CSeg label="Status" value={selects.status} opts={STATUS_OPTIONS} onChange={v => updSelect('status', v)} />
-              <div><label style={cLbl}>Checkout-URL (Shopify Draft Order Link)</label><input className="nf-cin" style={cIn} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https..." /></div>              <div><label style={cLbl}>Notizen für den Kunden</label>
-                <select className="nf-cin" style={{...cIn,marginBottom:8,cursor:'pointer'}} value="" onChange={e => { const t = e.target.value; if (!t) return; const ta = document.getElementById('nf-customer-note'); const v = ta.value ? ta.value + '\n' + t : t; ta.value = v; updText('customerNote', v); ta.focus() }}>
-                  <option value="">Fertigen Text einfügen …</option>
-                  <option value={'"TEXT" wird hochwertig per UV-Druck umgesetzt.'}>UV-Druck</option>
-                  <option value="Das Neonschild muss mit einer Rückwand geliefert werden. Dies ist bei diesem Entwurf die einzig mögliche Ausführung und sorgt gleichzeitig für das schönste Ergebnis.">Rückwand notwendig</option>
-                </select>
-                <textarea id="nf-customer-note" className="nf-cin" style={{...cIn,minHeight:84,resize:'vertical',lineHeight:1.5}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." /></div>
-            </div>
-          </CCard>
-        </div>
-
-        <CCard>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            <div style={{fontSize:12,color:'var(--text-muted)'}}>✉️ Beim Veröffentlichen wird automatisch eine E-Mail an den Kunden gesendet.</div>
-            <div style={{display:'flex',gap:10}}>
-              <button
-                className="nf-cb"
-                style={{flex:1,background:'transparent',border:`1px solid ${C_NEON}`,color:C_NEON,borderRadius:12,padding:14,fontSize:14,fontWeight:800,fontFamily:'inherit',opacity: previewLoading ? 0.7 : 1, cursor: previewLoading ? 'not-allowed' : 'pointer'}}
-                disabled={previewLoading}
-                onClick={async () => {
-                  setPreviewLoading(true)
-                  const f = { ...fRef.current, ...selects, ...priceInputs }
-                  try {
-                    const uploadedImgs = [...imgSrcs]
-                    for (let i = 0; i < 3; i++) {
-                      if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
-                        const blob = await (await fetch(imgSrcs[i])).blob()
-                        const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
-                        const up = await fetch('/api/upload', { method: 'POST', body: fd })
-                        const upData = await up.json()
-                        if (upData.url) uploadedImgs[i] = upData.url
-                      }
-                    }
-                    const payload = {
-                      offer_num: f.num, project: f.project,
-                      width: f.w, height: f.h,
-                      backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
-                      colors: f.color,
-                      base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
-                      disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
-                      net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-                      delivery: f.delivery, checkout_url: f.url,
-                      customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
-                      valid_until: f.validUntil || null, status: f.status || 'offer_sent',
-                      size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_options: cleanSizeRows(sizeRows), markup, black_week: bwNew,
-                      preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
-                      published: false,
-                    }
-                    let offerId = previewOfferId
-                    if (offerId) {
-                      await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-                    } else {
-                      const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-                      const data = await res.json()
-                      if (data.error) throw new Error(data.error)
-                      offerId = data.custom_id || data.id
-                      setPreviewOfferId(offerId)
-                      setPreviewOfferDbId(data.id)
-                    }
-                    setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
-                  } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
-                  finally { setPreviewLoading(false) }
-                }}
-              >
-                {previewLoading ? '⏳ Vorschau wird erstellt...' : '👁 Vorschau öffnen'}
-              </button>
-              <button className="nf-cb" onClick={publish} disabled={publishing} style={{flex:1.4,background:C_NEON,border:'none',color:'#0a0a0a',borderRadius:12,padding:14,fontSize:14,fontWeight:900,cursor:publishing?'not-allowed':'pointer',fontFamily:'inherit',opacity:publishing?0.7:1}}>
-                {publishing ? '⏳ Wird veröffentlicht...' : '🚀 Angebotsseite veröffentlichen'}
-              </button>
-            </div>
-            {publishedLink && (
-              <div style={{background:'var(--input-bg)',border:'1px solid #22c55e55',borderRadius:10,padding:10,display:'flex',alignItems:'center',gap:8}}>
-                <input value={publishedLink} readOnly style={{flex:1,background:'transparent',border:'none',fontSize:12,color:'#22c55e',outline:'none',fontFamily:'monospace'}} />
-                <button onClick={() => navigator.clipboard.writeText(publishedLink)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'5px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Kopieren</button>
-              </div>
-            )}
-          </div>
-        </CCard>
-      </div>
-    </div>
-  )
-
-  if (tab === 'manage_old') return (
-    <div className="nf-admin" data-theme={theme} style={S.app}>
-      <ThemeVars />
-      {editingOffer && (
-        <EditModal
-          offer={editingOffer}
-          onClose={() => setEditingOffer(null)}
-          onSaved={() => { setEditingOffer(null); loadOffers() }}
-        />
-      )}
-      <div style={S.topbar}>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div onClick={() => setTab('home')} title="Zur Startseite" style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8,cursor:'pointer'}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
-          <div style={S.tabs}>
-            <button style={S.tab(false)} onClick={() => setTab('create')}>Erstellen</button>
-            <button style={{...S.tab(true), position:'relative'}}>
-              Verwalten
-              {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
-            </button>
-          </div>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
-        </div>
-      </div>
-      <div style={{padding:32,overflowY:'auto',flex:1,background:'var(--bg-alt)'}}>
-        <div style={{maxWidth:900,margin:'0 auto'}}>
-<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
-            <h2 style={{fontSize:20,fontWeight:700,color:'var(--text)'}}>Alle Angebote {offers.length > 0 && <span style={{fontSize:14,fontWeight:500,color:'var(--text-faint)'}}>({offers.length})</span>}</h2>
-            <button style={S.btnDark} onClick={loadOffers}>Aktualisieren</button>
-          </div>
-          <div style={{display:'flex',gap:10,marginBottom:20}}>
-            <input
-              placeholder="Nach Name oder Angebots-ID suchen..."
-              onChange={e => setManageSearch(e.target.value)}
-              style={{flex:1,background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'var(--text)'}}
-            />
-            <select
-              onChange={e => setManageStatus(e.target.value)}
-              style={{background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 14px',fontSize:13,fontFamily:'inherit',outline:'none',color:'var(--text)',cursor:'pointer'}}
-            >
-              <option value="">Alle Status</option>
-              {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </div>
-          {loadingOffers ? <div style={{textAlign:'center',padding:60,color:'var(--text-faint)',fontSize:14}}>Wird geladen...</div>
-           : offers.length === 0 ? <div style={{textAlign:'center',padding:60,color:'var(--text-faint)',fontSize:14}}>Noch keine Angebote.</div>
-           : <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {offers.filter(o => {
-                const q = manageSearch.toLowerCase()
-                const matchSearch = !q || (o.project && o.project.toLowerCase().includes(q)) || (o.custom_id && String(o.custom_id).includes(q)) || (o.offer_num && o.offer_num.toLowerCase().includes(q))
-                const matchStatus = !manageStatus || o.status === manageStatus
-                return matchSearch && matchStatus
-              }).map(o => {
-                const id = o.custom_id || o.id.slice(0,8)
-                const link = `${typeof window !== 'undefined' ? window.location.origin : ''}/angebot/${o.custom_id || o.id}`
-                const daysDiff = Math.floor((Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
-                const isRed = daysDiff >= 3 && o.status === 'offer_sent'
-                return (
-<div key={o.id} style={{background:'var(--panel)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 220px 200px'}}>
-<div style={{padding:'20px 22px',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',justifyContent:'center',gap:14}}>
-                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                        <span style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>#{id}</span>
-                        <span style={{fontSize:15,color:'var(--text-muted)'}}>{o.project}</span>
-                        <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,background:o.published?'#f0fdf4':'#f3f4f6',color:o.published?'#166534':'#6b7280',border:`1px solid ${o.published?'#bbf7d0':'#e5e7eb'}`}}>{o.published?'Aktiv':'Inaktiv'}</span>
-                      </div>
-                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                        {o.created_at && <span style={{fontSize:12,color:isRed?'#dc2626':'#9ca3af',fontWeight:isRed?700:400}}>📅 {new Date(o.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'})}</span>}
-                        <span
-                          onClick={async () => {
-                            if (!o.customer_email) { alert('Keine E-Mail hinterlegt. Bitte im Bearbeiten-Menü ergänzen.'); return }
-                            if (!confirm(`Erinnerungs-E-Mail an ${o.customer_email} senden?`)) return
-                            try {
-                              const offerLink = `${window.location.origin}/angebot/${o.custom_id || o.id}`
-                              const res = await fetch('/api/recontact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: o.id, customerEmail: o.customer_email, customerName: o.project, offerLink, price: o.final_price, width: o.width, height: o.height, colors: o.colors }) })
-                              const data = await res.json()
-                              if (data.success) { alert('✅ E-Mail gesendet & Status aktualisiert!'); loadOffers() } else { alert('Fehler: ' + data.error) }
-                            } catch (err) { alert('Fehler: ' + err.message) }
-                          }}
-                          title={o.customer_email || 'Keine E-Mail hinterlegt'}
-                          style={{display:'inline-flex',alignItems:'center',gap:5,background:isRed?'#fef2f2':'#f3f4f6',border:`1px solid ${isRed?'#fecaca':'#e5e7eb'}`,color:isRed?'#dc2626':'#9ca3af',fontSize:11,fontWeight:700,padding:'4px 12px',borderRadius:20,whiteSpace:'nowrap',cursor:'pointer',userSelect:'none'}}
-                        >↩ Erneut kontaktieren</span>
-                      </div>
-                      {o.published && (
-                        <div style={{display:'flex',alignItems:'center',gap:8}}>
-                          <span style={{fontSize:11,color:'var(--text-faint)',fontFamily:'monospace'}}>{link}</span>
-                          <button onClick={() => navigator.clipboard.writeText(link)} style={{...S.btnOutline,padding:'4px 10px',fontSize:11}}>Kopieren</button>
-                          <a href={link} target="_blank" rel="noopener" style={{...S.btnOutline,padding:'4px 10px',fontSize:11,textDecoration:'none',display:'inline-block'}}>Öffnen</a>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{padding:'16px 18px',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
-                      <span style={{fontSize:10,fontWeight:600,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'.06em'}}>Preis</span>
-                      <span style={{fontSize:20,fontWeight:700,color:'var(--text)'}}>{o.final_price > 0 ? `€ ${parseFloat(o.final_price).toFixed(2)}` : '–'}</span>
-                      <span style={{fontSize:10,fontWeight:600,color:'var(--text-faint)',textTransform:'uppercase',letterSpacing:'.06em'}}>Status</span>
-                      <select
-                        value={o.status || 'offer_sent'}
-                        onChange={e => updateStatus(o.id, e.target.value)}style={{fontSize:12,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--input-bg)',color:'var(--text)',cursor:'pointer',fontFamily:'inherit',width:'100%'}}
-                      >
-                        {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                      </select>
-                    </div>
-                    <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:8,justifyContent:'center'}}>
-                      <button onClick={() => setEditingOffer(o)} style={{background:'#eff6ff',border:'1px solid #bfdbfe',color:'#2563eb',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>✏️ Bearbeiten</button>
-                      {(NF_TEST_MODE || mReviewOk(o)) && (
-                        <button onClick={async () => {
-                          if (!o.customer_email) { alert('Keine E-Mail hinterlegt.'); return }
-                          if (!confirm(`Bewertungsanfrage an ${o.customer_email} senden?`)) return
-                          try {
-                            const res = await fetch('/api/review-request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerEmail: o.customer_email, customerName: o.project, offerId: o.id }) })
-                            const data = await res.json()
-                            if (data.success) { alert('✅ Bewertungsanfrage gesendet!') } else { alert('Fehler: ' + data.error) }
-                          } catch (err) { alert('Fehler: ' + err.message) }
-                        }} style={{background:'#fefce8',border:'1px solid #fde68a',color:'#92400e',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>⭐ Bewertung anfragen</button>
-                      )}
-                      <button onClick={() => toggleOffer(o.id, o.published)} style={{...S.btnOutline,fontSize:12}}>{o.published?'Deaktivieren':'Aktivieren'}</button>
-                      <button onClick={() => deleteOffer(o.id)} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'9px 14px',fontWeight:500,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Löschen</button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>}
-        </div>
-      </div>
-    </div>
-  )
-
-return (
-    <div className="nf-admin" data-theme={theme} style={S.app}>
-      <ThemeVars />
-      {showPreviewModal && showPreviewModal !== null && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',zIndex:9999,display:'flex',flexDirection:'column'}}>
-          <div style={{background:'var(--panel)',borderBottom:'1px solid var(--border)',padding:'12px 20px',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-            <span style={{fontWeight:700,fontSize:15,color:'var(--text)'}}>👁 Vorschau</span>
-            <div style={{display:'flex',gap:10}}>
-              <button onClick={() => setShowPreviewModal(null)} style={{background:'transparent',border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,padding:'8px 16px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>✕ Schließen</button>
-              <button onClick={() => { setShowPreviewModal(null); publish() }} style={{background:'#16a34a',color:'#fff',border:'none',borderRadius:8,padding:'8px 20px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>🚀 Jetzt veröffentlichen</button>
-            </div>
-          </div>
-          <iframe src={showPreviewModal} style={{flex:1,border:'none',width:'100%',background:'#fff'}} title="Vorschau" />
-        </div>
-      )}
-      <div style={S.topbar}>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <div onClick={() => setTab('home')} title="Zur Startseite" style={{background:'#0a0a0a',padding:'6px 10px',borderRadius:8,cursor:'pointer'}}><img src="https://cdn.shopify.com/s/files/1/0922/0911/9605/files/neonframe-logo-black-background_800x800.png?v=1778426735" alt="NF" style={{height:24,display:'block'}} /></div>
-          <div style={S.tabs}>
-            <button style={S.tab(true)}>Erstellen</button>
-            <button style={{...S.tab(false), position:'relative'}} onClick={() => setTab('manage')}>
-              Verwalten
-              {(() => { const n = offers.filter(mIsRed).length; return n > 0 ? <span style={{position:'absolute',top:-6,right:-8,background:'#dc2626',color:'#fff',borderRadius:'50%',minWidth:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 4px',lineHeight:1}}>{n}</span> : null })()}
-            </button>
-          </div>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-          <button style={S.btnOutline} onClick={() => setAuthed(false)}>Abmelden</button>
-        </div>
-      </div>
-
-<div style={S.main}>
-        <div style={S.left}>
-          <div style={S.section}>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-              <div style={S.sTitle}>Dateien hochladen</div>
-              <button onClick={resetForm} style={{background:'#fef2f2',border:'1px solid #fecaca',color:'#dc2626',borderRadius:8,padding:'4px 12px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>↺ Reset</button>
-            </div>
-<div style={{marginBottom:8}}>
-              <label style={{...S.uploadZone, flexDirection:'row', padding:'12px 16px', justifyContent:'center', gap:10, cursor:'pointer'}} htmlFor="multi-img-upload">
-                <input id="multi-img-upload" type="file" accept="image/*" multiple style={{display:'none'}} onChange={e => {
-                  const files = Array.from(e.target.files)
-                  Promise.all(files.map(file => compressImage(file)))
-                    .then(compressed => setImgSrcs(prev => [...prev, ...compressed]))
-                    .catch(err => alert('Bild konnte nicht verarbeitet werden: ' + err.message))
-                  e.target.value = ''
-                }} />
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span style={{fontSize:13,color:'var(--text-faint)'}}>Bilder hochladen (max. 3 möglich)</span>
-              </label>
-            </div>
-            {imgSrcs.filter(Boolean).length > 0 && (
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))',gap:8,marginBottom:8}}>
-                {imgSrcs.map((src, idx) => src ? (
-                  <div key={idx} style={{position:'relative',borderRadius:8,overflow:'hidden',border:'1px solid #e5e7eb'}}>
-                    <img src={src} style={{width:'100%',height:80,objectFit:'cover',display:'block'}} alt="" />
-                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px',background:'rgba(0,0,0,0.3)',opacity:0,transition:'.15s'}}
-                      onMouseEnter={e => e.currentTarget.style.opacity=1}
-                      onMouseLeave={e => e.currentTarget.style.opacity=0}>
-                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx>0){[n[idx-1],n[idx]]=[n[idx],n[idx-1]]}; return n })}
-                        style={{background:'rgba(255,255,255,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>←</button>
-                      <button onClick={() => setImgSrcs(prev => prev.filter((_,i) => i !== idx))}
-                        style={{background:'rgba(220,38,38,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12,color:'#fff'}}>✕</button>
-                      <button onClick={() => setImgSrcs(prev => { const n=[...prev]; if(idx<n.length-1){[n[idx],n[idx+1]]=[n[idx+1],n[idx]]}; return n })}
-                        style={{background:'rgba(255,255,255,0.8)',border:'none',borderRadius:4,padding:'2px 6px',cursor:'pointer',fontSize:12}}>→</button>
-                    </div>
-                    <div style={{position:'absolute',top:2,left:2,background:'rgba(0,0,0,0.5)',color:'#fff',fontSize:9,padding:'1px 4px',borderRadius:3}}>{idx+1}</div>
-                  </div>
-                ) : null)}
-              </div>
-            )}
-            <label style={{...S.uploadZone,marginTop:8,flexDirection:'row',padding:'10px 14px',justifyContent:'flex-start',gap:10}} htmlFor="pdf-upload">
-              <input id="pdf-upload" type="file" accept=".pdf" style={{display:'none'}} onChange={handlePDF} />
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span style={{fontSize:12,color:'var(--text-faint)'}}>PDF hochladen (automatisch ausfüllen)</span>
-            </label>
-            {parseStatus && <div style={S.status(parseStatus.type)}>{parseStatus.msg}</div>}
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sTitle}>Angebotsdaten</div>
-            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Angebotsnummer">
-                <input style={S.input} defaultValue={fRef.current.num} onChange={e => updText('num', e.target.value)} placeholder="NF-1001" />
-              </Field>
-              <Field label="Projekt / Kundenname">
-                <input style={S.input} defaultValue={fRef.current.project} onChange={e => updText('project', e.target.value)} placeholder="z.B. Max Mustermann" />
-              </Field>
-              <Field label="Kunden-E-Mail">
-                <input style={{...S.input, borderColor: 'var(--email-border)', background: 'var(--email-bg)'}} type="email" defaultValue={fRef.current.customerEmail} onChange={e => updText('customerEmail', e.target.value)} placeholder="kunde@email.de" />
-              </Field>
-              <div style={S.row2}>
-                <Field label="Breite (cm)"><input style={S.input} type="number" defaultValue={fRef.current.w} onChange={e => updText('w', e.target.value)} /></Field>
-                <Field label="Höhe (cm)"><input style={S.input} type="number" defaultValue={fRef.current.h} onChange={e => updText('h', e.target.value)} /></Field>
-              </div>
-              <Field label="Farbe(n) – kommagetrennt">
-                <div
-                  style={{position:'relative'}}
-                  onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) setColorDropdownOpen(false) }}
-                >
-                  <input
-                    style={{...S.input, paddingRight: 96}}
-                    defaultValue={fRef.current.color}
-                    onChange={e => updText('color', e.target.value)}
-                    onFocus={() => setColorDropdownOpen(true)}
-                    placeholder="z.B. Soft Orange, Pink"
-                  />
-                  <button type="button" onClick={() => setColorDropdownOpen(o => !o)} style={{position:'absolute',right:6,top:6,bottom:6,background:'#fff',border:'1px solid #e5e7eb',borderRadius:6,padding:'0 10px',fontSize:11,fontWeight:600,color:'#374151',cursor:'pointer',fontFamily:'inherit'}}>Farbe wählen ▾</button>
-                  {colorDropdownOpen && (
-                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'var(--panel)',border:'1px solid var(--border)',borderRadius:8,padding:6,zIndex:20,boxShadow:'0 4px 12px rgba(0,0,0,.1)',display:'flex',flexDirection:'column',gap:2,maxHeight:240,overflowY:'auto'}}>
-                      {COLOR_OPTIONS.map(c => {
-                        const active = fRef.current.color.split(',').map(s => s.trim().toLowerCase()).includes(c.toLowerCase())
-                        return (
-                          <label key={c} tabIndex={-1} style={{display:'flex',alignItems:'center',gap:8,fontSize:13,cursor:'pointer',padding:'6px 8px',borderRadius:6,background:active?'#f0fdf4':'transparent'}}>
-                            <input type="checkbox" checked={active} onChange={() => toggleColor(c)} style={{cursor:'pointer'}} />
-                            <span style={{width:9,height:9,borderRadius:'50%',background:colorDot(c),display:'inline-block',border:'1px solid rgba(0,0,0,.08)'}}></span>
-                            {c}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              </Field>
-            </div>
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sTitle}>Konfiguration</div>
-            <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Rückwandform">
-                <select style={S.select} value={selects.backplate} onChange={e => updSelect('backplate', e.target.value)}>
-                  {BACKPLATE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </Field>
-              <Field label="Rückwandfarbe">
-                <select style={S.select} value={selects.backplate_color} onChange={e => updSelect('backplate_color', e.target.value)}>
-                  {BACKPLATE_COLOR_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </Field>
-              <Field label="Verwendungszweck">
-                <select style={S.select} value={selects.usage} onChange={e => updSelect('usage', e.target.value)}>
-                  {USAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </Field>
-            </div>
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sTitle}>Preiskalkulation</div>
-            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
-<Field label="Endpreis (brutto)">
-                <input style={S.input} type="number" step="0.01" value={endPrice} onChange={e => setEndPrice(e.target.value)} placeholder="0.00" />
-                {parseFloat(priceInputs.basePrice) > 0 && <div style={{fontSize:11,color:'#888',marginTop:5}}>Listenpreis (netto) automatisch: € {parseFloat(priceInputs.basePrice).toFixed(2)}</div>}
-              </Field>
-              <div style={S.row2}>
-                <Field label="Rabatt-Typ">
-                  <select style={S.select} value={selects.discType} onChange={e => updSelect('discType', e.target.value)}>
-                    <option value="pct">Prozent (%)</option><option value="eur">Euro (€)</option>
-                  </select>
-                </Field>
-                <Field label={`Rabatt (${selects.discType==='pct'?'%':'€'})`}>
-                  <input style={S.input} type="number" step="0.01" value={priceInputs.discVal} onChange={e => updPrice('discVal', e.target.value)} />
-                </Field>
-              </div>
-              <div style={S.row2}>
-                <Field label="MwSt. (%)">
-                  <input style={S.input} type="number" step="0.1" value={priceInputs.vat} onChange={e => updPrice('vat', e.target.value)} />
-                </Field>
-                <Field label="Lieferdatum">
-                  <input style={S.input} defaultValue={fRef.current.delivery} onChange={e => updText('delivery', e.target.value)} placeholder="27. Mai – 3. Juni" />
-                </Field>
-              </div>
-              <div style={{background:'#f9fafb',border:'1px solid #e5e7eb',borderRadius:8,padding:12,display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-                {[['Netto',prices.net>0?`€ ${prices.net.toFixed(2)}`:'–',false],['+ MwSt.',prices.vatAmt>0?`€ ${prices.vatAmt.toFixed(2)}`:'–',false],['Endpreis',prices.total>0?`€ ${prices.total.toFixed(2)}`:'–',true]].map(([l,v,a]) => (
-                  <div key={l}><div style={{fontSize:10,color:a?'#16a34a':'#9ca3af',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3}}>{l}</div><div style={{fontSize:14,fontWeight:700,color:a?'#16a34a':'#111'}}>{v}</div></div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sTitle}>Weitere Einstellungen</div>
-            <div key={formKey} style={{display:'flex',flexDirection:'column',gap:10}}>
-              <Field label="Status">
-                <select style={S.select} value={selects.status} onChange={e => updSelect('status', e.target.value)}>
-                  {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Checkout-URL (Shopify Draft Order Link)">
-                <input style={S.input} defaultValue={fRef.current.url} onChange={e => updText('url', e.target.value)} placeholder="https..." />
-              </Field>
-              <Field label="Notizen für den Kunden">
-                <textarea style={{...S.input, minHeight: 80, resize: 'vertical', lineHeight: 1.5, paddingTop: 9}} defaultValue={fRef.current.customerNote} onChange={e => updText('customerNote', e.target.value)} placeholder="z.B. Bitte überprüfen Sie die Maße nochmals..." />
-              </Field>
-            </div>
-          </div>
-
-<div style={S.publishArea}>
-            <div style={{background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'#166534',lineHeight:1.5}}>
-              ✅ Beim Veröffentlichen wird automatisch<br/>
-              • Eine E-Mail an den Kunden gesendet
-            </div>
-            <button
-style={{...S.btnGreen, background:'#1d4ed8', marginBottom:8, opacity: previewLoading ? 0.7 : 1, cursor: previewLoading ? 'not-allowed' : 'pointer'}}
-              disabled={previewLoading}
-onClick={async () => {
-  setPreviewLoading(true)
-  const f = { ...fRef.current, ...selects, ...priceInputs }
-  try {
-    const uploadedImgs = [...imgSrcs]
-    for (let i = 0; i < 3; i++) {
-      if (imgSrcs[i] && imgSrcs[i].startsWith('data')) {
-        const blob = await (await fetch(imgSrcs[i])).blob()
-        const fd = new FormData(); fd.append('file', blob, `offer-prev-${Date.now()}-${i}.jpg`); fd.append('offerId', f.num || 'preview')
-        const up = await fetch('/api/upload', { method: 'POST', body: fd })
-        const upData = await up.json()
-        if (upData.url) uploadedImgs[i] = upData.url
-      }
-    }
-    const payload = {
-      offer_num: f.num, project: f.project,
-      width: f.w, height: f.h,
-      backplate: f.backplate, backplate_color: f.backplate_color, usage: f.usage,
-      colors: f.color,
-      base_price: parseFloat(f.basePrice) || 0, disc_type: f.discType,
-      disc_val: parseFloat(f.discVal) || 0, vat_pct: parseFloat(f.vat) || 19,
-      net_price: prices.net, final_price: prices.total, rrp_price: prices.rrp,
-      delivery: f.delivery, checkout_url: f.url,
-      customer_note: f.customerNote || null, customer_email: f.customerEmail || null,
-      valid_until: f.validUntil || null, status: f.status || 'offer_sent',
-      size_warning_enabled: f.sizeWarningEnabled || false, size_warning_text: f.sizeWarningText || null,
-      size_options: cleanSizeRows(sizeRows), markup, black_week: bwNew,
-      preview_image: uploadedImgs[0], preview_image_2: uploadedImgs[1], preview_image_3: uploadedImgs[2],
-      published: false,
-    }
-let offerId = previewOfferId
-    if (offerId) {
-      await fetch(`/api/offers?id=${previewOfferDbId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-    } else {
-      const res = await fetch('/api/offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      offerId = data.custom_id || data.id
-      setPreviewOfferId(offerId)
-      setPreviewOfferDbId(data.id)
-    }
-setShowPreviewModal(`${window.location.origin}/angebot/${offerId}`)
-  } catch (err) { alert('Vorschau-Fehler: ' + err.message) }
-  finally { setPreviewLoading(false) }
-}}
-            >
-              {previewLoading ? '⏳ Vorschau wird erstellt...' : '👁 Vorschau öffnen'}
-            </button>
-            <button style={S.btnGreen} onClick={publish} disabled={publishing}>{publishing?'⏳ Wird veröffentlicht...':'Angebotsseite veröffentlichen'}</button>
-            {publishedLink && (
-              <div style={S.linkBox}>
-                <input value={publishedLink} readOnly style={{flex:1,background:'transparent',border:'none',fontSize:12,color:'#16a34a',outline:'none',fontFamily:'monospace'}} />
-                <button onClick={() => navigator.clipboard.writeText(publishedLink)} style={{...S.btnOutline,padding:'4px 10px',fontSize:11,flexShrink:0}}>Kopieren</button>
-              </div>
-            )}
-          </div>
-        </div>
-
-      </div>
-    </div>
+  return (
+    <CreatePage fRef={fRef} formKey={formKey} updText={updText} updSelect={updSelect} selects={selects} toggleColor={toggleColor}
+      imgSrcs={imgSrcs} setImgSrcs={setImgSrcs} checkoutImg={checkoutImg} setCheckoutImg={setCheckoutImg}
+      tncLink={tncLink} setTncLink={setTncLink} handleTNC={handleTNC} parseStatus={parseStatus} handlePDF={handlePDF} resetForm={resetForm}
+      origVk={origVk} setOrigVk={setOrigVk} endPrice={endPrice} setEndPrice={setEndPrice} mk={mk} markup={markup} bwNew={bwNew}
+      sizeRows={sizeRows} setSizeRows={setSizeRows} priceInputs={priceInputs} updPrice={updPrice} prices={prices}
+      openPreview={openPreview} previewLoading={previewLoading} showPreviewModal={showPreviewModal} setShowPreviewModal={setShowPreviewModal}
+      publish={publish} offers={offers} setTab={setTab} theme={theme} toggleTheme={toggleTheme} onLogout={() => setAuthed(false)}
+      onOpenOffer={(id) => { loadOffers(); setManageSel(id); setTab('manage') }} />
   )
 }
