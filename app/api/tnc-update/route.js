@@ -87,9 +87,10 @@ export async function POST(req) {
     // Preis wie bei der Größenauswahl: Endpreis = Empf. VK + 10 %, daraus Listenpreis netto zurückrechnen
     const dType = o.disc_type || 'pct'
     const dVal = parseFloat(o.disc_val) || 0
+    const lDisc = o.black_week ? (parseFloat(o.bw_prev?.disc_val) || 20) : dVal
     const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
     const ex = (parseFloat(o.extra_disc_pct) || 0) / 100
-    const base = Math.round((dType === 'pct' ? next.final / vat / (1 - dVal / 100) : next.final / vat + dVal) * 10000) / 10000
+    const base = Math.round((dType === 'pct' ? next.final / vat / (1 - lDisc / 100) : next.final / vat + dVal) * 10000) / 10000
     const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
 
     const img1 = ed.img1 || await copyImage(next.realistic_image, o.id, 1)
