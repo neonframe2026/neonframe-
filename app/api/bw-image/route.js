@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
 import { buildBwImage, bwImageHeight, BW_W } from '../../../lib/bw-image'
-import { getBW, currentVk } from '../../../lib/blackweek'
+import { getBW, bwListNow } from '../../../lib/blackweek'
 
 // Persönliches Bild für die Black-Week-Mails
 // /api/bw-image?offer=<id>&kind=switch|mail1|mail2
@@ -46,12 +46,12 @@ export async function GET(req) {
     const left = Math.max(0, end.getTime() - Date.now())
     const cd = { d: pad(Math.floor(left / 864e5)), h: pad(Math.floor(left / 36e5) % 24), m: pad(Math.floor(left / 6e4) % 60) }
     // Black-Week-Preise immer aus dem empf. VK (auch für Testmails mit normalen Angeboten)
-    const vk = currentVk(o)
+    const { list, now } = bwListNow(o)
     const imageUrl = await loadPreview(o.preview_image)
     const el = buildBwImage({
       kind, firstName: (o.project || '').split(' ')[0] || 'dort', imageUrl,
       sizeText: o.width && o.height ? `${o.width} × ${o.height} cm` : '', variant: o.usage || '', colorText: o.colors || '',
-      list: Math.round(vk / 0.6 * 100) / 100, now: vk, endText, cd,
+      list, now, endText, cd,
     })
     const H = bwImageHeight(kind, !!imageUrl)
     const png = await new ImageResponse(el, { width: BW_W, height: H, fonts: await loadFonts() }).arrayBuffer()
