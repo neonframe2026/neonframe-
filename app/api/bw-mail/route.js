@@ -96,7 +96,7 @@ export async function POST(req) {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'NeonFrame <info@neonframe.de>', to: [recipient], subject, html, headers: { 'List-Unsubscribe': `<${unsub}>, <mailto:info@neonframe.de?subject=Abmelden>` } }),
+      body: JSON.stringify({ from: 'NeonFrame <info@neonframe.de>', to: [recipient], subject, html, headers: { 'List-Unsubscribe': `<${unsub.replace('/abmelden/', '/api/unsubscribe?id=')}>, <mailto:info@neonframe.de?subject=Abmelden>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }),
     })
     if (!r.ok) return Response.json({ error: 'E-Mail Versand fehlgeschlagen: ' + (await r.text()).slice(0, 200) }, { status: 500 })
 
