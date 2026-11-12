@@ -55,7 +55,7 @@ export default function BlackWeekSettings() {
       if (!confirm('Black Week jetzt beenden?\n\nAlle nicht bestellten Black-Week-Angebote werden deaktiviert (nicht gelöscht) und zeigen die Abgelaufen-Seite.')) return
       save('black_week', { ...bw, on: false }, 'Black Week ist aus.')
     } else {
-      if (!confirm('Black Week jetzt starten?\n\nNeue Angebote werden automatisch als Black Week erstellt (Endpreis = empf. VK, 40% Rabatt).')) return
+      if (!confirm('Black Week jetzt starten?\n\nNeue Angebote werden automatisch als Black Week erstellt (normaler Listenpreis, 30% Rabatt).')) return
       save('black_week', { ...bw, on: true }, 'Black Week läuft.')
     }
   }
@@ -67,13 +67,13 @@ export default function BlackWeekSettings() {
 
   return (
     <>
-      <div className="t"><div><h2>Black Week</h2><div className="sub">Aktion mit 40% Rabatt · Endpreis = empf. VK</div></div></div>
+      <div className="t"><div><h2>Black Week</h2><div className="sub">Aktion mit 30% Rabatt auf den normalen Listenpreis</div></div></div>
       <div className="card">
         <div style={{ position: 'relative', background: '#080709', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', left: -20, top: 0, bottom: 0, width: '58%', background: 'linear-gradient(90deg,#0a2546,#0d3260)', transform: 'skewX(-18deg)', boxShadow: '8px 0 0 #080709,13px 0 0 #22d3ee' }} />
           <span style={{ position: 'relative', display: 'inline-flex', transform: 'rotate(-3deg)', boxShadow: '3px 3px 0 #000' }}>
             <span style={{ fontFamily: 'Anton, Impact, sans-serif', fontSize: 18, background: '#fff', color: '#000', padding: '4px 9px' }}>BLACK WEEK</span>
-            <span style={{ fontFamily: 'Anton, Impact, sans-serif', fontSize: 18, background: '#22d3ee', color: '#03121a', padding: '4px 7px' }}>-40%</span>
+            <span style={{ fontFamily: 'Anton, Impact, sans-serif', fontSize: 18, background: '#22d3ee', color: '#03121a', padding: '4px 7px' }}>-30%</span>
           </span>
           <span style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, color: running ? '#22d3ee' : '#94a3b8', fontWeight: 800, fontSize: 13 }}>
             {running ? 'AKTIV' : bw.on ? 'ABGELAUFEN' : 'AUS'}<Toggle big on={!!bw.on} onClick={() => !busy && mainSwitch()} />
