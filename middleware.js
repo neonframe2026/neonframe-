@@ -21,6 +21,7 @@ const PROTECTED = {
   '/api/tnc-update': '*',
   '/api/mail-test': '*',
   '/api/dhl-test': '*',
+  '/api/upload': '*',
 }
 
 export const config = { matcher: ['/api/:path*'] }
