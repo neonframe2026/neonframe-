@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import '../../lib/auth-fetch'
 import ZentraleFrame from './zentrale-frame'
 import TncUpdatePage2 from './tnc-update-page'
 import AdminLogin from './login-screen'
