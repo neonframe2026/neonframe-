@@ -1562,7 +1562,7 @@ function frame(){ frame.n=(frame.n||0)+1;
   else { const k=reduce?1:.09; target.lerp(goal,k); dist+=(distGoal-dist)*k; theta+=(thetaGoal-theta)*(reduce?1:.12); phi+=(phiGoal-phi)*(reduce?1:.12); }
   syncCam();
   if(!reduce){
-    globe.rotation.y=Math.sin(t*.25)*.55; globe.position.y=4.6+Math.sin(t*.8)*.08;
+    hub.rotation.y=theta-START_TH; globe.rotation.y=Math.sin(t*.25)*.55; globe.position.y=4.6+Math.sin(t*.8)*.08;
     tower.forEach((r,i)=>{ r.position.y=1.2+i*1.1+Math.sin(t*1.4+i)*.15; r.scale.setScalar(1+Math.sin(t*2+i)*.05); });
     crystal.rotation.y=crystalW.rotation.y=t*.5; core.position.y=3.1+Math.sin(t*1.2)*.15; ringC.rotation.z=-t*.3; ringB.rotation.z=t*.1;
     orbits.forEach(o=>o.e.position.set(Math.cos(t*o.sp)*o.r,Math.sin(t*o.sp)*o.r,0));
