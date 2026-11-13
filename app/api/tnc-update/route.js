@@ -27,7 +27,7 @@ async function load(req, id) {
   const row = rows.find(r => r.w === cur?.w) || rows[0]
   if (!row) throw new Error('Keine Preise von TNC erhalten')
   const next = {
-    width: row.w, height: row.h, vk: row.vk, final: r2(row.vk * markupFactor(offer)),
+    width: row.w, height: row.h, vk: row.vk, final: r2(row.vk * markupFactor(offer)), ek: row.partner || r2(row.vk / 1.35),
     colors: tnc.colors || offer.colors, backplate: tnc.backplate || offer.backplate, usage: tnc.usage || offer.usage,
     realistic_image: tnc.realistic_image || '', design_image: tnc.design_image || '',
     size_options: rows.filter(r => r.w !== row.w).map(r => ({ w: r.w, h: r.h, vk: r.vk })),
@@ -100,7 +100,7 @@ export async function POST(req) {
     const updated = {
       width: String(next.width), height: String(next.height),
       colors: next.colors, backplate: next.backplate, usage: next.usage,
-      base_price: base, net_price: r2(net), final_price: r2(net * vat), rrp_price: r2(base * vat),
+      base_price: base, net_price: r2(net), final_price: r2(net * vat), rrp_price: r2(base * vat), ek_net: next.ek,
       size_options: next.size_options.length ? next.size_options : null,
       ...(imgs[0] ? { preview_image: imgs[0] } : {}),
       ...(imgs[1] ? { preview_image_2: imgs[1] } : {}),
