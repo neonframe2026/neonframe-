@@ -45,6 +45,7 @@ function rate(a, avg) {
   }
   return a.spend >= (avg || 20) ? 'burn' : 'few'
 }
+const ORDER = ['win', 'good', 'weak', 'burn', 'few'] // Reihenfolge der Liste
 const isActive = (s) => s === 'ACTIVE'
 
 function CSS() {
@@ -117,7 +118,7 @@ export default function AdsPage({ onBack }) {
   const leads = camp === 'all' ? ads?.totals?.leads || 0 : sum(withData, 'leads')
   const cpl = leads ? spend / leads : null
   const rated = withData.map(a => ({ ...a, r: rate(a, cpl) }))
-    .sort((x, y) => (x.leads ? x.cpl : 1e9) - (y.leads ? y.cpl : 1e9) || y.spend - x.spend)
+    .sort((x, y) => ORDER.indexOf(x.r) - ORDER.indexOf(y.r) || (x.leads ? x.cpl : 1e9) - (y.leads ? y.cpl : 1e9) || y.spend - x.spend)
 
   // Bestellungen + Gewinn im selben Zeitraum (aus der Statistik)
   const orders = (stats?.orders || []).filter(o => { const d = iso(new Date(o.date)); return d >= range.since && d <= range.until })
