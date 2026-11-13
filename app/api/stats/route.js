@@ -72,10 +72,12 @@ export async function GET(req) {
 
     const bw = await getBW(sb)
     const archive = await getSetting(sb, 'black_week_archive', [])
-    const { count: bwOffers } = await sb.from('offers').select('id', { count: 'exact', head: true }).eq('black_week', true)
+    const { data: bwRows } = await sb.from('offers').select('created_at, bw_prev, bw_mail_switch_sent_at').eq('black_week', true)
+    const bwOffers = (bwRows || []).length
+    const bwStart = bw?.started_at || (bwRows || []).map(o => (o.bw_prev ? o.bw_mail_switch_sent_at : o.created_at)).filter(Boolean).sort()[0] || null
     return Response.json({
       orders,
-      blackWeek: { on: !!bw?.on, start: bw?.started_at || null, end: bw?.end || null, pct: 30, offers: bwOffers || 0 },
+      blackWeek: { on: !!bw?.on, start: bwStart, end: bw?.end || null, pct: 30, offers: bwOffers || 0 },
       archive: Array.isArray(archive) ? archive : [],
     })
   } catch (e) {
