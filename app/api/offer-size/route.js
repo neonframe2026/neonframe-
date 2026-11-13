@@ -53,6 +53,7 @@ export async function POST(req) {
     const updated = {
       width: w, height: +row.h, base_price: base,
       net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows, express: exp,
+      ek_net: Math.round(+row.vk / 1.35 * 100) / 100, // Einkaufspreis der gewählten Größe
     }
     const ids = await syncOfferShopify({ ...o, ...updated })
     await supabase.from('offers').update({ ...updated, ...ids }).eq('id', o.id)
