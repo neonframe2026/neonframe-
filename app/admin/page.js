@@ -859,12 +859,23 @@ function MTimeline({ o }) {
   const time = (d) => d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'
   const at = (v) => v ? time(new Date(v)) : '—'
   const recontacted = !!o.recontacted_at || ['recontacted', 'discount_offered', 'discount_reminded'].includes(o.status)
-  const ev = [
-    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true, k: 'angebot' },
+  const NORMAL = [
     { t: '✉️ Erinnerungs-Mail gesendet', d: o.recontacted_at ? at(o.recontacted_at) : (recontacted ? 'erledigt' : '—'), c: '#22d3ee', done: recontacted, k: 'erinnerung' },
     { t: '✉️ Rabatt-Mail gesendet', d: o.extra_discount_applied ? at(o.extra_discount_at) + (o.discount_valid_until && !o.extra_discount_expired_at ? ' · gültig bis ' + at(o.discount_valid_until) : '') : '—', c: '#22d3ee', done: !!o.extra_discount_applied, k: 'rabatt' },
     { t: '✉️ Rabatt-Erinnerung gesendet', d: at(o.discount_reminder_sent_at), c: '#22d3ee', done: !!o.discount_reminder_sent_at, k: 'rabatt_erinnerung' },
     ...(o.extra_discount_expired_at ? [{ t: '⏱️ Extra-Rabatt abgelaufen – automatisch entfernt', d: at(o.extra_discount_expired_at), c: '#f97316', done: true }] : []),
+  ]
+  // Black Week: statt Erinnerung/Rabatt kommen die Black-Week-Mails (bei umgestellten Angeboten bleibt das schon Gesendete stehen)
+  const BWC = '#22d3ee'
+  const bwEv = [
+    ...(o.bw_prev ? [{ t: '🖤 Black-Week-Umstellung gesendet', d: at(o.bw_mail_switch_sent_at), c: BWC, done: !!o.bw_mail_switch_sent_at, k: 'bw_switch' }]
+      : [{ t: '🖤 Black Week Mail gesendet', d: o.bw_mail1_sent_at ? at(o.bw_mail1_sent_at) : 'kommt 24 Std. nach dem Angebot', c: BWC, done: !!o.bw_mail1_sent_at, k: 'bw_mail1' }]),
+    { t: '🖤 Black Week Letzte Chance gesendet', d: o.bw_mail2_sent_at ? at(o.bw_mail2_sent_at) : 'kommt am 28.11.', c: BWC, done: !!o.bw_mail2_sent_at, k: 'bw_mail2' },
+  ]
+  const ev = [
+    { t: '✉️ Angebots-Mail gesendet', d: at(o.created_at), c: '#22d3ee', done: true, k: 'angebot' },
+    ...(o.black_week ? [] : NORMAL),
+    ...(o.black_week ? [...(o.bw_prev ? NORMAL.filter(e => e.done) : []), ...bwEv] : []),
     { t: 'Bestellt', d: mOrderedAt(o) ? at(mOrderedAt(o)) : (bought ? 'erledigt' : '—'), c: '#10b981', done: bought },
     { t: '✉️ Produktions-Mail gesendet', d: prodDone ? time(prodAt) : (prodAt ? 'geplant für ' + time(prodAt) : '—'), c: '#10b981', done: prodDone, k: 'produktion' },
     { t: '✉️ Versand-Mail gesendet' + (o.tracking_number ? ` (${o.tracking_number})` : ''), d: at(o.shipped_at), c: '#10b981', done: shipped, k: 'versand' },
