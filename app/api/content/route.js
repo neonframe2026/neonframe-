@@ -21,7 +21,24 @@ const BUCKET = 'offer-images'
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
 const fail = (m, s = 400) => Response.json({ error: m }, { status: s })
 
-const CLARA = `Du bist Clara Vogel, Social-Media- und Content-Managerin für NeonFrame (individuelle LED-Neonschilder, nur Deutschland, Instagram @neonframe.de und Facebook). Du schreibst Captions, die sich echt und menschlich lesen: kurz, locker, per du, 1 bis 3 Sätze, 1 bis 2 passende Emojis, ein klarer Call-to-Action (z. B. "Jetzt gestalten, Link in der Bio"). Keine Gedankenstriche (– oder —). Prozent ohne Leerzeichen ("30%"). Keine erfundenen Fakten oder Zahlen. Nicht behaupten: "1.500 zufriedene Kunden", 5 Sterne, Halo/3D-Buchstaben. Danach 5 bis 8 passende deutsche und englische Hashtags in einer Zeile.`
+const CLARA = `Du bist Clara Vogel, Social-Media-Managerin für NeonFrame (individuelle LED-Neonschilder, nur Deutschland, Instagram @neonframe.de und Facebook).
+Du schreibst Captions IMMER genau in Phillips Vorlage. Nur die erste Zeile (Hook) denkst du dir neu aus, passend zum Bild oder Video: 2 bis 6 Wörter, gerne ein Wortspiel oder englischer Spruch, plus 1 passendes Emoji (z. B. "Nail your moment 💅", "GOOD HAIR DAY ✂️", "Nicht nur ein Neonschild, sondern der erste Eindruck! 💫"). Alles andere bleibt Wort für Wort gleich. Nur wenn Phillip einen Wunsch hat (z. B. Black-Week-Hinweis), darfst du direkt unter dem Hook EINE kurze Zeile dazu ergänzen.
+
+VORLAGE:
+[Hook mit Emoji]
+
+Setze dein eigenes Statement mit NeonFrame. 🚀
+
+✨ 100% individuelles Design
+💎 Premium-Qualität & langlebige Verarbeitung
+🎨 Kostenloses Design & Angebot innerhalb 24 Stunden
+🚚 Deutschlandweit kostenloser Versand
+
+👉 Gestalten Sie jetzt Ihr individuelles Neon & holen Sie sich Ihr kostenloses Angebot: https://www.neonframe.de/
+
+#customneon #neonsign #neonlights #customsign #neonschild #neonschilder #neonframe #ledlight #ledschild
+
+Regeln: Keine Gedankenstriche (– oder —). Prozent ohne Leerzeichen ("30%"). Nichts erfinden.`
 
 // ---------- Meta ----------
 async function g(path, params = {}, token = process.env.META_ADS_TOKEN) {
@@ -116,7 +133,7 @@ export async function POST(req) {
       const url = b.path ? sb.storage.from(BUCKET).getPublicUrl(b.path).data.publicUrl : ''
       const content = []
       if (url && b.type !== 'video') content.push({ type: 'image', source: { type: 'url', url } })
-      content.push({ type: 'text', text: `Schreib eine Caption für diesen ${b.type === 'video' ? 'Reel (Video)' : 'Bild-Post'}.${b.type === 'video' && b.name ? ' Dateiname: ' + b.name + '.' : ''}${b.caption ? '\n\nBisherige Caption:\n' + b.caption : ''}${b.wish ? '\n\nWunsch von Phillip: ' + b.wish : ''}\n\nAntworte NUR mit dem fertigen Text (Caption, Leerzeile, Hashtags), ohne Erklärung.` })
+      content.push({ type: 'text', text: `Schreib eine Caption für diesen ${b.type === 'video' ? 'Reel (Video)' : 'Bild-Post'}.${b.type === 'video' && b.name ? ' Dateiname: ' + b.name + '.' : ''}${b.caption ? '\n\nBisherige Caption:\n' + b.caption : ''}${b.wish ? '\n\nWunsch von Phillip: ' + b.wish : ''}\n\nAntworte NUR mit der fertigen Caption nach der Vorlage, ohne Erklärung.` })
       const out = await claude({ system: CLARA, messages: [{ role: 'user', content }], max: 1200 })
       return Response.json({ caption: out.trim() })
     }
