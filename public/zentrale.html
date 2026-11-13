@@ -1381,7 +1381,8 @@ function renderCard(){
   if (p===CLARA) extra = claraHTML();
   if (p===DEPTS[3].people[2]) { const X=DATA.sx, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €', mon=new Date().toLocaleDateString('de-DE',{month:'long'});
     extra = `<div><p class="lbl">${mon} bisher</p>${X?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Umsatz brutto</div><b style="font-size:20px">${eu(X.rev)}</b></div><div><div class="isub">Gewinn</div><b style="font-size:20px;color:#22c55e">${eu(X.profit)}</b></div><div><div class="isub">Bestellungen</div><b style="font-size:20px">${X.n}</b></div></div>`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="stats">📊 Statistik öffnen</button></div></div>`; }
-  if (p===DEPTS[7].people[0]) extra = `<div><p class="lbl">Meta Ads</p><p class="isub">Werbekosten, Anfragen, Kosten pro Anfrage und Gewinn nach Werbung.</p><div class="iacts"><button class="b pri" data-nav="ads">📈 Ads-Analyse öffnen</button></div></div>`;
+  if (p===DEPTS[7].people[0]) { const A=DATA.ax, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €';
+    extra = `<div><p class="lbl">Diese Woche</p>${A?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Werbekosten</div><b style="font-size:20px">${eu(A.spend)}</b></div><div><div class="isub">Anfragen</div><b style="font-size:20px">${A.leads}</b></div><div><div class="isub">Aktive Anzeigen</div><b style="font-size:20px">${A.live}</b></div></div>${A.open?`<p class="isub" style="color:#f59e0b">💡 ${A.open} ${A.open===1?'Empfehlung wartet':'Empfehlungen warten'} auf deine Freigabe</p>`:`<p class="isub">${A.live?'Keine offenen Empfehlungen.':'Gerade läuft keine Anzeige.'}</p>`}`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="ads">📈 Ads-Analyse öffnen</button></div></div>`; }
   if (p===NOAH) extra = noahHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
@@ -1479,7 +1480,7 @@ function showToast(title,sub,who,ini2){
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
   const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null, joBefore = DATA.jo ? new Set(joOpen().map(r => r.id)) : null;
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, sx: e.data.sx || DATA.sx, st: e.data.st || DATA.st, stats: e.data.stats || DATA.stats };
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, sx: e.data.sx || DATA.sx, ax: e.data.ax || DATA.ax, st: e.data.st || DATA.st, stats: e.data.stats || DATA.stats };
   const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
   const shNew = shBefore ? shOpen().filter(r => !shBefore.has(r.id)) : [];
   const joNew = joBefore ? joOpen().filter(r => !joBefore.has(r.id)) : [];
