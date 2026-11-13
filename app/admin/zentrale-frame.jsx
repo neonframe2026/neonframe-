@@ -108,6 +108,20 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
     return j
   }
   const loadSt = () => stApi('GET').then(j => { stRef.current = j; setSt(j) }).catch(() => {})
+  // Statistik (Felix): Umsatz + Gewinn im aktuellen Monat
+  const [sx, setSx] = useState(null)
+  const sxRef = useRef(null)
+  const loadSx = async () => {
+    try {
+      const { data } = await authClient().auth.getSession()
+      const r = await fetch('/api/stats', { headers: { Authorization: 'Bearer ' + (data?.session?.access_token || '') } })
+      if (!r.ok) return
+      const j = await r.json(), n = new Date()
+      const l = (j.orders || []).filter(o => { const d = new Date(o.date); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() })
+      const v = { n: l.length, rev: l.reduce((a, o) => a + o.revenue, 0), profit: l.reduce((a, o) => a + o.profit, 0) }
+      sxRef.current = v; setSx(v)
+    } catch {}
+  }
   const loadJo = () => joApi('GET').then(j => { joRef.current = j; setJo(j) }).catch(() => {})
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
@@ -115,7 +129,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt()
+    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadSx()
     const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt() }, 120000)
     return () => { alive = false; clearInterval(t) }
   }, [])
@@ -142,6 +156,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
       jo: joRef.current || undefined,
       cr: crRef.current || undefined,
       st: stRef.current || undefined,
+      sx: sxRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
       stats: {
         total: offers.length,
@@ -231,7 +246,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st, sx])
 
   return (
     <>
