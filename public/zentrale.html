@@ -431,7 +431,7 @@ const DEPTS = [
   people:[{name:'Mia Hoffmann',role:'Prompts',agent:'Prompt-Agent',f:1},{name:'Noah Schmitt',role:'Bild & Video',agent:'Bild- & Video-Agent',f:0},{name:'Lea Wagner',role:'3D-Vorschau',agent:'Vorschau-Agent',f:1}]},
  {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2 2 4-4"/></svg>`, color:'#8f7bff', tags:['Berichte & Ziele','Kampagnen-Kalender','Chat & Planung'],
   kpis:[['Ziele','3'],['Kampagnen','2'],['Bericht','Mo']],
-  people:[{name:'David Lehmann',role:'Berichte & Ziele',agent:'Bericht-Agent',f:0},{name:'Clara Vogel',role:'Kampagnen',agent:'Kampagnen-Agent',f:1}]},
+  people:[{name:'David Lehmann',role:'Berichte & Ziele',agent:'Bericht-Agent',f:0},{name:'Clara Vogel',role:'Aufgaben & Pläne',agent:'Kampagnen-Agent',f:1}]},
  {id:'einkauf', name:'Einkauf', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 10.5A2 2 0 0 1 15.5 20h-7a2 2 0 0 1-2-1.5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`, color:'#ffc04a', tags:['TNC-Anfragen','Logos & Farben','TNC-Portal'],
   kpis:[['Hersteller','2'],['Ersparnis','18 %'],['Muster','Dez']],
   people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Einkaufs-Agent',f:1}]},
@@ -463,7 +463,7 @@ const AGENT_INFO = {
   'Prompt-Agent': { live: true, tasks: ['Schreibt Prompts für Bilder und Videos auf Englisch', 'Ganze Serien auf einmal, z. B. 10 Black-Friday-Creatives', 'Text im Bild bleibt Deutsch', 'Leitet Prompts an Noah weiter'] },
   'Bild- & Video-Agent': { live: true, tasks: ['Sammelt die Prompts von Mia', 'Kopiert den Prompt und öffnet ElevenLabs', 'Speichert fertige Bilder und Videos', 'Alles zum Download an einem Ort'] },
   'Bericht-Agent': { live: true, tasks: ['Wochen-, Monats- und Jahresberichte aus deinen echten Zahlen', 'Anfragen, Angebote, Rückmeldungen, Verkäufe, Umsatz', 'Vergleich mit Vorwoche, Vormonat und Vorjahr', 'Konkrete Vorschläge, was du verbessern kannst', 'Ziele mit Fortschritt', 'Chat: frag ihn alles zu deinen Zahlen'] },
-  'Kampagnen-Agent': { live: true, tasks: ['Kampagnen-Kalender mit allen Aktionen', 'Plant Angebot, Zeitplan, Ads und Mails', 'Achtet auf Marge und Bestellschluss', 'Gibt Ads direkt an Mia weiter', 'Chat: plant alles zusammen mit dir'] },
+  'Kampagnen-Agent': { live: true, tasks: ['Aufgaben-Board wie Asana: Offen, In Bearbeitung, Erledigt', 'Schreibt aus Davids Vorschlägen einen fertigen Plan mit Schritten', 'Fälligkeit und Fortschritt für jede Aufgabe', 'Du kannst auch eigene Aufgaben anlegen'] },
   'Ads-Agent': { live: true, tasks: ['Liest Werbekosten und Anfragen aus Meta Ads', 'Kosten pro Anfrage für jede Anzeige', 'Gewinn nach Werbung (Gewinn minus Werbekosten)', 'Bewertet Anzeigen: Gewinner, Gut, Schwach, Verbrennt Geld'] },
   'Statistik-Agent': { live: true, tasks: ['Umsatz brutto und Gewinn pro Monat und Jahr', 'Speichert bei jeder Bestellung den echten Betrag und deinen Einkaufspreis', 'Liste aller Bestellungen mit Gewinn', 'Black-Week-Archiv für jedes Jahr'] },
   'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
@@ -1378,7 +1378,8 @@ function renderCard(){
   if (p===JONAS) extra = jonasHTML();
   if (p===MIA) extra = miaHTML();
   if (p===DAVID) { const nw=stNew(); if(nw.length&&!nw.includes(STP.tab)) STP.tab=nw[nw.length-1]; extra = davidHTML(); }
-  if (p===CLARA) extra = claraHTML();
+  if (p===CLARA) { const T=(DATA.st&&DATA.st.tasks)||[], td=new Date().toISOString().slice(0,10), n=k=>T.filter(t=>(t.status||'offen')===k).length, late=T.filter(t=>t.due&&t.status!=='erledigt'&&t.due<td).length;
+    extra = `<div><p class="lbl">Aufgaben</p>${DATA.st?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Offen</div><b style="font-size:20px">${n('offen')}</b></div><div><div class="isub">In Bearbeitung</div><b style="font-size:20px;color:#f59e0b">${n('arbeit')}</b></div><div><div class="isub">Erledigt</div><b style="font-size:20px;color:#22c55e">${n('erledigt')}</b></div></div>${late?`<p class="isub" style="color:#f87171">⚠ ${late} ${late===1?'Aufgabe ist':'Aufgaben sind'} überfällig</p>`:''}`:'<p class="isub">Wird geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="aufgaben">🗂 Aufgaben öffnen</button></div></div>`; }
   if (p===DEPTS[6].people[0]) { const X=DATA.sx, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €', mon=new Date().toLocaleDateString('de-DE',{month:'long'});
     extra = `<div><p class="lbl">${mon} bisher</p>${X?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Umsatz brutto</div><b style="font-size:20px">${eu(X.rev)}</b></div><div><div class="isub">Gewinn</div><b style="font-size:20px;color:#22c55e">${eu(X.profit)}</b></div><div><div class="isub">Bestellungen</div><b style="font-size:20px">${X.n}</b></div></div>`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="stats">📊 Statistik öffnen</button></div></div>`; }
   if (p===DEPTS[7].people[0]) { const A=DATA.ax, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €';
