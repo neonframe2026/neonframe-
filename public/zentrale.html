@@ -464,6 +464,7 @@ const AGENT_INFO = {
   'Bild- & Video-Agent': { live: true, tasks: ['Sammelt die Prompts von Mia', 'Kopiert den Prompt und öffnet ElevenLabs', 'Speichert fertige Bilder und Videos', 'Alles zum Download an einem Ort'] },
   'Bericht-Agent': { live: true, tasks: ['Wochen-, Monats- und Jahresberichte aus deinen echten Zahlen', 'Anfragen, Angebote, Rückmeldungen, Verkäufe, Umsatz', 'Vergleich mit Vorwoche, Vormonat und Vorjahr', 'Konkrete Vorschläge, was du verbessern kannst', 'Ziele mit Fortschritt', 'Chat: frag ihn alles zu deinen Zahlen'] },
   'Kampagnen-Agent': { live: true, tasks: ['Kampagnen-Kalender mit allen Aktionen', 'Plant Angebot, Zeitplan, Ads und Mails', 'Achtet auf Marge und Bestellschluss', 'Gibt Ads direkt an Mia weiter', 'Chat: plant alles zusammen mit dir'] },
+  'Ads-Agent': { live: true, tasks: ['Liest Werbekosten und Anfragen aus Meta Ads', 'Kosten pro Anfrage für jede Anzeige', 'Gewinn nach Werbung (Gewinn minus Werbekosten)', 'Bewertet Anzeigen: Gewinner, Gut, Schwach, Verbrennt Geld'] },
   'Statistik-Agent': { live: true, tasks: ['Umsatz brutto und Gewinn pro Monat und Jahr', 'Speichert bei jeder Bestellung den echten Betrag und deinen Einkaufspreis', 'Liste aller Bestellungen mit Gewinn', 'Black-Week-Archiv für jedes Jahr'] },
   'Einkaufs-Agent': { live: true, tasks: ['Liest neue Kundenanfragen aus dem Konfigurator', 'Bereitet die TNC-Anfrage vor (Bild, Farben, Größe, Rückwand)', 'Sendet nach deiner Freigabe ans TNC-Portal', 'Merkt sich die TNC-Nummer für Lisa'] },
   'Follow-up-Agent': { live: true, tasks: ['Prüft offene Angebote', 'Erinnerung 12 h nach dem Angebot', 'Rabatt 12 h nach der Erinnerung', 'Rabatt-Erinnerung 1 Tag vor Ablauf', 'Bewertungsanfrage nach Lieferung', 'Sendet nur zwischen 8:10 und 20:00 Uhr'] },
@@ -1380,6 +1381,7 @@ function renderCard(){
   if (p===CLARA) extra = claraHTML();
   if (p===DEPTS[3].people[2]) { const X=DATA.sx, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €', mon=new Date().toLocaleDateString('de-DE',{month:'long'});
     extra = `<div><p class="lbl">${mon} bisher</p>${X?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Umsatz brutto</div><b style="font-size:20px">${eu(X.rev)}</b></div><div><div class="isub">Gewinn</div><b style="font-size:20px;color:#22c55e">${eu(X.profit)}</b></div><div><div class="isub">Bestellungen</div><b style="font-size:20px">${X.n}</b></div></div>`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="stats">📊 Statistik öffnen</button></div></div>`; }
+  if (p===DEPTS[7].people[0]) extra = `<div><p class="lbl">Meta Ads</p><p class="isub">Werbekosten, Anfragen, Kosten pro Anfrage und Gewinn nach Werbung.</p><div class="iacts"><button class="b pri" data-nav="ads">📈 Ads-Analyse öffnen</button></div></div>`;
   if (p===NOAH) extra = noahHTML();
   if (p===TOM) extra = `<div><div class="preph"><p class="lbl">Änderungen von Kenzo</p>${updTasks().length?`<span class="tag-ready">${updTasks().length} bereit</span>`:''}</div>${tlist(updTasks(), 'Vorher / Nachher')}</div>`;
   if (p===EMMA) { const F2=DATA.fu||{approve:[],next:[],sent:[]};
