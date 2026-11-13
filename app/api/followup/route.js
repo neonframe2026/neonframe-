@@ -107,16 +107,20 @@ async function load() {
   const now = Date.now()
   const items = []
   for (const o of offers || []) {
+    if (o.mail_pause) continue // „In Bearbeitung“: keine Mails an diesen Kunden
     const s = step(o)
     if (!s) continue
     const id = `${o.id}:${s.kind}`
     if (skipped.has(id)) continue
     if (s.due < now - MAX_OLD_DAYS * 24 * H) continue
-    if (custom.has(id)) { items.push({ o, id, ...s, manual: false, custom: true, at: custom.get(id) }); continue }
+    // Nach „In Bearbeitung“: fällige Mails frühestens 2 Std. nach dem Ausschalten
+    const hold = t(o.mail_resume_at)
+    const push = (it) => items.push(hold > now && it.at < hold ? { ...it, at: it.custom ? hold : sendAt(hold) } : it)
+    if (custom.has(id)) { push({ o, id, ...s, manual: false, custom: true, at: custom.get(id) }); continue }
     const p = planned.get(id)
-    if (p) { items.push({ o, id, ...s, manual: false, approved: true, at: sendAt(t(p.created_at)) }); continue }
+    if (p) { push({ o, id, ...s, manual: false, approved: true, at: sendAt(t(p.created_at)) }); continue }
     const manual = s.due < START
-    items.push({ o, id, ...s, manual, at: sendAt(Math.max(s.due, START)) })
+    push({ o, id, ...s, manual, at: sendAt(Math.max(s.due, START)) })
   }
   return { items, logs: (logs || []).filter(l => l.type === 'fu_sent') }
 }
