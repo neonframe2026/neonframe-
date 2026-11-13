@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendPush } from '../../../lib/push'
 import { checkBlackWeekEnd, getBW } from '../../../lib/blackweek'
+import { requireUser } from '../../../lib/api-auth'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -217,6 +218,7 @@ async function waList() {
 export async function GET(req) {
   try {
     const sp = new URL(req.url).searchParams
+    if (!sp.get('run')) { const denied = await requireUser(req); if (denied) return denied } // Übersicht nur mit Login
     const { items, logs } = await load()
 
     if (sp.get('run')) {
@@ -287,6 +289,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const denied = await requireUser(req); if (denied) return denied // nur mit Login
   try {
     const { action, id, ids, at, now: force } = await req.json()
     // Planen: eine oder mehrere Mails auf Datum + Uhrzeit legen
