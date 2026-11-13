@@ -75,6 +75,7 @@ function CSS() {
       .pn-thumb{width:46px;height:46px}
       .pn-recs{grid-template-columns:1fr}
       .pn-hist{flex-wrap:wrap}
+      .pn-btns{flex-direction:column}
     }
   `}</style>
 }
@@ -100,14 +101,14 @@ const GHOST = { ...BTN, background: 'transparent', border: '1px solid #2a3b52', 
 const dt = (s) => { const d = new Date(s); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}. ${pad(d.getHours())}:${pad(d.getMinutes())}` }
 
 // Pauls Empfehlungen, Höchstbudget und Verlauf
-function PaulPanel({ ads, onChanged }) {
+function PaulPanel({ ads, onChanged, onSwap, tick }) {
   const [act, setAct] = useState(null)
   const [ask, setAsk] = useState(null) // Empfehlung, die gerade freigegeben werden soll
   const [busy, setBusy] = useState(false)
   const [capEdit, setCapEdit] = useState(null)
   const [msg, setMsg] = useState('')
   const loadAct = () => authed('/api/ads/action').then(setAct).catch(e => setMsg(e.message))
-  useEffect(() => { loadAct() }, [])
+  useEffect(() => { loadAct() }, [tick])
 
   const cap = act?.cap || 30, total = act?.total
   const avg = ads?.totals?.cpl || null
@@ -128,6 +129,8 @@ function PaulPanel({ ads, onChanged }) {
     const t = target(a); if (!t || seen.has(t.id)) continue; seen.add(t.id)
     recs.push({ key: 'down:' + t.id, kind: 'down', ad: a, t, pct: -30 })
   }
+  // Schwache / teure Anzeigen: neues Creative vorschlagen
+  for (const a of live.filter(x => x.r === 'weak' || x.r === 'burn')) recs.push({ key: 'swap:' + a.id, kind: 'swap', ad: a })
   const open = recs.filter(r => !(act?.ignored || []).includes(r.key))
   const newBudget = (r) => Math.max(1, Math.round(r.t.budget * (1 + r.pct / 100)))
 
@@ -144,9 +147,10 @@ function PaulPanel({ ads, onChanged }) {
 
   const card = (r) => {
     const c = r.kind === 'pause' ? '#ef4444' : r.kind === 'up' ? '#22c55e' : '#f59e0b'
-    const ic = r.kind === 'pause' ? '⏸' : r.kind === 'up' ? '🚀' : '📉'
-    const title = r.kind === 'pause' ? `„${r.ad.name}“ pausieren` : r.kind === 'up' ? 'Gewinner hochfahren' : 'Budget senken'
-    const desc = r.kind === 'pause'
+    const ic = r.kind === 'pause' ? '⏸' : r.kind === 'up' ? '🚀' : r.kind === 'swap' ? '🔄' : '📉'
+    const title = r.kind === 'pause' ? `„${r.ad.name}“ pausieren` : r.kind === 'up' ? 'Gewinner hochfahren' : r.kind === 'swap' ? 'Creative austauschen' : 'Budget senken'
+    const desc = r.kind === 'swap' ? `„${r.ad.name}“ ist ${r.ad.r === 'burn' ? 'zu teuer' : 'schwach'}${r.ad.cpl ? ` (${eur(r.ad.cpl)} pro Anfrage)` : ''}. Neues Bild oder Video rein, die alte Anzeige wird pausiert.`
+      : r.kind === 'pause'
       ? (r.ad.leads ? `${eur(r.ad.spend)} für ${r.ad.leads} ${r.ad.leads === 1 ? 'Anfrage' : 'Anfragen'} (${eur(r.ad.cpl)} pro Anfrage). Der Schnitt liegt bei ${eur(avg)}.` : `${eur(r.ad.spend)} ausgegeben, 0 Anfragen. Der Schnitt liegt bei ${avg ? eur(avg) : '–'} pro Anfrage.`)
       : r.kind === 'up' ? `„${r.ad.name}“ bringt Anfragen für ${eur(r.ad.cpl)}. Budget von „${r.t.name}“ +${r.pct}%.`
       : `„${r.ad.name}“ ist schwach (${eur(r.ad.cpl)} pro Anfrage). Budget von „${r.t.name}“ -30%.`
@@ -155,12 +159,15 @@ function PaulPanel({ ads, onChanged }) {
       <div key={r.key} style={{ border: `1px solid ${c}55`, background: `${c}0d`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 19 }}>{ic}</span><div><b style={{ fontSize: 14 }}>{title}</b><div style={{ color: '#7d8fa3', fontSize: 12, marginTop: 3, lineHeight: 1.5 }}>{desc}</div></div></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0a101b', border: '1px solid #223146', borderRadius: 11, padding: '9px 12px', fontSize: 13 }}>
-          {r.kind === 'pause' ? <><span style={{ color: '#7d8fa3' }}>● aktiv</span><span style={{ color: c }}>→</span><b style={{ color: c }}>⏸ pausiert</b></>
+          {r.kind === 'swap' ? <>{r.ad.thumb ? <img src={r.ad.thumb} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} /> : null}<span style={{ color: c }}>→</span><span style={{ width: 40, height: 40, borderRadius: 8, border: `1.5px dashed ${c}88`, color: c, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>+</span><span style={{ color: '#7d8fa3', fontSize: 11.5 }}>Neues Creative vom PC</span></>
+            : r.kind === 'pause' ? <><span style={{ color: '#7d8fa3' }}>● aktiv</span><span style={{ color: c }}>→</span><b style={{ color: c }}>⏸ pausiert</b></>
             : blocked ? <span style={{ color: '#f59e0b' }}>Höchstbudget erreicht. Erhöhe es oben, wenn du mehr ausgeben willst.</span>
             : <><span style={{ color: '#7d8fa3' }}>{eur(r.t.budget)} / Tag</span><span style={{ color: c }}>→</span><b style={{ color: c }}>{eur(newBudget(r))} / Tag</b></>}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 'auto' }}>
-          <button disabled={blocked || busy} onClick={() => setAsk(r)} style={{ ...BTN, background: c, color: r.kind === 'pause' ? '#fff' : '#04101f', opacity: blocked ? .4 : 1 }}>✓ Freigeben</button>
+          {r.kind === 'swap'
+            ? <button disabled={busy} onClick={() => onSwap(r.ad)} style={{ ...BTN, background: c, color: '#04101f' }}>📁 Creative wählen</button>
+            : <button disabled={blocked || busy} onClick={() => setAsk(r)} style={{ ...BTN, background: c, color: r.kind === 'pause' ? '#fff' : '#04101f', opacity: blocked ? .4 : 1 }}>✓ Freigeben</button>}
           <button disabled={busy} onClick={() => run({ kind: 'ignore', key: r.key })} style={GHOST}>Ignorieren</button>
         </div>
       </div>
@@ -194,12 +201,12 @@ function PaulPanel({ ads, onChanged }) {
       <b style={{ fontSize: 15 }}>🕘 Verlauf</b>
       {!(act?.log || []).length ? <div style={{ color: '#7d8fa3', fontSize: 13, marginTop: 8 }}>Noch keine Änderungen.</div> : <div style={{ marginTop: 6 }}>
         {act.log.slice(0, 15).map(e => {
-          const c = e.kind === 'pause' ? '#ef4444' : e.after > e.before ? '#22c55e' : '#f59e0b'
+          const c = e.kind === 'pause' ? '#ef4444' : e.kind === 'swap' ? '#f59e0b' : e.after > e.before ? '#22c55e' : '#f59e0b'
           return (
             <div key={e.id} className="pn-hist" style={{ opacity: e.undone ? .5 : 1 }}>
               <span style={{ color: '#7d8fa3', width: 92, flex: 'none' }}>{dt(e.at)}</span>
-              <b style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.kind === 'budget' ? `Budget „${e.name}“` : `„${e.name}“`}</b>
-              <span style={{ color: c }}>{e.kind === 'pause' ? 'pausiert' : `${eur(e.before / 100)} → ${eur(e.after / 100)} / Tag`}</span>
+              <b style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.kind === 'budget' ? `Budget „${e.name}“` : e.kind === 'swap' ? 'Creative getauscht' : `„${e.name}“`}</b>
+              <span style={{ color: c }}>{e.kind === 'pause' ? 'pausiert' : e.kind === 'swap' ? `„${e.name}“ → neue Anzeige „${e.newName}“` : `${eur(e.before / 100)} → ${eur(e.after / 100)} / Tag`}</span>
               {e.undone ? <span style={{ color: '#7d8fa3', fontSize: 11.5 }}>↩ rückgängig</span>
                 : <button disabled={busy} onClick={() => run({ kind: 'undo', logId: e.id }, true)} style={{ ...GHOST, padding: '5px 9px', fontSize: 11.5 }}>↩ Rückgängig</button>}
             </div>
@@ -232,6 +239,82 @@ function PaulPanel({ ads, onChanged }) {
   </>
 }
 
+// Creative austauschen: neues Bild/Video vom PC -> neue Anzeige in derselben Anzeigengruppe, alte wird pausiert
+function SwapModal({ ad, onClose, onDone }) {
+  const [info, setInfo] = useState(null)
+  const [file, setFile] = useState(null)
+  const [prev, setPrev] = useState('')
+  const [step, setStep] = useState('')
+  const [msg, setMsg] = useState('')
+  useEffect(() => { authed('/api/ads/action?ad=' + encodeURIComponent(ad.id)).then(setInfo).catch(e => setMsg(e.message)) }, [ad.id])
+  useEffect(() => () => { if (prev) URL.revokeObjectURL(prev) }, [prev])
+  const isVid = file && /^video\//.test(file.type)
+  const pick = (f) => {
+    if (!f) return
+    if (!/^(image\/(jpeg|png)|video\/(mp4|quicktime))$/.test(f.type)) { setMsg('Bitte ein Bild (JPG/PNG) oder Video (MP4/MOV) wählen'); return }
+    if (f.size > 50 * 1024 * 1024) { setMsg('Datei ist zu groß (max. 50 MB)'); return }
+    setMsg(''); setFile(f); setPrev(URL.createObjectURL(f))
+  }
+  async function go() {
+    setMsg('')
+    try {
+      setStep('Datei wird hochgeladen …')
+      const { path, token } = await authedPost('/api/ads/action', { kind: 'upload', name: file.name })
+      const { error } = await authClient().storage.from('offer-images').uploadToSignedUrl(path, token, file, { contentType: file.type })
+      if (error) throw new Error(error.message)
+      setStep(isVid ? 'Video wird zu Meta hochgeladen …' : 'Paul legt die neue Anzeige an …')
+      let r = await authedPost('/api/ads/action', { kind: 'swap', adId: ad.id, path, type: isVid ? 'video' : 'image' })
+      for (let i = 0; r.wait && i < 60; i++) {
+        setStep('Meta verarbeitet das Video … (kann 1 bis 3 Minuten dauern)')
+        await new Promise(res => setTimeout(res, 5000))
+        r = await authedPost('/api/ads/action', { kind: 'swap', adId: ad.id, path, type: 'video', videoId: r.wait })
+      }
+      if (r.wait) throw new Error('Meta braucht zu lange für das Video. Bitte später nochmal versuchen.')
+      onDone()
+    } catch (e) { setMsg(e.message); setStep('') }
+  }
+  const busy = !!step
+  const row = (k, v) => v ? <div style={{ display: 'flex', gap: 10 }}><span style={{ color: '#7d8fa3', width: 82, flex: 'none' }}>{k}</span><span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{v}</span></div> : null
+  return (
+    <div onClick={() => !busy && onClose()} style={{ position: 'fixed', inset: 0, background: 'rgba(3,6,12,.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 640, maxHeight: '96vh', overflowY: 'auto', background: '#0e1522', border: '1px solid #22d3ee55', borderRadius: 22, padding: 20, boxShadow: '0 30px 80px rgba(0,0,0,.6)' }}>
+        <b style={{ fontSize: 17 }}>🔄 Creative austauschen</b>
+        <div style={{ color: '#7d8fa3', fontSize: 12.5, marginTop: 6 }}>{ad.adset?.name ? `Anzeigengruppe „${ad.adset.name}“` : ad.campaign?.name}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+          <div style={{ background: '#0a101b', border: '1px solid #223146', borderRadius: 14, padding: 12, textAlign: 'center' }}>
+            <div className="pn-lbl" style={{ marginBottom: 8 }}>Alt · wird pausiert</div>
+            {ad.thumb ? <img src={info?.thumb || ad.thumb} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10, opacity: .6 }} /> : <div style={{ aspectRatio: '1', borderRadius: 10, background: '#0e1522' }} />}
+            <div style={{ color: '#7d8fa3', fontSize: 11, marginTop: 6 }}>{ad.name}{ad.cpl ? ` · ${eur(ad.cpl)} pro Anfrage` : ''}</div>
+          </div>
+          <label style={{ background: '#0a101b', border: `1px ${file ? 'solid' : 'dashed'} #f59e0b88`, borderRadius: 14, padding: 12, textAlign: 'center', cursor: busy ? 'default' : 'pointer' }}>
+            <div className="pn-lbl" style={{ marginBottom: 8, color: '#f59e0b' }}>Neu</div>
+            <input type="file" accept="image/jpeg,image/png,video/mp4,video/quicktime" disabled={busy} onChange={e => pick(e.target.files?.[0])} style={{ display: 'none' }} />
+            {file ? (isVid ? <video src={prev} muted autoPlay loop playsInline style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10 }} /> : <img src={prev} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 10 }} />)
+              : <div style={{ aspectRatio: '1', borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#f59e0b' }}><span style={{ fontSize: 30 }}>+</span><span style={{ fontSize: 12.5, fontWeight: 700 }}>Bild oder Video wählen</span><span style={{ color: '#7d8fa3', fontSize: 11 }}>JPG, PNG, MP4 · max. 50 MB</span></div>}
+            {file && <div style={{ fontSize: 11, marginTop: 6, color: '#cfe3f5', overflowWrap: 'anywhere' }}>{file.name} · <span style={{ color: NEON }}>ändern</span></div>}
+          </label>
+        </div>
+        <div style={{ background: '#0a101b', border: '1px solid #223146', borderRadius: 14, padding: 14, marginTop: 14, fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="pn-lbl" style={{ marginBottom: 2 }}>Wird von der alten Anzeige übernommen</div>
+          {!info ? <span style={{ color: '#7d8fa3' }}>{msg ? '–' : 'Paul liest die alte Anzeige …'}</span> : <>
+            {row('Text', info.message && `„${info.message.length > 160 ? info.message.slice(0, 160) + ' …' : info.message}“`)}
+            {row('Überschrift', info.headline)}
+            {row('Link', info.link)}
+            {row('Button', info.ctaText)}
+          </>}
+        </div>
+        <div style={{ color: '#7d8fa3', fontSize: 11.5, marginTop: 12, lineHeight: 1.5 }}>Bei „Freigeben“ lädt Paul das Creative zu Meta hoch, startet eine neue Anzeige in derselben Anzeigengruppe und pausiert die alte. Im Verlauf kannst du es rückgängig machen.</div>
+        {msg && <div style={{ color: '#f87171', fontSize: 12.5, marginTop: 10 }}>{msg}</div>}
+        {step && <div style={{ color: NEON, fontSize: 12.5, marginTop: 10 }}>⏳ {step}</div>}
+        <div className="pn-btns" style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <button disabled={!file || !info || busy} onClick={go} style={{ ...BTN, flex: 1, padding: 13, fontSize: 14, background: '#f59e0b', color: '#04101f', opacity: !file || !info ? .45 : 1 }}>{busy ? 'Paul arbeitet …' : '✓ Freigeben & austauschen'}</button>
+          <button disabled={busy} onClick={onClose} style={{ ...GHOST, padding: '13px 18px', fontSize: 14 }}>Abbrechen</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdsPage({ onBack }) {
   const [rk, setRk] = useState('30')
   const [camp, setCamp] = useState('all')
@@ -242,6 +325,7 @@ export default function AdsPage({ onBack }) {
   const [at, setAt] = useState(null)
   const [allAds, setAllAds] = useState(false)
   const [reload, setReload] = useState(0)
+  const [swap, setSwap] = useState(null)
   const range = rangeOf(rk)
 
   useEffect(() => { authed('/api/stats').then(setStats).catch(() => setStats({ orders: [] })) }, [])
@@ -392,6 +476,7 @@ export default function AdsPage({ onBack }) {
                       <b>{a.cpl ? eur(a.cpl) : '–'}</b>
                     </div>
                     <span className="pn-chip" style={{ color: rc, border: `1px solid ${rc}66`, background: `${rc}14` }}>{rl}</span>
+                    <button title="Creative austauschen" onClick={() => setSwap(a)} style={{ ...GHOST, padding: '5px 8px', fontSize: 13 }}>🔄</button>
                   </div>
                 )
               })}
@@ -402,7 +487,8 @@ export default function AdsPage({ onBack }) {
             </div>
           </div>
 
-          <PaulPanel ads={ads} onChanged={() => setReload(n => n + 1)} />
+          <PaulPanel ads={ads} tick={reload} onChanged={() => setReload(n => n + 1)} onSwap={setSwap} />
+          {swap && <SwapModal ad={swap} onClose={() => setSwap(null)} onDone={() => { setSwap(null); setReload(n => n + 1) }} />}
         </>}
       </div>
     </div>
