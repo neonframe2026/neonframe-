@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { authClient } from '../../lib/admin-auth'
 
 // Ads-Analyse (Paul Neumann, nur Administratoren): Meta-Werbekosten, Leads, Kosten pro Lead,
-// Gewinn nach Werbung (Gewinn aus der Statistik − Werbekosten) und Bewertung jeder Anzeige.
+// Bestellungen im Zeitraum und Bewertung jeder Anzeige.
 // Nur Ansicht. Pauls Empfehlungen mit "Freigeben" kommen im nächsten Schritt.
 // Klassen heißen "pn-…" statt "ad-…", weil Werbeblocker alles mit "ad-" ausblenden.
 const NEON = '#22d3ee'
@@ -37,6 +37,7 @@ const RATE = {
 function rate(a, avg) {
   if (a.leads > 0) {
     if (!avg) return 'good'
+    if (a.leads < 3) return a.cpl > avg * 1.6 ? 'burn' : 'few' // unter 3 Anfragen kann es Zufall sein
     if (a.cpl <= avg * 0.8) return 'win'
     if (a.cpl <= avg * 1.1) return 'good'
     if (a.cpl <= avg * 1.6) return 'weak'
@@ -53,7 +54,7 @@ function CSS() {
     .pn-lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#6f8399;text-transform:uppercase}
     .pn-big{font-size:32px;font-weight:900;line-height:1.15;letter-spacing:-.4px;margin-top:6px}
     .pn-sub{color:#7d8fa3;font-size:12px;margin-top:6px;line-height:1.4}
-    .pn-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+    .pn-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
     .pn-sel{appearance:none;-webkit-appearance:none;background:#0a101b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2322d3ee' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 13px center;border:1px solid #2a3b52;border-radius:11px;padding:10px 38px 10px 13px;font-weight:700;font-size:14px;color:#e6edf5;font-family:inherit;cursor:pointer;max-width:260px}
     .pn-row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed #1f2c3f}
     .pn-thumb{width:56px;height:56px;border-radius:10px;flex:none;object-fit:cover;background:#0a101b;border:1px solid #1b2738}
@@ -61,7 +62,7 @@ function CSS() {
     .pn-only-m{display:none}
     @media (max-width: 760px){
       .pn-wrap{padding:16px 12px 40px}
-      .pn-kpis{grid-template-columns:1fr 1fr;gap:10px}
+      .pn-kpis{grid-template-columns:1fr 1fr;gap:10px}.pn-kpis > div:last-child{grid-column:span 2}
       .pn-card{padding:14px}
       .pn-big{font-size:24px}
       .pn-only-d{display:none !important}
@@ -89,6 +90,7 @@ export default function AdsPage({ onBack }) {
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
   const [at, setAt] = useState(null)
+  const [allAds, setAllAds] = useState(false)
   const range = rangeOf(rk)
 
   useEffect(() => { authed('/api/stats').then(setStats).catch(() => setStats({ orders: [] })) }, [])
@@ -119,8 +121,6 @@ export default function AdsPage({ onBack }) {
 
   // Bestellungen + Gewinn im selben Zeitraum (aus der Statistik)
   const orders = (stats?.orders || []).filter(o => { const d = iso(new Date(o.date)); return d >= range.since && d <= range.until })
-  const profit = sum(orders, 'profit')
-  const after = profit - spend
   const activeCount = list.filter(a => isActive(a.status)).length
 
   // Diagramm: pro Tag, bei langen Zeiträumen pro Woche
@@ -197,11 +197,6 @@ export default function AdsPage({ onBack }) {
               <div className="pn-big">{orders.length}</div>
               <div className="pn-sub">{orders.length && leads ? `≈ 1 von ${Math.max(1, Math.round(leads / orders.length))} Anfragen` : 'im Zeitraum'}</div>
             </div>
-            <div className="pn-card">
-              <div className="pn-lbl">Gewinn nach Werbung</div>
-              <div className="pn-big" style={{ color: after >= 0 ? '#22c55e' : '#ef4444' }}>{eur(after)}</div>
-              <div className="pn-sub">Gewinn {eur(profit)} − Werbung {eur(spend)}{camp !== 'all' ? ' (nur diese Kampagne)' : ''}</div>
-            </div>
           </div>
 
           <div className="pn-card" style={{ marginTop: 16 }}>
@@ -228,7 +223,7 @@ export default function AdsPage({ onBack }) {
               <span style={{ color: '#7d8fa3', fontSize: 12 }}>{rated.length} mit Kosten · {activeCount} aktiv</span>
             </div>
             {rated.length === 0 ? <div style={{ color: '#7d8fa3', fontSize: 13, padding: '16px 0 4px' }}>Im Zeitraum „{rName}“ hatte keine Anzeige Kosten.</div> : <div style={{ marginTop: 6 }}>
-              {rated.map(a => {
+              {(allAds ? rated : rated.slice(0, 8)).map(a => {
                 const [rl, rc] = RATE[a.r]
                 return (
                   <div key={a.id} className="pn-row">
@@ -249,9 +244,10 @@ export default function AdsPage({ onBack }) {
                   </div>
                 )
               })}
+              {rated.length > 8 && <button onClick={() => setAllAds(v => !v)} style={{ width: '100%', marginTop: 12, background: 'transparent', border: '1px dashed #2a3b52', color: '#9fb3c8', borderRadius: 12, padding: '11px 14px', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{allAds ? 'Weniger anzeigen' : `Alle ${rated.length} anzeigen`}</button>}
             </div>}
             <div style={{ color: '#55677c', fontSize: 11.5, marginTop: 12, lineHeight: 1.5 }}>
-              Bewertung nach Kosten pro Anfrage im Vergleich zum Schnitt ({cpl ? eur(cpl) : '–'}): Gewinner = mind. 20% günstiger, Gut = etwa Schnitt, Schwach = bis 60% teurer, Verbrennt Geld = noch teurer oder keine Anfrage trotz Kosten.
+              Bewertung nach Kosten pro Anfrage im Vergleich zum Schnitt ({cpl ? eur(cpl) : '–'}): Gewinner = mind. 20% günstiger, Gut = etwa Schnitt, Schwach = bis 60% teurer, Verbrennt Geld = noch teurer oder keine Anfrage trotz Kosten. Unter 3 Anfragen = Zu wenig Daten.
             </div>
           </div>
         </>}
