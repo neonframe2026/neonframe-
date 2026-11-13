@@ -234,9 +234,9 @@ export default function ContentPage({ onBack }) {
               const k = isoDay(x), isT = k === today, past = k < today, list = byDay(k)
               return (
                 <div key={k} className={'ct-day' + (isT ? ' today' : '') + (past ? ' past' : '')}>
-                  <div className="ct-lbl" style={{ fontSize: 9.5, color: isT ? BLAU : undefined }}>
-                    {WD[i]} {pad(x.getDate())}.{pad(x.getMonth() + 1)}.
-                    {isT && <><br /><span style={{ background: BLAU, color: '#04121c', borderRadius: 5, padding: '1px 5px', letterSpacing: .5 }}>HEUTE</span></>}
+                  <div className="ct-lbl" style={{ fontSize: 9.5, color: isT ? BLAU : undefined, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                    <span>{WD[i]} {pad(x.getDate())}.{pad(x.getMonth() + 1)}.</span>
+                    {isT && <span style={{ background: BLAU, color: '#04121c', borderRadius: 5, padding: '1px 5px', letterSpacing: .5 }}>HEUTE</span>}
                   </div>
                   {list.map(p => (
                     <div key={p.id} className="ct-post" onClick={() => setEdit({ post: p })}>
