@@ -1527,7 +1527,7 @@ canvas.addEventListener('pointermove',e=>{
   if(ptrs.size===1 && dragPt){
     moved=Math.max(moved,Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]));
     if(moved>5){ if(tw){ distGoal=dist; goal.copy(target); thetaGoal=theta; phiGoal=phi; tw=null; } const dx=e.clientX-lastP[0], dy=e.clientY-lastP[1];
-      thetaGoal-=dx*.006; phiGoal=Math.min(1.35,Math.max(.45,phiGoal-dy*.004)); canvas.style.cursor='grabbing'; }
+      thetaGoal-=dx*.006; if(focused) phiGoal=Math.min(1.35,Math.max(.45,phiGoal-dy*.004)); canvas.style.cursor='grabbing'; }
     lastP=[e.clientX,e.clientY];
     return;
   }
@@ -1560,6 +1560,7 @@ function frame(){ frame.n=(frame.n||0)+1;
     target.lerpVectors(tw.p0,tw.p1,e); dist=tw.d0+(tw.d1-tw.d0)*e+Math.sin(Math.PI*e)*tw.arc; theta=tw.th0+(tw.th1-tw.th0)*e; phi=tw.ph0+(tw.ph1-tw.ph0)*e;
     if(u>=1) tw=null; }
   else { const k=reduce?1:.09; target.lerp(goal,k); dist+=(distGoal-dist)*k; theta+=(thetaGoal-theta)*(reduce?1:.12); phi+=(phiGoal-phi)*(reduce?1:.12); }
+  if(!tw&&!focused){ const k=isMob()?0:4.2*RS; target.set(Math.sin(theta)*k,1.5,Math.cos(theta)*k); goal.copy(target); } // Übersicht: die Mitte bleibt stehen, nur die Abteilungen drehen sich
   syncCam();
   if(!reduce){
     hub.rotation.y=theta-START_TH; globe.rotation.y=Math.sin(t*.25)*.55; globe.position.y=4.6+Math.sin(t*.8)*.08;
