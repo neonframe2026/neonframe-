@@ -48,6 +48,8 @@ export default function StatsPage({ onBack }) {
   const [year, setYear] = useState(String(now.getFullYear()))
   const [month, setMonth] = useState(String(now.getMonth()))
   const [all, setAll] = useState(false)
+  const [edit, setEdit] = useState(null) // { id, val } = Einkaufspreis wird gerade eingetragen
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -79,15 +81,7 @@ export default function StatsPage({ onBack }) {
   }
   const list = useMemo(() => orders.filter(o => inPeriod(o, year, month)), [orders, year, month])
 
-  // Vergleich mit dem Zeitraum davor
-  let prev = null, prevName = ''
-  if (year !== 'all') {
-    if (month === 'year') { prev = orders.filter(o => inPeriod(o, String(+year - 1), 'year')); prevName = String(+year - 1) }
-    else { const pm = +month === 0 ? 11 : +month - 1, py = +month === 0 ? +year - 1 : +year; prev = orders.filter(o => inPeriod(o, String(py), String(pm))); prevName = MON[pm].slice(0, 3) + '.' }
-  }
   const rev = sum(list, 'revenue'), profit = sum(list, 'profit'), net = rev / 1.19
-  const prevRev = prev ? sum(prev, 'revenue') : 0
-  const diff = prev && prevRev > 0 ? Math.round((rev / prevRev - 1) * 100) : null
   const anyApprox = list.some(o => o.approx)
   const periodName = year === 'all' ? 'insgesamt' : month === 'year' ? `in ${year}` : `im ${MON[+month]}`
   const titleName = year === 'all' ? 'Alle Zeiträume' : month === 'year' ? `Jahr ${year}` : `${MON[+month]} ${year}`
@@ -103,6 +97,22 @@ export default function StatsPage({ onBack }) {
   })
 
   const shown = all ? list : list.slice(0, 8)
+
+  // Echten Einkaufspreis (TNC-Rechnung, netto) eintragen -> Gewinn ist dann genau
+  async function saveEk(o) {
+    const v = parseFloat(String(edit?.val || '').replace(/\./g, '').replace(',', '.'))
+    if (!(v > 0)) { setEdit(null); return }
+    setSaving(true)
+    try {
+      const { data: s } = await authClient().auth.getSession()
+      const r = await fetch('/api/offers?id=' + encodeURIComponent(o.id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (s.session?.access_token || '') }, body: JSON.stringify({ paid_ek: v, ek_net: Math.round((o.express ? v / 1.3 : v) * 100) / 100 }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || j.error) throw new Error(j.error || 'Speichern fehlgeschlagen')
+      setData(d => ({ ...d, orders: d.orders.map(x => x.id === o.id ? { ...x, ek: v, profit: Math.round((x.revenue / 1.19 - v) * 100) / 100, approx: false } : x) }))
+      setEdit(null)
+    } catch (e) { alert(e.message) }
+    setSaving(false)
+  }
   const open = (o) => window.open('/admin?offer=' + encodeURIComponent(o.id), '_blank')
 
   return (
@@ -148,7 +158,6 @@ export default function StatsPage({ onBack }) {
               <div className="st-big" style={{ marginTop: 6 }}>{eur(rev)}</div>
               <div style={{ color: '#7d8fa3', fontSize: 12.5, marginTop: 8 }}>
                 {list.length} {list.length === 1 ? 'Bestellung' : 'Bestellungen'} {periodName}
-                {diff != null && <> · vs. {prevName}: <span style={{ color: diff >= 0 ? '#22c55e' : '#ef4444' }}>{diff >= 0 ? '+' : ''}{diff}%</span></>}
               </div>
             </div>
             <div className="st-card" style={{ flex: 1, padding: 24 }}>
@@ -178,12 +187,19 @@ export default function StatsPage({ onBack }) {
                   </span>
                   <span className="st-only-d" style={{ color: '#7d8fa3' }}>{o.size}</span>
                   <span className="st-r">{eur(o.revenue)}</span>
-                  <span className="st-r st-only-d" style={{ color: '#7d8fa3' }}>{o.approx ? 'ca. ' : ''}{eur(o.ek)}</span>
+                  <span className="st-r st-only-d" style={{ color: '#7d8fa3' }} onClick={e => { e.stopPropagation(); if (!edit || edit.id !== o.id) setEdit({ id: o.id, val: String(o.ek).replace('.', ',') }) }} title="Echten Einkaufspreis eintragen">
+                    {edit?.id === o.id
+                      ? <span style={{ display: 'inline-flex', gap: 5, justifyContent: 'flex-end' }}>
+                          <input autoFocus value={edit.val} onChange={e => setEdit({ id: o.id, val: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') saveEk(o); if (e.key === 'Escape') setEdit(null) }} style={{ width: 82, background: '#0a101b', border: `1px solid ${NEON}`, borderRadius: 7, padding: '4px 7px', color: '#fff', fontFamily: 'inherit', fontSize: 13, textAlign: 'right' }} />
+                          <button onClick={() => saveEk(o)} disabled={saving} style={{ background: NEON, border: 'none', borderRadius: 7, padding: '0 8px', fontWeight: 800, cursor: 'pointer' }}>{saving ? '…' : '✓'}</button>
+                        </span>
+                      : <span style={{ cursor: 'pointer', borderBottom: o.approx ? '1px dashed #f59e0b' : '1px dashed transparent', color: o.approx ? '#f59e0b' : undefined }}>{o.approx ? 'ca. ' : ''}{eur(o.ek)} ✎</span>}
+                  </span>
                   <span className="st-r" style={{ fontWeight: 800, color: o.profit >= 0 ? '#22c55e' : '#ef4444' }}>{o.approx ? <span style={{ fontWeight: 500, color: '#7d8fa3', fontSize: 11 }}>ca. </span> : null}{eur(o.profit)}</span>
                 </div>
               ))}
               {list.length > 8 && <div onClick={() => setAll(a => !a)} style={{ textAlign: 'center', paddingTop: 12, color: NEON, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{all ? 'Weniger anzeigen ▴' : `Alle ${list.length} anzeigen ▾`}</div>}
-              {anyApprox && <div style={{ color: '#6f8399', fontSize: 11.5, marginTop: 10 }}>„ca.“ = alte Bestellung ohne gespeicherten Einkaufspreis, aus dem Angebotspreis zurückgerechnet.</div>}
+              {anyApprox && <div style={{ color: '#6f8399', fontSize: 11.5, marginTop: 10 }}>„ca.“ = alte Bestellung ohne gespeicherten Einkaufspreis, aus dem Angebotspreis zurückgerechnet. Klick auf den Einkaufspreis und trag den echten Betrag von der TNC-Rechnung ein, dann stimmt der Gewinn genau.</div>}
             </div>}
           </div>
 
