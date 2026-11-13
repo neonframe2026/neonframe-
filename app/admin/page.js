@@ -790,7 +790,7 @@ const mRecontacted = (o) => !!o.recontacted_at || ['recontacted', 'discount_offe
 // Zeitpunkt der Erinnerung (Status manuell umgestellt, ohne Mail: 12 Std. nach dem Angebot)
 const mRecAt = (o) => o.recontacted_at || new Date(new Date(o.created_at).getTime() + 12 * 3600000).toISOString()
 const mDiscOk = (o) => mRecontacted(o) && mHours(mRecAt(o)) >= 12
-const mIsRed = (o) => !(o.black_week && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)) && ((mHours(o.created_at) >= 12 && o.status === 'offer_sent') || (o.status === 'recontacted' && !o.extra_discount_applied && mDiscOk(o)) || mReviewDue(o) || mDiscReminderDue(o))
+const mIsRed = (o) => !o.mail_pause && !(o.black_week && !['confirmed', 'in_production', 'shipped', 'delivered'].includes(o.status)) && ((mHours(o.created_at) >= 12 && o.status === 'offer_sent') || (o.status === 'recontacted' && !o.extra_discount_applied && mDiscOk(o)) || mReviewDue(o) || mDiscReminderDue(o))
 const mDate = (d) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '–'
 const mEur = (n) => `€ ${(parseFloat(n) || 0).toFixed(2)}`
 const mStatus = (v) => STATUS_OPTIONS.find(s => s.value === v) || STATUS_OPTIONS[0]
@@ -1072,6 +1072,39 @@ const BWTag = ({ small }) => (
     <span style={{ fontFamily: BW_ANTON, fontWeight: 900, fontSize: small ? 9.5 : 12, background: '#22d3ee', color: '#03121a', padding: small ? '1px 3px' : '2px 5px' }}>-30%</span>
   </span>
 )
+// „In Bearbeitung“: solange an, gehen keine automatischen Mails an den Kunden.
+// Beim Ausschalten gehen fällige Mails frühestens 2 Std. später raus.
+function MPause({ o, onReload }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const on = !!o.mail_pause
+  async function toggle() {
+    setBusy(true)
+    const resume = new Date(Date.now() + 2 * 3600000)
+    try {
+      const r = await fetch(`/api/offers?id=${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(on ? { mail_pause: false, mail_resume_at: resume.toISOString() } : { mail_pause: true }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || j.error) throw new Error(j.error || 'Speichern fehlgeschlagen')
+      if (on) { setMsg(`✓ Mails wieder an. Nächste Mail frühestens ${resume.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr.`); setTimeout(() => setMsg(''), 5000) }
+      onReload && onReload()
+    } catch (e) { alert(e.message) }
+    setBusy(false)
+  }
+  return (
+    <>
+      <button type="button" onClick={toggle} disabled={busy} title={on ? 'Bearbeitung fertig: Mails wieder an' : 'Keine Mails an den Kunden, solange du das Angebot bearbeitest'}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 9, borderRadius: 10, padding: '8px 13px', fontSize: 13, fontWeight: 700, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit',
+          border: `1px solid ${on ? '#f59e0b' : 'var(--border)'}`, background: on ? '#f59e0b1a' : 'var(--panel)', color: on ? '#fbbf24' : 'var(--text)' }}>
+        <span style={{ width: 34, height: 19, borderRadius: 12, background: on ? '#f59e0b' : '#64748b', position: 'relative', flexShrink: 0, transition: '.15s' }}>
+          <span style={{ position: 'absolute', top: 2, left: on ? 17 : 2, width: 15, height: 15, borderRadius: '50%', background: '#fff', transition: '.15s' }} />
+        </span>
+        ✋ In Bearbeitung
+      </button>
+      {msg && <div style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 9999, background: 'var(--panel)', border: '1px solid #22c55e66', color: 'var(--text)', borderRadius: 12, padding: '12px 16px', fontSize: 13, boxShadow: '0 10px 30px rgba(0,0,0,.4)' }}>{msg}</div>}
+    </>
+  )
+}
+
 function MBlackWeek({ o, onReload }) {
   const [ask, setAsk] = useState(false)
   const [mail, setMail] = useState(true)
@@ -1143,6 +1176,7 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
             <span className="nf-msub" style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-muted)' }}>{o.project}</span>
             <MAktiv o={o} />
             {o.black_week && <BWTag />}
+            {o.mail_pause && <span style={{ fontSize: 12, fontWeight: 800, color: '#f59e0b', border: '1px solid #f59e0b88', background: '#f59e0b1a', borderRadius: 6, padding: '4px 9px', whiteSpace: 'nowrap' }}>✋ IN BEARBEITUNG</span>}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
             {o.offer_num && <span style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-muted)', background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px' }}>Nr. {o.offer_num}</span>}
@@ -1150,14 +1184,22 @@ function MDetail({ o, onEdit, onContact, onReview, onDiscount, onDiscReminder, o
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <MPause o={o} onReload={onReload} />
           <MBlackWeek o={o} onReload={onReload} />
           <MB kind="edit" onClick={onEdit}>✏️ Bearbeiten</MB>
-                    <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} onDiscReminder={onDiscReminder} onMail={onMail} />
+          {NF_TEST_MODE && <MContactMenu o={o} onContact={onContact} onReview={onReview} onDiscount={onDiscount} onDiscReminder={onDiscReminder} onMail={onMail} />}
           <MB onClick={onToggle}>{o.published ? 'Deaktivieren' : 'Aktivieren'}</MB>
           <MB kind="del" onClick={onDelete} title="Löschen">🗑</MB>
         </div>
       </div>
 
+      {o.mail_pause && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f59e0b14', border: '1px solid #f59e0b77', color: '#fcd34d', borderRadius: 12, padding: '12px 14px', fontSize: 13 }}>
+          <span style={{ fontSize: 20 }}>✋</span>
+          <div><b>Angebot in Bearbeitung: es gehen keine Mails an {o.project || 'den Kunden'} raus.</b>
+            <div style={{ color: '#d6b25e', marginTop: 3 }}>Wenn du fertig bist, Schalter wieder aus. Fällige Mails gehen dann frühestens 2 Std. später raus.</div></div>
+        </div>
+      )}
       {mIsRed(o) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0a9bff1a', border: '1px solid #0a9bff55', color: '#3bb4ff', borderRadius: 12, padding: '10px 14px', fontSize: 13, fontWeight: 700 }}>
           🤖 {mDiscReminderDue(o) ? 'Rabatt-Erinnerung' : mReviewDue(o) ? 'Bewertungs-Mail' : o.status === 'recontacted' ? 'Rabatt-Mail' : 'Erinnerungs-Mail'} geht automatisch {mAutoWhen()} raus. Du musst nichts tun.
@@ -1365,7 +1407,7 @@ function ManagePage({ offers, loadingOffers, loadOffers, setTab, theme, toggleTh
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4 }}>
                       <MDateTxt o={x} short />
-                      <span style={{ fontSize: 11, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{mStatus(x.status).label}</span>
+                      {x.mail_pause ? <span style={{ fontSize: 10.5, fontWeight: 800, color: '#f59e0b', border: '1px solid #f59e0b88', background: '#f59e0b1a', borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap' }}>✋ IN BEARBEITUNG</span> : <span style={{ fontSize: 11, color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{mStatus(x.status).label}</span>}
                     </div>
                   </div>
                 </div>
