@@ -7,6 +7,7 @@ import AdminLogin from './login-screen'
 import SettingsPage from './settings-page'
 import StatsPage from './stats-page'
 import DavidPage from './david-page'
+import ContentPage from './content-page'
 import AdsPage from './ads-page'
 import WissenPage from './wissen-page'
 import { authSignOut } from '../../lib/admin-auth'
@@ -2535,6 +2536,7 @@ if (tab === 'tncupdate') return (
 if (tab === 'settings') return <SettingsPage onBack={() => setTab('zentrale')} />
 if (tab === 'stats') return <StatsPage onBack={() => setTab('zentrale')} />
 if (tab === 'bericht') return <DavidPage onBack={() => setTab('zentrale')} />
+if (tab === 'content') return <ContentPage onBack={() => setTab('zentrale')} />
 if (tab === 'ads') return <AdsPage onBack={() => setTab('zentrale')} />
 if (tab === 'wissen') return <WissenPage onBack={() => setTab('zentrale')} />
 if (tab === 'zentrale' || tab === 'home') return (
