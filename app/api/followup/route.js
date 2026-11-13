@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
 export const maxDuration = 60
 
-// Follow-up-Agent (Emma)
+// Follow-up-Agent (Emma) – mit „In Bearbeitung“-Pause
 // GET                      -> Übersicht für die Zentrale: { approve, next, sent }
 // GET ?run=1&key=...       -> Automatik (cron-job.org alle 10 Min.): schickt fällige Mails, nur 8:10 bis 20:00 Uhr
 // POST { action: 'send' | 'skip', id }   -> Freigabe aus der Zentrale (id = "<offerId>:<art>")
