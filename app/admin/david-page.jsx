@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { authClient } from '../../lib/admin-auth'
 
-// David: Bericht & Vorschläge (eigene Seite). Angenommene Vorschläge gehen mit fertigem Plan an Claras Board.
+// David: Bericht & Vorschläge (eigene Seite). Vorschläge nur zum Lesen, mit X wegklicken (= ablehnen).
 const LILA = '#8f7bff'
 const eur = (n) => Math.round(n || 0).toLocaleString('de-DE') + ' €'
 const TABS = [['week', 'Woche'], ['month', 'Monat'], ['year', 'Jahr']]
@@ -16,7 +16,6 @@ async function api(method, body, qs = '') {
   return j
 }
 const BTN = { borderRadius: 10, padding: '9px 13px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', fontFamily: 'inherit', border: 'none', whiteSpace: 'nowrap' }
-const PRI = { ...BTN, background: LILA, color: '#fff' }
 const GHOST = { ...BTN, background: 'transparent', border: '1px solid #2a3b52', color: '#b9c7d6' }
 
 function CSS() {
@@ -50,7 +49,7 @@ function Delta({ cur, prev, money }) {
   return <div style={{ color: p > 0 ? '#22c55e' : p < 0 ? '#ef4444' : '#7d8fa3', fontSize: 11.5 }}>{p > 0 ? '+' : ''}{p}% zu vorher</div>
 }
 
-export default function DavidPage({ onBack, onTasks }) {
+export default function DavidPage({ onBack }) {
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [k, setK] = useState('week')
@@ -69,7 +68,7 @@ export default function DavidPage({ onBack, onTasks }) {
     setBusy('')
   }
   const now = P?.now || {}, prev = P?.nowPrev || {}
-  const done = new Set([...(rep?.accepted || []), ...(rep?.rejected || [])])
+  const done = new Set(rep?.rejected || [])
   const sugs = (rep?.suggestions || []).map((s, i) => ({ ...s, i })).filter(s => !done.has(s.i))
 
   return (
@@ -117,34 +116,29 @@ export default function DavidPage({ onBack, onTasks }) {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0 10px' }}>
             <b style={{ fontSize: 16 }}>💡 Davids Vorschläge</b>
-            <span style={{ color: '#7d8fa3', fontSize: 12 }}>{sugs.length ? `${sugs.length} offen` : ''}{rep?.accepted?.length ? ` · ${rep.accepted.length} angenommen` : ''}</span>
+            <span style={{ color: '#7d8fa3', fontSize: 12 }}>{sugs.length ? `${sugs.length} offen` : ''}</span>
           </div>
-          {!rep ? null : sugs.length === 0 ? <div className="dv-card" style={{ color: '#7d8fa3', fontSize: 13 }}>Alle Vorschläge sind erledigt. Angenommene findest du bei Clara in den Aufgaben.</div> :
+          {!rep ? null : sugs.length === 0 ? <div className="dv-card" style={{ color: '#7d8fa3', fontSize: 13 }}>Alle Vorschläge sind weggeklickt. Mit „Bericht neu schreiben“ bekommst du neue.</div> :
             <div className="dv-sug">{sugs.map((s, n) => {
-              const c = SCOL[n % 3], b = busy === 'acc' + s.i || busy === 'rej' + s.i
+              const c = SCOL[n % 3]
               return (
-                <div key={s.i} className="dv-card" style={{ borderColor: c + '44', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                <div key={s.i} className="dv-card" style={{ borderColor: c + '44', display: 'flex', flexDirection: 'column', gap: 9, opacity: busy === 'rej' + s.i ? .4 : 1 }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                     <span style={{ width: 26, height: 26, borderRadius: 8, background: c + '22', color: c, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>{n + 1}</span>
-                    <b style={{ fontSize: 14.5, lineHeight: 1.35 }}>{s.title}</b>
+                    <b style={{ fontSize: 14.5, lineHeight: 1.35, flex: 1 }}>{s.title}</b>
+                    <button title="Vorschlag entfernen" disabled={!!busy} onClick={() => act({ action: 'reject', key: P.key, i: s.i }, 'rej' + s.i)} style={{ background: 'none', border: 'none', color: '#6f8399', fontSize: 17, cursor: 'pointer', lineHeight: 1, padding: 2 }}>✕</button>
                   </div>
                   <div style={{ fontSize: 12.5, lineHeight: 1.55 }}>
                     {s.what && <><div className="dv-lbl" style={{ fontSize: 9.5 }}>Was</div><div style={{ margin: '2px 0 7px' }}>{s.what}</div></>}
-                    {s.why && <><div className="dv-lbl" style={{ fontSize: 9.5 }}>Warum</div><div style={{ margin: '2px 0 7px', color: '#9fb3c8' }}>{s.why}</div></>}
-                    {s.result && <><div className="dv-lbl" style={{ fontSize: 9.5 }}>Ergebnis</div><div style={{ marginTop: 2, color: '#22c55e' }}>{s.result}</div></>}
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 'auto', flexWrap: 'wrap' }}>
-                    <button disabled={!!busy} onClick={() => act({ action: 'task_from_suggestion', key: P.key, i: s.i }, 'acc' + s.i)} style={{ ...PRI, opacity: busy && !b ? .5 : 1 }}>{busy === 'acc' + s.i ? 'Clara schreibt den Plan …' : '✓ Vorschlag annehmen'}</button>
-                    <button disabled={!!busy} onClick={() => act({ action: 'reject', key: P.key, i: s.i }, 'rej' + s.i)} style={GHOST}>Ablehnen</button>
+                    {s.why && <><div className="dv-lbl" style={{ fontSize: 9.5 }}>Warum</div><div style={{ marginTop: 2, color: '#9fb3c8' }}>{s.why}</div></>}
                   </div>
                 </div>
               )
             })}</div>}
 
           <div className="dv-card dv-foot" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ flex: 1, color: '#7d8fa3', fontSize: 12.5 }}>Angenommene Vorschläge landen als Aufgabe mit fertigem Plan bei Clara.</span>
+            <span style={{ flex: 1, color: '#7d8fa3', fontSize: 12.5 }}>Mit ✕ entfernst du einen Vorschlag. David schlägt so etwas dann nicht mehr vor.</span>
             <button disabled={!!busy} onClick={() => act({ action: 'report', period: k }, 'rep')} style={GHOST}>{busy === 'rep' ? 'David schreibt …' : '↻ Bericht neu schreiben'}</button>
-            <button onClick={onTasks} style={GHOST}>🗂 Zu Claras Aufgaben</button>
           </div>
         </>}
       </div>
