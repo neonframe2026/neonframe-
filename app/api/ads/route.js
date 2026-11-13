@@ -37,7 +37,8 @@ async function meta(path, params = {}) {
 
 // Leads/Käufe aus "actions" zählen (größten Wert nehmen, damit nichts doppelt zählt)
 const pick = (actions, types) => Math.max(0, ...((actions || []).filter(a => types.includes(a.action_type)).map(a => +a.value || 0)))
-const LEAD = ['lead', 'offsite_conversion.fb_pixel_lead', 'onsite_conversion.lead_grouped', 'onsite_web_lead']
+// Standard-Lead-Ereignisse + eure benutzerdefinierte Conversion "NeonFrame Lead" (wird unten automatisch gesucht)
+const LEAD_STD = ['lead', 'offsite_conversion.fb_pixel_lead', 'onsite_conversion.lead_grouped', 'onsite_web_lead']
 const BUY = ['purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase']
 
 const iso = d => d.toISOString().slice(0, 10)
@@ -54,13 +55,17 @@ export async function GET(req) {
   const F = 'spend,impressions,clicks,ctr,actions'
 
   try {
-    const [info, daily, adRows, ads, campaigns] = await Promise.all([
+    const [info, daily, adRows, ads, campaigns, custom] = await Promise.all([
       meta(acc, { fields: 'name,currency,account_status,timezone_name' }),
       meta(`${acc}/insights`, { fields: F, time_range, time_increment: 1, limit: 100 }),
       meta(`${acc}/insights`, { fields: `ad_id,ad_name,adset_id,adset_name,campaign_id,campaign_name,${F}`, level: 'ad', time_range, limit: 200 }),
       meta(`${acc}/ads`, { fields: 'id,name,effective_status,adset_id,campaign_id,creative{thumbnail_url}', limit: 200 }),
       meta(`${acc}/campaigns`, { fields: 'id,name,effective_status,daily_budget,lifetime_budget', limit: 100 }),
+      meta(`${acc}/customconversions`, { fields: 'id,name', limit: 100 }).catch(() => []),
     ])
+    // Benutzerdefinierte Conversions mit "Lead" im Namen zählen als Lead (z. B. "NeonFrame Lead")
+    const leadCustom = custom.filter(c => /lead/i.test(c.name || ''))
+    const LEAD = [...LEAD_STD, ...leadCustom.map(c => 'offsite_conversion.custom.' + c.id)]
     const adsets = await meta(`${acc}/adsets`, { fields: 'id,name,effective_status,daily_budget,lifetime_budget,campaign_id', limit: 200 })
 
     const days = daily.map(d => ({
@@ -89,7 +94,7 @@ export async function GET(req) {
 
     return Response.json({
       account: { name: info.name, currency: info.currency, status: info.account_status, tz: info.timezone_name },
-      range: { since, until }, totals, days, ads: adList,
+      range: { since, until }, leadEvent: leadCustom.map(c => c.name), totals, days, ads: adList,
     })
   } catch (e) {
     return Response.json({ error: 'Meta: ' + e.message }, { status: 502 })
