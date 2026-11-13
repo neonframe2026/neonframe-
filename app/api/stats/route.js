@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { markupFactor, getSetting } from '../../../lib/pricing'
-import { shopifyOrderTotals } from '../../../lib/shopify-admin'
+import { shopifyOrderFacts } from '../../../lib/shopify-admin'
 import { getBW } from '../../../lib/blackweek'
 
 export const dynamic = 'force-dynamic'
@@ -39,22 +39,27 @@ export async function GET(req) {
   try {
     const sb = db()
     const { data, error } = await sb.from('offers')
-      .select('id, custom_id, project, status, ordered_at, created_at, width, height, final_price, base_price, disc_type, disc_val, vat_pct, markup, black_week, bw_prev, express, ek_net, paid_total, paid_ek, paid_size, shopify_order_id')
+      .select('id, custom_id, project, status, ordered_at, created_at, width, height, final_price, base_price, disc_type, disc_val, vat_pct, markup, black_week, bw_prev, express, ek_net, paid_total, paid_ek, paid_size, shopify_order_id, shopify_draft_id')
       .in('status', BOUGHT)
     if (error) throw new Error(error.message)
     const list = data || []
 
-    // Alte Bestellungen einmalig nachtragen (bezahlter Betrag von Shopify, sonst Angebotspreis)
-    const todo = list.filter(o => o.paid_total == null || o.paid_ek == null)
+    // Alte Bestellungen einmalig nachtragen: echtes Bestelldatum + bezahlter Betrag von Shopify, Einkaufspreis
+    const todo = list.filter(o => o.paid_total == null || o.paid_ek == null || !o.ordered_at)
     if (todo.length) {
-      let totals = {}
-      const ids = todo.map(o => o.shopify_order_id).filter(Boolean)
-      if (ids.length) { try { totals = await shopifyOrderTotals(ids) } catch (e) { console.error('Shopify-Beträge:', e.message) } }
+      let F = { byOrder: {}, byDraft: {} }
+      const oIds = todo.map(o => o.shopify_order_id).filter(Boolean)
+      const dIds = todo.filter(o => !o.shopify_order_id && o.shopify_draft_id).map(o => o.shopify_draft_id)
+      if (oIds.length || dIds.length) { try { F = await shopifyOrderFacts(oIds, dIds) } catch (e) { console.error('Shopify-Bestelldaten:', e.message) } }
       for (const o of todo) {
+        const dKey = o.shopify_draft_id && (String(o.shopify_draft_id).startsWith('gid://') ? String(o.shopify_draft_id) : `gid://shopify/DraftOrder/${o.shopify_draft_id}`)
+        const f = (o.shopify_order_id && F.byOrder[String(o.shopify_order_id)]) || (dKey && F.byDraft[dKey]) || {}
         const upd = {
-          paid_total: o.paid_total ?? (totals[String(o.shopify_order_id)] || parseFloat(o.final_price) || null),
+          paid_total: o.paid_total ?? (f.total || parseFloat(o.final_price) || null),
           paid_ek: o.paid_ek ?? ekOf(o),
           paid_size: o.paid_size || (o.width && o.height ? `${o.width} × ${o.height} cm` : null),
+          ...(!o.ordered_at && f.date ? { ordered_at: f.date } : {}),
+          ...(!o.shopify_order_id && f.id ? { shopify_order_id: f.id } : {}),
         }
         await sb.from('offers').update(upd).eq('id', o.id)
         Object.assign(o, upd)
