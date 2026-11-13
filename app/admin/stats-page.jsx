@@ -121,7 +121,7 @@ export default function StatsPage({ onBack }) {
       <div style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', gap: 16, padding: '0 20px', borderBottom: '1px solid #1f2937', position: 'sticky', top: 0, zIndex: 20 }}>
         <button onClick={onBack} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#cbd5e1', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← Zentrale</button>
         <span style={{ fontWeight: 800, fontSize: 15 }}>📊 Statistik</span>
-        <span className="st-only-d" style={{ color: '#6f8399', fontSize: 12.5 }}>Felix Weber · Strategie & Planung</span>
+        <span className="st-only-d" style={{ color: '#6f8399', fontSize: 12.5 }}>Felix Weber · Zahlen & Statistik</span>
       </div>
 
       <div className="st-wrap">
