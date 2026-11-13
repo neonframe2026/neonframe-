@@ -431,16 +431,16 @@ const DEPTS = [
   people:[{name:'Mia Hoffmann',role:'Prompts',agent:'Prompt-Agent',f:1},{name:'Noah Schmitt',role:'Bild & Video',agent:'Bild- & Video-Agent',f:0},{name:'Lea Wagner',role:'3D-Vorschau',agent:'Vorschau-Agent',f:1}]},
  {id:'strategie', name:'Strategie & Planung', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2 2 4-4"/></svg>`, color:'#8f7bff', tags:['Berichte & Ziele','Kampagnen-Kalender','Chat & Planung'],
   kpis:[['Ziele','3'],['Kampagnen','2'],['Bericht','Mo']],
-  people:[{name:'David Lehmann',role:'Berichte & Ziele',agent:'Bericht-Agent',f:0},{name:'Clara Vogel',role:'Kampagnen',agent:'Kampagnen-Agent',f:1},{name:'Felix Weber',role:'Zahlen & Statistik',agent:'Statistik-Agent',f:0}]},
+  people:[{name:'David Lehmann',role:'Berichte & Ziele',agent:'Bericht-Agent',f:0},{name:'Clara Vogel',role:'Kampagnen',agent:'Kampagnen-Agent',f:1}]},
  {id:'einkauf', name:'Einkauf', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 10.5A2 2 0 0 1 15.5 20h-7a2 2 0 0 1-2-1.5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>`, color:'#ffc04a', tags:['TNC-Anfragen','Logos & Farben','TNC-Portal'],
   kpis:[['Hersteller','2'],['Ersparnis','18 %'],['Muster','Dez']],
   people:[{name:'Anna Schulz',role:'Einkäuferin',agent:'Einkaufs-Agent',f:1}]},
  {id:'followup', name:'Follow-up & CRM', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M12 7v5l3 2"/></svg>`, color:'#34e39b', tags:['Erinnerungen','Rabatt-Mails','Bewertungen'],
   kpis:[['Offene Angebote','11'],['Mails fällig','3'],['Bewertungen','5']],
   people:[{name:'Emma Koch',role:'CRM-Managerin',agent:'Follow-up-Agent',f:1}]},
- {id:'shoptest', name:'Shop-Tester', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h13L19 9"/><path d="M4 9v10h7"/><circle cx="17" cy="16" r="3"/><path d="M21 20l-1.8-1.8"/></svg>`, color:'#f472b6', tags:['Startseite & Produktseiten','Fehlende Infos','Conversion'],
-  kpis:[['Vorschläge','0'],['Umgesetzt','0'],['Clarity','bald']],
-  people:[{name:'Lena Wolf',role:'Growth & CRO',agent:'Shop-Tester-Agent',f:1}]},
+ {id:'statistik', name:'Zahlen & Statistik', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>`, color:'#f472b6', tags:['Umsatz & Gewinn','Alle Bestellungen','Black-Week-Archiv'],
+  kpis:[['Umsatz','–'],['Gewinn','–'],['Bestellungen','–']],
+  people:[{name:'Felix Weber',role:'Zahlen & Statistik',agent:'Statistik-Agent',f:0}]},
  {id:'ads', name:'Ads-Analyse', icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M10 20V10M16 20V12M22 20H2"/><path d="M4 9l6-4 6 3 5-5"/></svg>`, color:'#a3e635', tags:['Meta Ads','Kosten & ROAS','Gewinner-Creatives'],
   kpis:[['ROAS','–'],['Kosten','–'],['Gewinner','–']],
   people:[{name:'Paul Neumann',role:'Ads-Analyst',agent:'Ads-Agent',f:0}]}
@@ -600,13 +600,13 @@ const globe = new THREE.Group(); globe.position.y=4.6; hub.add(globe);
 /* ================= Räume ================= */
 const pickables = [], rooms = {}, persons = [];
 const R = DEPTS.length>6 ? 20 : 16.5; const RS = R/16.5;
-const PICK = {angebote:0, service:1, creative:0, strategie:0, einkauf:0, followup:0, shoptest:1, ads:1};
+const PICK = {angebote:0, service:1, creative:0, strategie:0, einkauf:0, followup:0, statistik:0, ads:1};
 const VAR = {
   angebote:[{f:'white',w:0xe3e7ee,n:'Clean Office',p:['arm:0x1b1e25','table','plant','plant2']},{f:'wood',w:0xe7e2da,n:'Wood Lounge',p:['sofa:0x1f2a44','rugO','shelf','plant']},{f:'grey',w:0xdfe4ec,n:'Sales Board',p:['board','stand','arm1:0x1b1e25','plant']}],
   service:[{f:'white',w:0xe2eaee,n:'Call Center',p:['booth','plant','plant2','pouf:0x3ad7ff']},{f:'beige',w:0xe9e4dc,n:'Cozy Support',p:['sofa:0xb9c2cf','rugO','pouf:0x6b7a93','plant']},{f:'grey',w:0xdfe6ea,n:'Help Desk',p:['counter','parcels','plant']}],
   creative:[{f:'white',w:0xeee6e1,n:'Studio',p:['easel','bean:0xff8a5c','bean2:0x1b1e25','plant']},{f:'wood',w:0xe9e2d8,n:'Workshop',p:['bigtable','shelfc','plant']},{f:'dark',w:0x3a3e48,n:'Dark Studio',p:['sofa:0x15171c','neonwall','plant']}],
   strategie:[{f:'wood',w:0xe6e3f1,n:'War Room',p:['meet','calendar','shelfb','plant2']},{f:'grey',w:0xe1e0ea,n:'Ziele-Wand',p:['goals','sofa:0x3b2f6b','plant2']},{f:'beige',w:0xe7e3ec,n:'Denker-Ecke',p:['calendar','arm:0x1b1e25','shelf','plant']}],
-  shoptest:[{f:'white',w:0xf1e4ec,n:'Test-Labor',p:['devices','heatmap','plant']},{f:'wood',w:0xeee2e8,n:'Kunden-Ecke',p:['heatmap','arm:0x1b1e25','bags','plant2']},{f:'grey',w:0xe8e1e6,n:'Shop-Lounge',p:['sofa:0x6b2f52','bags','board','plant']}],
+  statistik:[{f:'white',w:0xf1e4ec,n:'Zahlen-Büro',p:['chartwall','arm:0x1b1e25','shelf','plant']},{f:'wood',w:0xeee2e8,n:'Statistik-Lounge',p:['sofa:0x6b2f52','chartwall','plant2']},{f:'grey',w:0xe8e1e6,n:'Report-Wand',p:['board','stand','plant']}],
   ads:[{f:'grey',w:0xe6ecdf,n:'Data-Wand',p:['chartwall','arm1:0x1b1e25','plant']},{f:'wood',w:0xe7eadf,n:'ROAS-Lounge',p:['tv:0x2a3a1f','chartwall','plant2']},{f:'white',w:0xe9ecE3,n:'Kampagnen-Board',p:['board','stand','bean:0xa3e635','plant']}],
   einkauf:[{f:'grey',w:0xe5e3dc,n:'Lager',p:['racks','pallet','plant']},{f:'white',w:0xe8e6df,n:'Muster-Raum',p:['meet','parcels']},{f:'wood',w:0xe9e3d6,n:'Büro Warm',p:['sofa:0xd9a43a','shelf','plant']}],
   followup:[{f:'white',w:0xe1ebe6,n:'Lounge',p:['sofa:0x2e8f63','plant','plant2','plantT']},{f:'grey',w:0xdfe6e3,n:'Kanban',p:['board','stand','plant']},{f:'beige',w:0xe6e9e2,n:'Phone Booth',p:['booth','arm:0x1b1e25','plant']}],
@@ -1379,7 +1379,7 @@ function renderCard(){
   if (p===MIA) extra = miaHTML();
   if (p===DAVID) { const nw=stNew(); if(nw.length&&!nw.includes(STP.tab)) STP.tab=nw[nw.length-1]; extra = davidHTML(); }
   if (p===CLARA) extra = claraHTML();
-  if (p===DEPTS[3].people[2]) { const X=DATA.sx, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €', mon=new Date().toLocaleDateString('de-DE',{month:'long'});
+  if (p===DEPTS[6].people[0]) { const X=DATA.sx, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €', mon=new Date().toLocaleDateString('de-DE',{month:'long'});
     extra = `<div><p class="lbl">${mon} bisher</p>${X?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Umsatz brutto</div><b style="font-size:20px">${eu(X.rev)}</b></div><div><div class="isub">Gewinn</div><b style="font-size:20px;color:#22c55e">${eu(X.profit)}</b></div><div><div class="isub">Bestellungen</div><b style="font-size:20px">${X.n}</b></div></div>`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="stats">📊 Statistik öffnen</button></div></div>`; }
   if (p===DEPTS[7].people[0]) { const A=DATA.ax, eu=n=>Math.round(n||0).toLocaleString('de-DE')+' €';
     extra = `<div><p class="lbl">Diese Woche</p>${A?`<div style="display:flex;gap:18px;margin:4px 0 10px;flex-wrap:wrap"><div><div class="isub">Werbekosten</div><b style="font-size:20px">${eu(A.spend)}</b></div><div><div class="isub">Anfragen</div><b style="font-size:20px">${A.leads}</b></div><div><div class="isub">Aktive Anzeigen</div><b style="font-size:20px">${A.live}</b></div></div>${A.open?`<p class="isub" style="color:#f59e0b">💡 ${A.open} ${A.open===1?'Empfehlung wartet':'Empfehlungen warten'} auf deine Freigabe</p>`:`<p class="isub">${A.live?'Keine offenen Empfehlungen.':'Gerade läuft keine Anzeige.'}</p>`}`:'<p class="isub">Zahlen werden geladen …</p>'}<div class="iacts"><button class="b pri" data-nav="ads">📈 Ads-Analyse öffnen</button></div></div>`; }
