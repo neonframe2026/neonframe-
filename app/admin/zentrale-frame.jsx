@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { authClient } from '../../lib/admin-auth'
+import { openRecCount } from './ads-page'
 
 // Die 3D-Zentrale (public/zentrale.html) im Admin anzeigen und mit echten Daten füttern
 export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIsRed, mStatus, mId, mBought, onOpenOffer, onOpenUpdate }) {
@@ -122,6 +123,24 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
       sxRef.current = v; setSx(v)
     } catch {}
   }
+  // Ads-Analyse (Paul): Werbekosten + Anfragen diese Woche, offene Empfehlungen
+  const [ax, setAx] = useState(null)
+  const axRef = useRef(null)
+  const loadAx = async () => {
+    try {
+      const { data } = await authClient().auth.getSession()
+      const h = { Authorization: 'Bearer ' + (data?.session?.access_token || '') }
+      const p2 = (n) => String(n).padStart(2, '0'), iso = (d) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`
+      const t = new Date(), mon = new Date(t); mon.setDate(t.getDate() - (t.getDay() + 6) % 7)
+      const from = new Date(t); from.setDate(t.getDate() - 29)
+      const [r1, r2] = await Promise.all([fetch(`/api/ads?since=${iso(from)}&until=${iso(t)}`, { headers: h }), fetch('/api/ads/action', { headers: h })])
+      if (!r1.ok) return
+      const j = await r1.json(), act = r2.ok ? await r2.json() : {}
+      const wk = (j.days || []).filter(d => d.date >= iso(mon))
+      const v = { spend: wk.reduce((a, d) => a + d.spend, 0), leads: wk.reduce((a, d) => a + d.leads, 0), live: (j.ads || []).filter(a => a.status === 'ACTIVE').length, open: openRecCount(j, act.ignored || []) }
+      axRef.current = v; setAx(v)
+    } catch {}
+  }
   const loadJo = () => joApi('GET').then(j => { joRef.current = j; setJo(j) }).catch(() => {})
   const loadFu = () => fetch('/api/followup').then(r => r.json()).then(j => { if (Array.isArray(j.approve)) { fuRef.current = j; setFu(j) } }).catch(() => {})
 
@@ -129,9 +148,10 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadSx()
+    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadSx(); loadAx()
     const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt() }, 120000)
-    return () => { alive = false; clearInterval(t) }
+    const t2 = setInterval(loadAx, 600000) // Meta-Zahlen alle 10 Minuten
+    return () => { alive = false; clearInterval(t); clearInterval(t2) }
   }, [])
 
   const send = () => {
@@ -157,6 +177,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
       cr: crRef.current || undefined,
       st: stRef.current || undefined,
       sx: sxRef.current || undefined,
+      ax: axRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
       stats: {
         total: offers.length,
@@ -246,7 +267,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st, sx])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st, sx, ax])
 
   return (
     <>
