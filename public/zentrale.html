@@ -1562,7 +1562,7 @@ function frame(){ frame.n=(frame.n||0)+1;
   else { const k=reduce?1:.09; target.lerp(goal,k); dist+=(distGoal-dist)*k; theta+=(thetaGoal-theta)*(reduce?1:.12); phi+=(phiGoal-phi)*(reduce?1:.12); }
   syncCam();
   if(!reduce){
-    globe.rotation.y=(theta-START_TH)+Math.sin(t*.25)*.55; globe.position.y=4.6+Math.sin(t*.8)*.08;
+    globe.rotation.y=Math.sin(t*.25)*.55; globe.position.y=4.6+Math.sin(t*.8)*.08;
     tower.forEach((r,i)=>{ r.position.y=1.2+i*1.1+Math.sin(t*1.4+i)*.15; r.scale.setScalar(1+Math.sin(t*2+i)*.05); });
     crystal.rotation.y=crystalW.rotation.y=t*.5; core.position.y=3.1+Math.sin(t*1.2)*.15; ringC.rotation.z=-t*.3; ringB.rotation.z=t*.1;
     orbits.forEach(o=>o.e.position.set(Math.cos(t*o.sp)*o.r,Math.sin(t*o.sp)*o.r,0));
@@ -1594,8 +1594,7 @@ function frame(){ frame.n=(frame.n||0)+1;
 }
 // Start: erst von oben, dann sanft runter in die Übersicht (so leicht gedreht, dass alle Abteilungen zu sehen sind)
 distGoal=overDist(); phiGoal=overPhi(); thetaGoal=START_TH; overGoal(); target.copy(goal);
-phi=reduce?phiGoal:.06; theta=reduce?START_TH:START_TH-1.1; dist=reduce?distGoal:distGoal*1.45;
-requestAnimationFrame(()=>requestAnimationFrame(()=>flyTo(2200))); // Flug startet erst, wenn das Bild schon da ist
+phi=phiGoal; theta=START_TH; dist=distGoal; // direkt in der Übersicht starten, ohne Start-Animation
 updateBadges(); syncCam(); frame();
 if(document.fonts) document.fonts.ready.then(()=>[logoTex,...DEPTS.flatMap(d=>[d._tex,d._scr,d._sign].filter(Boolean))].forEach(t=>t.userData.redraw()));
 </script>
