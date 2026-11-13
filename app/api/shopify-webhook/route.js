@@ -41,7 +41,7 @@ export async function POST(request) {
         ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}),
       })
       .ilike('checkout_url', `%${token}%`)
-      .select('id, project, customer_email, order_email_sent_at, shopify_product_id, offer_num, width, height, ek_net, paid_total, base_price, disc_type, disc_val, vat_pct, markup, black_week, bw_prev')
+      .select('id, project, customer_email, order_email_sent_at, shopify_product_id, offer_num, width, height, ek_net, paid_total, base_price, disc_type, disc_val, vat_pct, markup, black_week, bw_prev, express')
 
     if (error) return Response.json({ error: error.message }, { status: 500 })
 
@@ -55,6 +55,7 @@ export async function POST(request) {
         const list = o.disc_type === 'eur' && !o.black_week ? Math.max(0, b - ld) : b * (1 - ld / 100)
         ek = Math.round(list * vat / markupFactor(o) / 1.35 * 100) / 100
       }
+      if (o.express) ek = Math.round(ek * 1.3 * 100) / 100 // Express kostet bei TNC auch +30%
       await supabase.from('offers').update({ paid_total: parseFloat(draft.total_price) || null, paid_ek: ek || null, paid_size: `${o.width} × ${o.height} cm` }).eq('id', o.id)
     }
 
