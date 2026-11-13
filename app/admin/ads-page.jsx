@@ -4,7 +4,7 @@ import { authClient } from '../../lib/admin-auth'
 
 // Ads-Analyse (Paul Neumann, nur Administratoren): Meta-Werbekosten, Leads, Kosten pro Lead,
 // Bestellungen im Zeitraum und Bewertung jeder Anzeige.
-// Nur Ansicht. Pauls Empfehlungen mit "Freigeben" kommen im nächsten Schritt.
+// Pauls Empfehlungen (Pausieren, Budget ±30%) laufen NUR nach Klick auf "Freigeben" (/api/ads/action).
 // Klassen heißen "pn-…" statt "ad-…", weil Werbeblocker alles mit "ad-" ausblenden.
 const NEON = '#22d3ee'
 const START = '2026-03-01'
@@ -61,6 +61,8 @@ function CSS() {
     .pn-thumb{width:56px;height:56px;border-radius:10px;flex:none;object-fit:cover;background:#0a101b;border:1px solid #1b2738}
     .pn-chip{font-size:11px;font-weight:800;border-radius:8px;padding:4px 8px;white-space:nowrap}
     .pn-only-m{display:none}
+    .pn-recs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .pn-hist{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed #1f2c3f;font-size:12.5px}
     @media (max-width: 760px){
       .pn-wrap{padding:16px 12px 40px}
       .pn-kpis{grid-template-columns:1fr 1fr;gap:10px}.pn-kpis > div:last-child{grid-column:span 2}
@@ -71,6 +73,8 @@ function CSS() {
       .pn-head{flex-direction:column;align-items:stretch !important}
       .pn-sels{width:100%}.pn-sels > div{flex:1;min-width:0}.pn-sel{width:100%;max-width:none}
       .pn-thumb{width:46px;height:46px}
+      .pn-recs{grid-template-columns:1fr}
+      .pn-hist{flex-wrap:wrap}
     }
   `}</style>
 }
@@ -83,6 +87,151 @@ async function authed(url) {
   return j
 }
 
+async function authedPost(url, body) {
+  const { data: s } = await authClient().auth.getSession()
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (s.session?.access_token || '') }, body: JSON.stringify(body) })
+  const j = await r.json().catch(() => ({}))
+  if (!r.ok || j.error) throw new Error(j.error || 'Fehler')
+  return j
+}
+
+const BTN = { borderRadius: 10, padding: '9px 13px', fontWeight: 800, fontSize: 12.5, cursor: 'pointer', fontFamily: 'inherit', border: 'none', whiteSpace: 'nowrap' }
+const GHOST = { ...BTN, background: 'transparent', border: '1px solid #2a3b52', color: '#b9c7d6' }
+const dt = (s) => { const d = new Date(s); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}. ${pad(d.getHours())}:${pad(d.getMinutes())}` }
+
+// Pauls Empfehlungen, Höchstbudget und Verlauf
+function PaulPanel({ ads, onChanged }) {
+  const [act, setAct] = useState(null)
+  const [ask, setAsk] = useState(null) // Empfehlung, die gerade freigegeben werden soll
+  const [busy, setBusy] = useState(false)
+  const [capEdit, setCapEdit] = useState(null)
+  const [msg, setMsg] = useState('')
+  const loadAct = () => authed('/api/ads/action').then(setAct).catch(e => setMsg(e.message))
+  useEffect(() => { loadAct() }, [])
+
+  const cap = act?.cap || 30, total = act?.total
+  const avg = ads?.totals?.cpl || null
+  const all = (ads?.ads || []).filter(a => a.spend > 0).map(a => ({ ...a, r: rate(a, avg) }))
+  const live = all.filter(a => isActive(a.status))
+  const target = (a) => a.adset?.daily_budget ? { id: a.adset.id, level: 'adset', name: a.adset.name, budget: a.adset.daily_budget }
+    : a.campaign?.daily_budget ? { id: a.campaign.id, level: 'campaign', name: a.campaign.name, budget: a.campaign.daily_budget } : null
+
+  const recs = []
+  const seen = new Set()
+  for (const a of live.filter(x => x.r === 'burn')) recs.push({ key: 'pause:' + a.id, kind: 'pause', ad: a })
+  for (const a of live.filter(x => x.r === 'win')) {
+    const t = target(a); if (!t || seen.has(t.id)) continue; seen.add(t.id)
+    const room = total != null ? Math.floor((cap - total) / t.budget * 100) : 30
+    recs.push({ key: 'up:' + t.id, kind: 'up', ad: a, t, pct: Math.max(0, Math.min(30, room)) })
+  }
+  for (const a of live.filter(x => x.r === 'weak')) {
+    const t = target(a); if (!t || seen.has(t.id)) continue; seen.add(t.id)
+    recs.push({ key: 'down:' + t.id, kind: 'down', ad: a, t, pct: -30 })
+  }
+  const open = recs.filter(r => !(act?.ignored || []).includes(r.key))
+  const newBudget = (r) => Math.max(1, Math.round(r.t.budget * (1 + r.pct / 100)))
+
+  async function run(body, ok) {
+    setBusy(true); setMsg('')
+    try { await authedPost('/api/ads/action', body); setAsk(null); await loadAct(); if (ok) onChanged() }
+    catch (e) { setMsg(e.message) }
+    setBusy(false)
+  }
+  const approve = (r) => r.kind === 'pause'
+    ? run({ kind: 'pause', adId: r.ad.id, name: r.ad.name }, true)
+    : run({ kind: 'budget', objId: r.t.id, level: r.t.level, pct: r.pct, name: r.t.name }, true)
+  const saveCap = () => run({ kind: 'cap', value: capEdit }).then(() => setCapEdit(null))
+
+  const card = (r) => {
+    const c = r.kind === 'pause' ? '#ef4444' : r.kind === 'up' ? '#22c55e' : '#f59e0b'
+    const ic = r.kind === 'pause' ? '⏸' : r.kind === 'up' ? '🚀' : '📉'
+    const title = r.kind === 'pause' ? `„${r.ad.name}“ pausieren` : r.kind === 'up' ? 'Gewinner hochfahren' : 'Budget senken'
+    const desc = r.kind === 'pause'
+      ? (r.ad.leads ? `${eur(r.ad.spend)} für ${r.ad.leads} ${r.ad.leads === 1 ? 'Anfrage' : 'Anfragen'} (${eur(r.ad.cpl)} pro Anfrage). Der Schnitt liegt bei ${eur(avg)}.` : `${eur(r.ad.spend)} ausgegeben, 0 Anfragen. Der Schnitt liegt bei ${avg ? eur(avg) : '–'} pro Anfrage.`)
+      : r.kind === 'up' ? `„${r.ad.name}“ bringt Anfragen für ${eur(r.ad.cpl)}. Budget von „${r.t.name}“ +${r.pct}%.`
+      : `„${r.ad.name}“ ist schwach (${eur(r.ad.cpl)} pro Anfrage). Budget von „${r.t.name}“ -30%.`
+    const blocked = r.kind === 'up' && r.pct < 5
+    return (
+      <div key={r.key} style={{ border: `1px solid ${c}55`, background: `${c}0d`, borderRadius: 16, padding: 15, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }}><span style={{ fontSize: 19 }}>{ic}</span><div><b style={{ fontSize: 14 }}>{title}</b><div style={{ color: '#7d8fa3', fontSize: 12, marginTop: 3, lineHeight: 1.5 }}>{desc}</div></div></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#0a101b', border: '1px solid #223146', borderRadius: 11, padding: '9px 12px', fontSize: 13 }}>
+          {r.kind === 'pause' ? <><span style={{ color: '#7d8fa3' }}>● aktiv</span><span style={{ color: c }}>→</span><b style={{ color: c }}>⏸ pausiert</b></>
+            : blocked ? <span style={{ color: '#f59e0b' }}>Höchstbudget erreicht. Erhöhe es oben, wenn du mehr ausgeben willst.</span>
+            : <><span style={{ color: '#7d8fa3' }}>{eur(r.t.budget)} / Tag</span><span style={{ color: c }}>→</span><b style={{ color: c }}>{eur(newBudget(r))} / Tag</b></>}
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 'auto' }}>
+          <button disabled={blocked || busy} onClick={() => setAsk(r)} style={{ ...BTN, background: c, color: r.kind === 'pause' ? '#fff' : '#04101f', opacity: blocked ? .4 : 1 }}>✓ Freigeben</button>
+          <button disabled={busy} onClick={() => run({ kind: 'ignore', key: r.key })} style={GHOST}>Ignorieren</button>
+        </div>
+      </div>
+    )
+  }
+
+  const totalAfter = ask && ask.kind !== 'pause' && total != null ? total - ask.t.budget + newBudget(ask) : null
+  return <>
+    <div className="pn-card" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', padding: '14px 18px' }}>
+      <div style={{ flex: 1, minWidth: 220 }}><div className="pn-lbl">Höchstbudget pro Tag</div><div style={{ color: '#7d8fa3', fontSize: 12, marginTop: 4 }}>Paul erhöht Budgets nie über diese Grenze (alle Kampagnen zusammen).</div></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div><div style={{ color: '#7d8fa3', fontSize: 11 }}>Aktuell</div><b style={{ fontSize: 16 }}>{total != null ? eur(total) : '–'}</b><span style={{ color: '#7d8fa3', fontSize: 12 }}> / Tag</span></div>
+        <div style={{ width: 140 }}><div style={{ height: 8, background: '#1b2738', borderRadius: 6, overflow: 'hidden' }}><div style={{ width: `${Math.min(100, (total || 0) / cap * 100)}%`, height: '100%', background: (total || 0) > cap ? '#ef4444' : NEON }} /></div><div style={{ color: '#7d8fa3', fontSize: 11, marginTop: 4 }}>{Math.round((total || 0) / cap * 100)}% genutzt</div></div>
+        {capEdit == null
+          ? <button onClick={() => setCapEdit(String(cap).replace('.', ','))} style={{ ...GHOST, fontSize: 14, color: '#fff' }}>{eur(cap)} <span style={{ color: NEON }}>✎</span></button>
+          : <span style={{ display: 'inline-flex', gap: 6 }}><input autoFocus value={capEdit} onChange={e => setCapEdit(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveCap(); if (e.key === 'Escape') setCapEdit(null) }} style={{ width: 80, background: '#0a101b', border: `1px solid ${NEON}`, borderRadius: 9, padding: '8px 10px', color: '#fff', fontFamily: 'inherit', fontSize: 14, textAlign: 'right' }} /><button onClick={saveCap} disabled={busy} style={{ ...BTN, background: NEON, color: '#03121a' }}>✓</button></span>}
+      </div>
+    </div>
+
+    {msg && <div className="pn-card" style={{ marginTop: 12, padding: '12px 16px', borderColor: '#ef444466', color: '#f87171', fontSize: 13 }}>{msg}</div>}
+
+    <div className="pn-card" style={{ marginTop: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}><b style={{ fontSize: 15 }}>💡 Pauls Empfehlungen</b><span style={{ color: '#7d8fa3', fontSize: 12 }}>{open.length} offen</span></div>
+      {live.length === 0 ? <div style={{ color: '#7d8fa3', fontSize: 13 }}>Gerade läuft keine Anzeige. Paul meldet sich hier, sobald eine aktiv ist.</div>
+        : open.length === 0 ? <div style={{ color: '#7d8fa3', fontSize: 13 }}>Alles im grünen Bereich. Gerade gibt es nichts zu ändern.</div>
+        : <div className="pn-recs">{open.map(card)}</div>}
+      <div style={{ color: '#55677c', fontSize: 11.5, marginTop: 10 }}>Paul ändert nie etwas allein. Erst dein Klick auf „Freigeben“ ändert die Anzeige bei Meta.</div>
+    </div>
+
+    <div className="pn-card" style={{ marginTop: 16 }}>
+      <b style={{ fontSize: 15 }}>🕘 Verlauf</b>
+      {!(act?.log || []).length ? <div style={{ color: '#7d8fa3', fontSize: 13, marginTop: 8 }}>Noch keine Änderungen.</div> : <div style={{ marginTop: 6 }}>
+        {act.log.slice(0, 15).map(e => {
+          const c = e.kind === 'pause' ? '#ef4444' : e.after > e.before ? '#22c55e' : '#f59e0b'
+          return (
+            <div key={e.id} className="pn-hist" style={{ opacity: e.undone ? .5 : 1 }}>
+              <span style={{ color: '#7d8fa3', width: 92, flex: 'none' }}>{dt(e.at)}</span>
+              <b style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.kind === 'budget' ? `Budget „${e.name}“` : `„${e.name}“`}</b>
+              <span style={{ color: c }}>{e.kind === 'pause' ? 'pausiert' : `${eur(e.before / 100)} → ${eur(e.after / 100)} / Tag`}</span>
+              {e.undone ? <span style={{ color: '#7d8fa3', fontSize: 11.5 }}>↩ rückgängig</span>
+                : <button disabled={busy} onClick={() => run({ kind: 'undo', logId: e.id }, true)} style={{ ...GHOST, padding: '5px 9px', fontSize: 11.5 }}>↩ Rückgängig</button>}
+            </div>
+          )
+        })}
+      </div>}
+    </div>
+
+    {ask && <div onClick={() => !busy && setAsk(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(3,6,12,.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14, zIndex: 50 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: '#0e1522', border: '1px solid #22d3ee55', borderRadius: 22, padding: 22, boxShadow: '0 30px 80px rgba(0,0,0,.6)' }}>
+        <b style={{ fontSize: 17 }}>{ask.kind === 'pause' ? '⏸ Anzeige pausieren?' : ask.kind === 'up' ? '🚀 Budget erhöhen freigeben?' : '📉 Budget senken freigeben?'}</b>
+        <div style={{ color: '#7d8fa3', fontSize: 12.5, marginTop: 6 }}>{ask.kind === 'pause' ? `„${ask.ad.name}“ · ${ask.ad.campaign?.name || ''}` : `„${ask.t.name}“ · wegen „${ask.ad.name}“`}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 12, alignItems: 'center', marginTop: 16 }}>
+          <div style={{ background: '#0a101b', border: '1px solid #223146', borderRadius: 14, padding: 14 }}><div className="pn-lbl">Vorher</div><div style={{ fontSize: 24, fontWeight: 900, marginTop: 4 }}>{ask.kind === 'pause' ? 'aktiv' : eur(ask.t.budget)}</div>{ask.kind !== 'pause' && <div style={{ color: '#7d8fa3', fontSize: 11 }}>pro Tag</div>}</div>
+          <span style={{ color: NEON, fontSize: 20 }}>→</span>
+          <div style={{ background: '#0a101b', border: `1px solid ${ask.kind === 'pause' ? '#ef4444' : ask.kind === 'up' ? '#22c55e' : '#f59e0b'}66`, borderRadius: 14, padding: 14 }}><div className="pn-lbl">Nachher</div><div style={{ fontSize: 24, fontWeight: 900, marginTop: 4, color: ask.kind === 'pause' ? '#ef4444' : ask.kind === 'up' ? '#22c55e' : '#f59e0b' }}>{ask.kind === 'pause' ? 'pausiert' : eur(newBudget(ask))}</div>{ask.kind !== 'pause' && <div style={{ color: '#7d8fa3', fontSize: 11 }}>pro Tag · {ask.pct > 0 ? '+' : ''}{ask.pct}%</div>}</div>
+        </div>
+        {totalAfter != null && <div style={{ marginTop: 14, fontSize: 12.5, display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#7d8fa3' }}>Alle Kampagnen zusammen</span><b>{eur(totalAfter)} / Tag</b></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#7d8fa3' }}>Dein Höchstbudget</span><b>{eur(cap)} / Tag {totalAfter <= cap ? <span style={{ color: '#22c55e' }}>✓</span> : <span style={{ color: '#ef4444' }}>✕</span>}</b></div>
+        </div>}
+        <div style={{ color: '#7d8fa3', fontSize: 11.5, marginTop: 12, lineHeight: 1.5 }}>Die Änderung wird sofort bei Meta gespeichert. Im Verlauf kannst du sie rückgängig machen.</div>
+        {msg && <div style={{ color: '#f87171', fontSize: 12.5, marginTop: 10 }}>{msg}</div>}
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+          <button disabled={busy} onClick={() => approve(ask)} style={{ ...BTN, flex: 1, padding: 13, fontSize: 14, background: ask.kind === 'pause' ? '#ef4444' : ask.kind === 'up' ? '#22c55e' : '#f59e0b', color: ask.kind === 'pause' ? '#fff' : '#04101f' }}>{busy ? 'Paul ändert …' : '✓ Freigeben'}</button>
+          <button disabled={busy} onClick={() => setAsk(null)} style={{ ...GHOST, padding: '13px 18px', fontSize: 14 }}>Abbrechen</button>
+        </div>
+      </div>
+    </div>}
+  </>
+}
+
 export default function AdsPage({ onBack }) {
   const [rk, setRk] = useState('30')
   const [camp, setCamp] = useState('all')
@@ -92,6 +241,7 @@ export default function AdsPage({ onBack }) {
   const [loading, setLoading] = useState(false)
   const [at, setAt] = useState(null)
   const [allAds, setAllAds] = useState(false)
+  const [reload, setReload] = useState(0)
   const range = rangeOf(rk)
 
   useEffect(() => { authed('/api/stats').then(setStats).catch(() => setStats({ orders: [] })) }, [])
@@ -103,7 +253,7 @@ export default function AdsPage({ onBack }) {
       .catch(e => { if (!off) setErr(e.message) })
       .finally(() => { if (!off) setLoading(false) })
     return () => { off = true }
-  }, [rk])
+  }, [rk, reload])
 
   // Kampagnen-Auswahl (nur Kampagnen mit Daten im Zeitraum oder aktive)
   const camps = useMemo(() => {
@@ -251,6 +401,8 @@ export default function AdsPage({ onBack }) {
               Bewertung nach Kosten pro Anfrage im Vergleich zum Schnitt ({cpl ? eur(cpl) : '–'}): Gewinner = mind. 20% günstiger, Gut = etwa Schnitt, Schwach = bis 60% teurer, Verbrennt Geld = noch teurer oder keine Anfrage trotz Kosten. Unter 3 Anfragen = Zu wenig Daten.
             </div>
           </div>
+
+          <PaulPanel ads={ads} onChanged={() => setReload(n => n + 1)} />
         </>}
       </div>
     </div>
