@@ -2288,6 +2288,7 @@ h1{font-size:22px;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-b
       size_warning_enabled: f.sizeWarningEnabled || false,
       size_warning_text: f.sizeWarningText || null,
       size_options: cleanSizeRows(sizeRows), markup, black_week: bwNew,
+      ek_net: npNum(origVk) > 0 ? Math.round(npNum(origVk) / 1.35 * 100) / 100 : null,
       preview_image: imgs[0], preview_image_2: imgs[1], preview_image_3: imgs[2],
       published,
     }
