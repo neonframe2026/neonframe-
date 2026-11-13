@@ -31,7 +31,8 @@ let { data } = await supabase.from('offers').select('*').eq('custom_id', id).sin
 }
 
 export default async function Page({ params }) {
-  const offer = await getOffer(params.id)
+  const raw = await getOffer(params.id)
+  const offer = raw && (({ ek_net, paid_ek, ...rest }) => rest)(raw) // Einkaufspreis nie an den Kunden geben
   // Gelöscht oder nach Black Week deaktiviert -> Abgelaufen-Seite statt 404
   if (!offer) return <Abgelaufen />
   if (['confirmed', 'in_production', 'shipped', 'delivered'].includes(offer.status)) {
