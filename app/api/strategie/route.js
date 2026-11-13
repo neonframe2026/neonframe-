@@ -1,4 +1,4 @@
-import { sb, periods, loadData, stats, claude, context, PERSONA } from '../../../lib/strategie'
+import { sb, periods, loadData, stats, claude, context, PERSONA, adsSummary } from '../../../lib/strategie'
 import { sendPush } from '../../../lib/push'
 
 export const runtime = 'nodejs'
@@ -52,13 +52,14 @@ async function seed(db) {
 async function writeReport(db, k, auto) {
       const P = periods(), p = P[k]
       const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
-      const cmp = [`${p.label}: ${JSON.stringify(stats(D0, p.cur))}`, `${p.prevLabel}: ${JSON.stringify(stats(D0, p.prev))}`, p.ly ? `${p.lyLabel}: ${JSON.stringify(stats(D0, p.ly))}` : '', p.full ? `${p.fullLabel}: ${JSON.stringify(stats(D0, p.full))}` : ''].filter(Boolean).join('\n')
+      const [adCur, adPrev] = await Promise.all([adsSummary(p.cur), adsSummary(p.prev)])
+      const cmp = [`${p.label}: ${JSON.stringify(stats(D0, p.cur))}`, adCur ? `Meta-Werbung ${p.label}: ${JSON.stringify(adCur)}` : '', adPrev ? `Meta-Werbung ${p.prevLabel}: ${JSON.stringify(adPrev)}` : '', `${p.prevLabel}: ${JSON.stringify(stats(D0, p.prev))}`, p.ly ? `${p.lyLabel}: ${JSON.stringify(stats(D0, p.ly))}` : '', p.full ? `${p.fullLabel}: ${JSON.stringify(stats(D0, p.full))}` : ''].filter(Boolean).join('\n')
       const out = await claude({
         system: PERSONA.david + '\n\n' + await context(db),
-        messages: [{ role: 'user', content: `Schreib den ${k === 'week' ? 'Wochenbericht' : k === 'month' ? 'Monatsbericht' : 'Jahresbericht'} für ${p.label}. Vergleich:\n${cmp}\n\nAntworte NUR mit JSON: {"summary":"2 bis 3 Sätze: wie lief es, wichtigste Veränderung mit Zahl","good":["was gut lief, max 3, kurz"],"bad":["was schlecht lief oder auffällt, max 3, kurz"],"suggestions":[{"title":"konkrete Maßnahme, max 10 Wörter","why":"warum und erwartete Wirkung, 1 Satz","type":"ziel oder kampagne"}]} mit 3 bis 5 Vorschlägen, nach Wirkung sortiert. Wenn kaum Daten da sind, sag das ehrlich und schlag vor, was zuerst gemessen werden sollte.` }],
+        messages: [{ role: 'user', content: `Schreib den ${k === 'week' ? 'Wochenbericht' : k === 'month' ? 'Monatsbericht' : 'Jahresbericht'} für ${p.label}. Vergleich:\n${cmp}\n\nAnfragen und Angebote sind fast immer gleich viele, vergleiche sie NICHT miteinander. Erinnerungs- und Rabatt-Mails laufen automatisch, die sind kein Thema für Vorschläge, außer sie bringen klar nichts.\n\nVORSCHLÄGE: genau 3, die mit der größten Wirkung auf Verkäufe und Umsatz. Jeder Vorschlag ist eine konkrete Maßnahme, die Phillip diese Woche starten kann, mit echten Zahlen aus den Daten. Keine allgemeinen Tipps wie "mehr Werbung machen" oder "Ziel setzen". Gut ist z. B.: "Logo-Anzeige im Büro testen, 15 € pro Tag, weil 8 von 10 Anfragen Logos sind".\n\nAntworte NUR mit JSON: {"summary":"2 bis 3 Sätze: wie lief es, wichtigste Veränderung mit Zahl","good":["was gut lief, max 3, kurz"],"bad":["was schlecht lief oder auffällt, max 3, kurz"],"suggestions":[{"title":"Maßnahme, max 8 Wörter","what":"was genau tun, 1 Satz","why":"warum, mit Zahl aus den Daten, 1 Satz","result":"erwartetes Ergebnis mit Zahl, kurz"}]}. Wenn kaum Daten da sind, sag das ehrlich.` }],
         max: 1800, json: true,
       })
-      await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { auto: !!auto, seen: !auto, summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 6) } }])
+      await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { auto: !!auto, seen: !auto, summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 3) } }])
 }
 
 // Clara schreibt aus einer Idee einen konkreten Plan mit Schritten und Fälligkeit
@@ -107,6 +108,13 @@ export async function GET(req) {
       per[k] = { key: p.key, label: p.label, prevLabel: p.prevLabel, nowLabel: p.nowLabel, lyLabel: p.lyLabel || '', fullLabel: p.fullLabel || '', cur: S(p.cur), prev: S(p.prev), ly: S(p.ly), full: S(p.full), now: S(p.now), nowPrev: S(p.nowPrev), nowPrevLabel: p.nowPrevLabel, report: rep ? { ...rep.data, at: rep.created_at } : null }
     }
     const chat = (a) => R.filter(r => r.type === 'chat' && r.key === a).slice(-40).map(r => ({ role: r.data?.role, text: r.content, at: r.created_at }))
+    // Werbekosten für die Kacheln (laufender Zeitraum und gleicher Zeitraum davor)
+    if (sp.get('ads')) {
+      const [w, wp, m, mp, y, yp] = await Promise.all(['week', 'month', 'year'].flatMap(k => [adsSummary(P[k].now), adsSummary(P[k].nowPrev)]))
+      per.week.ads = { now: w?.werbekosten ?? null, prev: wp?.werbekosten ?? null }
+      per.month.ads = { now: m?.werbekosten ?? null, prev: mp?.werbekosten ?? null }
+      per.year.ads = { now: y?.werbekosten ?? null, prev: yp?.werbekosten ?? null }
+    }
     return Response.json({
       periods: per, monthName: P.monthName, metrics: METRICS, goals,
       chat: { david: chat('david'), clara: chat('clara') },
