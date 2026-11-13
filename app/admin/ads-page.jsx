@@ -5,6 +5,7 @@ import { authClient } from '../../lib/admin-auth'
 // Ads-Analyse (Paul Neumann, nur Administratoren): Meta-Werbekosten, Leads, Kosten pro Lead,
 // Gewinn nach Werbung (Gewinn aus der Statistik − Werbekosten) und Bewertung jeder Anzeige.
 // Nur Ansicht. Pauls Empfehlungen mit "Freigeben" kommen im nächsten Schritt.
+// Klassen heißen "pn-…" statt "ad-…", weil Werbeblocker alles mit "ad-" ausblenden.
 const NEON = '#22d3ee'
 const START = '2026-03-01'
 const eur = (n) => (Math.round((n || 0) * 100) / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
@@ -47,27 +48,27 @@ const isActive = (s) => s === 'ACTIVE'
 
 function CSS() {
   return <style>{`
-    .ad-wrap{max-width:1100px;margin:0 auto;padding:28px 24px 50px}
-    .ad-card{background:#0e1522;border:1px solid #1b2738;border-radius:18px;padding:20px}
-    .ad-lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#6f8399;text-transform:uppercase}
-    .ad-big{font-size:32px;font-weight:900;line-height:1.15;letter-spacing:-.4px;margin-top:6px}
-    .ad-sub{color:#7d8fa3;font-size:12px;margin-top:6px;line-height:1.4}
-    .ad-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
-    .ad-sel{appearance:none;-webkit-appearance:none;background:#0a101b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2322d3ee' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 13px center;border:1px solid #2a3b52;border-radius:11px;padding:10px 38px 10px 13px;font-weight:700;font-size:14px;color:#e6edf5;font-family:inherit;cursor:pointer;max-width:260px}
-    .ad-row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed #1f2c3f}
-    .ad-thumb{width:56px;height:56px;border-radius:10px;flex:none;object-fit:cover;background:#0a101b;border:1px solid #1b2738}
-    .ad-chip{font-size:11px;font-weight:800;border-radius:8px;padding:4px 8px;white-space:nowrap}
-    .ad-only-m{display:none}
+    .pn-wrap{max-width:1100px;margin:0 auto;padding:28px 24px 50px}
+    .pn-card{background:#0e1522;border:1px solid #1b2738;border-radius:18px;padding:20px}
+    .pn-lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#6f8399;text-transform:uppercase}
+    .pn-big{font-size:32px;font-weight:900;line-height:1.15;letter-spacing:-.4px;margin-top:6px}
+    .pn-sub{color:#7d8fa3;font-size:12px;margin-top:6px;line-height:1.4}
+    .pn-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+    .pn-sel{appearance:none;-webkit-appearance:none;background:#0a101b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2322d3ee' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 13px center;border:1px solid #2a3b52;border-radius:11px;padding:10px 38px 10px 13px;font-weight:700;font-size:14px;color:#e6edf5;font-family:inherit;cursor:pointer;max-width:260px}
+    .pn-row{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed #1f2c3f}
+    .pn-thumb{width:56px;height:56px;border-radius:10px;flex:none;object-fit:cover;background:#0a101b;border:1px solid #1b2738}
+    .pn-chip{font-size:11px;font-weight:800;border-radius:8px;padding:4px 8px;white-space:nowrap}
+    .pn-only-m{display:none}
     @media (max-width: 760px){
-      .ad-wrap{padding:16px 12px 40px}
-      .ad-kpis{grid-template-columns:1fr 1fr;gap:10px}
-      .ad-card{padding:14px}
-      .ad-big{font-size:24px}
-      .ad-only-d{display:none !important}
-      .ad-only-m{display:block}
-      .ad-head{flex-direction:column;align-items:stretch !important}
-      .ad-sels{width:100%}.ad-sels > div{flex:1;min-width:0}.ad-sel{width:100%;max-width:none}
-      .ad-thumb{width:46px;height:46px}
+      .pn-wrap{padding:16px 12px 40px}
+      .pn-kpis{grid-template-columns:1fr 1fr;gap:10px}
+      .pn-card{padding:14px}
+      .pn-big{font-size:24px}
+      .pn-only-d{display:none !important}
+      .pn-only-m{display:block}
+      .pn-head{flex-direction:column;align-items:stretch !important}
+      .pn-sels{width:100%}.pn-sels > div{flex:1;min-width:0}.pn-sel{width:100%;max-width:none}
+      .pn-thumb{width:46px;height:46px}
     }
   `}</style>
 }
@@ -143,11 +144,11 @@ export default function AdsPage({ onBack }) {
       <div style={{ background: '#0a0a0a', height: 64, display: 'flex', alignItems: 'center', gap: 16, padding: '0 20px', borderBottom: '1px solid #1f2937', position: 'sticky', top: 0, zIndex: 20 }}>
         <button onClick={onBack} style={{ background: 'transparent', border: '1px solid #2b2e36', color: '#cbd5e1', borderRadius: 9, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>← Zentrale</button>
         <span style={{ fontWeight: 800, fontSize: 15 }}>📈 Ads-Analyse</span>
-        <span className="ad-only-d" style={{ color: '#6f8399', fontSize: 12.5 }}>Paul Neumann · Ads-Analyst</span>
+        <span className="pn-only-d" style={{ color: '#6f8399', fontSize: 12.5 }}>Paul Neumann · Ads-Analyst</span>
       </div>
 
-      <div className="ad-wrap">
-        <div className="ad-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 14 }}>
+      <div className="pn-wrap">
+        <div className="pn-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 14 }}>
           <div>
             <div style={{ fontSize: 26, fontWeight: 800 }}>Ads-Analyse</div>
             <div style={{ color: '#7d8fa3', fontSize: 12.5, marginTop: 3 }}>
@@ -155,16 +156,16 @@ export default function AdsPage({ onBack }) {
               {loading && ads && <span style={{ color: NEON }}> · lädt …</span>}
             </div>
           </div>
-          <div className="ad-sels" style={{ display: 'flex', gap: 10 }}>
+          <div className="pn-sels" style={{ display: 'flex', gap: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <span className="ad-lbl">Zeitraum</span>
-              <select className="ad-sel" value={rk} onChange={e => setRk(e.target.value)}>
+              <span className="pn-lbl">Zeitraum</span>
+              <select className="pn-sel" value={rk} onChange={e => setRk(e.target.value)}>
                 {RANGES.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <span className="ad-lbl">Kampagne</span>
-              <select className="ad-sel" value={camp} onChange={e => setCamp(e.target.value)}>
+              <span className="pn-lbl">Kampagne</span>
+              <select className="pn-sel" value={camp} onChange={e => setCamp(e.target.value)}>
                 <option value="all">Alle</option>
                 {camps.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
               </select>
@@ -172,38 +173,38 @@ export default function AdsPage({ onBack }) {
           </div>
         </div>
 
-        {err && <div className="ad-card" style={{ marginTop: 18, borderColor: '#ef444466', color: '#ef4444' }}>Fehler: {err}</div>}
-        {!ads && !err && <div className="ad-card" style={{ marginTop: 18, color: '#7d8fa3' }}>Paul holt die Zahlen von Meta …</div>}
+        {err && <div className="pn-card" style={{ marginTop: 18, borderColor: '#ef444466', color: '#ef4444' }}>Fehler: {err}</div>}
+        {!ads && !err && <div className="pn-card" style={{ marginTop: 18, color: '#7d8fa3' }}>Paul holt die Zahlen von Meta …</div>}
 
         {ads && <>
-          {activeCount === 0 && <div className="ad-card" style={{ marginTop: 18, padding: '12px 16px', borderColor: '#f59e0b55', background: '#f59e0b0d', color: '#f5c46b', fontSize: 13 }}>
+          {activeCount === 0 && <div className="pn-card" style={{ marginTop: 18, padding: '12px 16px', borderColor: '#f59e0b55', background: '#f59e0b0d', color: '#f5c46b', fontSize: 13 }}>
             ⏸ Gerade läuft keine Anzeige{camp !== 'all' ? ' in dieser Kampagne' : ''}. Die Zahlen unten sind aus dem gewählten Zeitraum.
           </div>}
 
-          <div className="ad-kpis">
-            <div className="ad-card">
-              <div className="ad-lbl">Werbekosten</div>
-              <div className="ad-big">{eur(spend)}</div>
-              <div className="ad-sub">Meta Ads · {dm(range.since)} bis {dm(range.until)}</div>
+          <div className="pn-kpis">
+            <div className="pn-card">
+              <div className="pn-lbl">Werbekosten</div>
+              <div className="pn-big">{eur(spend)}</div>
+              <div className="pn-sub">Meta Ads · {dm(range.since)} bis {dm(range.until)}</div>
             </div>
-            <div className="ad-card">
-              <div className="ad-lbl">Anfragen</div>
-              <div className="ad-big">{leads}</div>
-              <div className="ad-sub">{(ads.leadEvent || []).join(', ') || 'Leads'}{cpl ? ` · ${eur(cpl)} pro Anfrage` : ''}</div>
+            <div className="pn-card">
+              <div className="pn-lbl">Anfragen</div>
+              <div className="pn-big">{leads}</div>
+              <div className="pn-sub">{(ads.leadEvent || []).join(', ') || 'Leads'}{cpl ? ` · ${eur(cpl)} pro Anfrage` : ''}</div>
             </div>
-            <div className="ad-card">
-              <div className="ad-lbl">Bestellungen</div>
-              <div className="ad-big">{orders.length}</div>
-              <div className="ad-sub">{orders.length && leads ? `≈ 1 von ${Math.max(1, Math.round(leads / orders.length))} Anfragen` : 'im Zeitraum'}</div>
+            <div className="pn-card">
+              <div className="pn-lbl">Bestellungen</div>
+              <div className="pn-big">{orders.length}</div>
+              <div className="pn-sub">{orders.length && leads ? `≈ 1 von ${Math.max(1, Math.round(leads / orders.length))} Anfragen` : 'im Zeitraum'}</div>
             </div>
-            <div className="ad-card">
-              <div className="ad-lbl">Gewinn nach Werbung</div>
-              <div className="ad-big" style={{ color: after >= 0 ? '#22c55e' : '#ef4444' }}>{eur(after)}</div>
-              <div className="ad-sub">Gewinn {eur(profit)} − Werbung {eur(spend)}{camp !== 'all' ? ' (nur diese Kampagne)' : ''}</div>
+            <div className="pn-card">
+              <div className="pn-lbl">Gewinn nach Werbung</div>
+              <div className="pn-big" style={{ color: after >= 0 ? '#22c55e' : '#ef4444' }}>{eur(after)}</div>
+              <div className="pn-sub">Gewinn {eur(profit)} − Werbung {eur(spend)}{camp !== 'all' ? ' (nur diese Kampagne)' : ''}</div>
             </div>
           </div>
 
-          <div className="ad-card" style={{ marginTop: 16 }}>
+          <div className="pn-card" style={{ marginTop: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ fontWeight: 800, fontSize: 15 }}>Werbekosten & Anfragen {bars.length > 45 ? 'pro Woche' : 'pro Tag'}{camp !== 'all' ? <span style={{ color: '#7d8fa3', fontWeight: 600, fontSize: 12 }}> · alle Kampagnen</span> : null}</div>
               <span style={{ color: '#7d8fa3', fontSize: 12 }}><span style={{ display: 'inline-block', width: 10, height: 10, background: '#3b4d66', borderRadius: 3 }} /> Kosten &nbsp; <span style={{ display: 'inline-block', width: 10, height: 10, background: NEON, borderRadius: '50%' }} /> Anfragen</span>
@@ -221,7 +222,7 @@ export default function AdsPage({ onBack }) {
             </div>
           </div>
 
-          <div className="ad-card" style={{ marginTop: 16 }}>
+          <div className="pn-card" style={{ marginTop: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontWeight: 800, fontSize: 15 }}>Anzeigen</div>
               <span style={{ color: '#7d8fa3', fontSize: 12 }}>{rated.length} mit Kosten · {activeCount} aktiv</span>
@@ -230,21 +231,21 @@ export default function AdsPage({ onBack }) {
               {rated.map(a => {
                 const [rl, rc] = RATE[a.r]
                 return (
-                  <div key={a.id} className="ad-row">
-                    {a.thumb ? <img className="ad-thumb" src={a.thumb} alt="" /> : <div className="ad-thumb" />}
+                  <div key={a.id} className="pn-row">
+                    {a.thumb ? <img className="pn-thumb" src={a.thumb} alt="" /> : <div className="pn-thumb" />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>
                       <div style={{ color: '#7d8fa3', fontSize: 11.5, marginTop: 2 }}>
                         {eur(a.spend)} · {a.leads} {a.leads === 1 ? 'Anfrage' : 'Anfragen'} · CTR {(a.ctr || 0).toLocaleString('de-DE')}%
-                        <span className="ad-only-m">{a.cpl ? `${eur(a.cpl)} pro Anfrage` : 'keine Anfrage'}</span>
+                        <span className="pn-only-m">{a.cpl ? `${eur(a.cpl)} pro Anfrage` : 'keine Anfrage'}</span>
                       </div>
-                      <div style={{ fontSize: 11, marginTop: 2, color: isActive(a.status) ? '#22c55e' : '#6f8399' }}>{isActive(a.status) ? '● aktiv' : '⏸ pausiert'}<span className="ad-only-d" style={{ display: 'inline', color: '#55677c' }}> · {a.campaign?.name}</span></div>
+                      <div style={{ fontSize: 11, marginTop: 2, color: isActive(a.status) ? '#22c55e' : '#6f8399' }}>{isActive(a.status) ? '● aktiv' : '⏸ pausiert'}<span className="pn-only-d" style={{ display: 'inline', color: '#55677c' }}> · {a.campaign?.name}</span></div>
                     </div>
-                    <div className="ad-only-d" style={{ textAlign: 'right', width: 120 }}>
-                      <div className="ad-lbl">pro Anfrage</div>
+                    <div className="pn-only-d" style={{ textAlign: 'right', width: 120 }}>
+                      <div className="pn-lbl">pro Anfrage</div>
                       <b>{a.cpl ? eur(a.cpl) : '–'}</b>
                     </div>
-                    <span className="ad-chip" style={{ color: rc, border: `1px solid ${rc}66`, background: `${rc}14` }}>{rl}</span>
+                    <span className="pn-chip" style={{ color: rc, border: `1px solid ${rc}66`, background: `${rc}14` }}>{rl}</span>
                   </div>
                 )
               })}
