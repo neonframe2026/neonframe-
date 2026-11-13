@@ -315,6 +315,19 @@ function SwapModal({ ad, onClose, onDone }) {
   )
 }
 
+// Für die Zentrale: offene Empfehlungen zählen (gleiche Regeln wie in PaulPanel)
+export function openRecCount(ads, ignored = []) {
+  const avg = ads?.totals?.cpl || null
+  const live = (ads?.ads || []).filter(a => a.spend > 0 && isActive(a.status)).map(a => ({ ...a, r: rate(a, avg) }))
+  const keyOf = (a) => a.adset?.daily_budget ? a.adset.id : a.campaign?.daily_budget ? a.campaign.id : null
+  const keys = [], seen = new Set()
+  for (const a of live) if (a.r === 'burn') keys.push('pause:' + a.id)
+  for (const a of live) if (a.r === 'win') { const t = keyOf(a); if (t && !seen.has(t)) { seen.add(t); keys.push('up:' + t) } }
+  for (const a of live) if (a.r === 'weak') { const t = keyOf(a); if (t && !seen.has(t)) { seen.add(t); keys.push('down:' + t) } }
+  for (const a of live) if (a.r === 'weak' || a.r === 'burn') keys.push('swap:' + a.id)
+  return keys.filter(k => !ignored.includes(k)).length
+}
+
 export default function AdsPage({ onBack }) {
   const [rk, setRk] = useState('30')
   const [camp, setCamp] = useState('all')
