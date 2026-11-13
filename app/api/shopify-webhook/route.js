@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import { logEmail } from '../../../lib/email-log'
 import { removeOfferShopify } from '../../../lib/shopify-admin'
+import { markupFactor } from '../../../lib/pricing'
 
 const EMAIL_ASSETS = 'https://angebote.neonframe.de/email'
 const DELAY_MINUTES = 15
@@ -40,9 +41,22 @@ export async function POST(request) {
         ...(draft.order_id ? { shopify_order_id: String(draft.order_id) } : {}),
       })
       .ilike('checkout_url', `%${token}%`)
-      .select('id, project, customer_email, order_email_sent_at, shopify_product_id, offer_num')
+      .select('id, project, customer_email, order_email_sent_at, shopify_product_id, offer_num, width, height, ek_net, paid_total, base_price, disc_type, disc_val, vat_pct, markup, black_week, bw_prev')
 
     if (error) return Response.json({ error: error.message }, { status: 500 })
+
+    // Statistik: bezahlten Betrag + Einkaufspreis der bestellten Größe fest speichern (nur einmal)
+    for (const o of offers || []) {
+      if (o.paid_total != null) continue
+      let ek = parseFloat(o.ek_net) || 0
+      if (!ek) { // alte Angebote ohne gespeicherten Einkaufspreis: aus dem Preis zurückrechnen
+        const b = parseFloat(o.base_price) || 0, vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
+        const ld = o.black_week ? (parseFloat(o.bw_prev?.disc_val) || 20) : (parseFloat(o.disc_val) || 0)
+        const list = o.disc_type === 'eur' && !o.black_week ? Math.max(0, b - ld) : b * (1 - ld / 100)
+        ek = Math.round(list * vat / markupFactor(o) / 1.35 * 100) / 100
+      }
+      await supabase.from('offers').update({ paid_total: parseFloat(draft.total_price) || null, paid_ek: ek || null, paid_size: `${o.width} × ${o.height} cm` }).eq('id', o.id)
+    }
 
     // Verstecktes Angebots-Produkt archivieren (Bild bleibt in der Bestellung sichtbar)
     for (const o of offers || []) {
