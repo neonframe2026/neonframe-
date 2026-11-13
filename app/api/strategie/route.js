@@ -14,6 +14,12 @@ export const maxDuration = 60
 // POST { action:'campaign_from_chat' }  -> Clara legt aus dem Chat eine Kampagne an
 // POST { action:'step', id, i }         -> Schritt einer Kampagne abhaken
 // POST { action:'campaign_status', id, status }
+// Aufgaben (Claras Board, Status offen | arbeit | erledigt):
+// POST { action:'task_add', title, desc, due, plan }      -> eigene Aufgabe (plan=true: Clara schreibt Schritte)
+// POST { action:'task_from_suggestion', key, i }          -> Davids Vorschlag annehmen, Clara schreibt den Plan
+// POST { action:'task_update', id, title?, desc?, due?, status? }
+// POST { action:'step_add', id, t } / { action:'step_del', id, i } / { action:'step', id, i }
+// POST { action:'task_chat', id, text }                   -> mit David besprechen, David ändert die Aufgabe
 const fail = (e) => Response.json({ error: e.message }, { status: e.status || 500 })
 async function user(req) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
@@ -55,6 +61,16 @@ async function writeReport(db, k, auto) {
       await db.from('strategie').insert([{ type: 'report', key: p.key, title: p.label, data: { auto: !!auto, seen: !auto, summary: out.summary || '', good: out.good || [], bad: out.bad || [], suggestions: (out.suggestions || []).slice(0, 6) } }])
 }
 
+// Clara schreibt aus einer Idee einen konkreten Plan mit Schritten und Fälligkeit
+async function claraPlan(db, x) {
+  const out = await claude({
+    system: PERSONA.clara + '\n\nDu machst aus einer Aufgabe einen konkreten, umsetzbaren Plan für Phillip (Einzelunternehmer, macht fast alles selbst). Kurze Schritte, jeder Schritt eine klare Handlung mit Zahl, wo sinnvoll. Keine Floskeln.\n\n' + await context(db),
+    messages: [{ role: 'user', content: `Aufgabe: ${x.title}\n${x.what ? 'Was: ' + x.what + '\n' : ''}${x.why ? 'Warum: ' + x.why + '\n' : ''}${x.result ? 'Erwartetes Ergebnis: ' + x.result + '\n' : ''}${x.goal ? 'Beschreibung: ' + x.goal + '\n' : ''}\nAntworte NUR mit JSON: {"goal":"Ziel in 1 bis 2 Sätzen mit messbarer Zahl","due":"YYYY-MM-DD, realistisch ab heute","steps":["4 bis 8 konkrete Schritte"]}` }],
+    json: true,
+  })
+  return { goal: String(out.goal || ''), due: /^\d{4}-\d{2}-\d{2}$/.test(out.due || '') ? out.due : '', steps: (out.steps || []).slice(0, 12).map(t => ({ t: String(t), done: false })) }
+}
+
 export async function GET(req) {
   try {
     const sp = new URL(req.url).searchParams
@@ -73,7 +89,6 @@ export async function GET(req) {
     }
     await user(req)
     const db = sb()
-    await seed(db)
     const P = periods()
     const D0 = await loadData(db, P.year.prev[0] - 40 * 864e5)
     const S = (r) => (r ? stats(D0, r) : null)
@@ -95,6 +110,7 @@ export async function GET(req) {
     return Response.json({
       periods: per, monthName: P.monthName, metrics: METRICS, goals,
       chat: { david: chat('david'), clara: chat('clara') },
+      tasks: R.filter(r => r.type === 'task').map(r => ({ id: r.id, title: r.title, at: r.created_at, ...r.data })),
       campaigns: R.filter(r => r.type === 'campaign').map(r => ({ id: r.id, title: r.title, ...r.data })).sort((a, b) => String(a.start).localeCompare(String(b.start))),
     })
   } catch (e) { return fail(e) }
@@ -174,6 +190,26 @@ export async function POST(req) {
       else await db.from('strategie').insert([{ type: 'campaign', title: String(out.title || 'Neue Kampagne').slice(0, 80), data }])
       return Response.json({ success: true, title: out.title })
     }
+    if (b.action === 'task_add') {
+      const title = String(b.title || '').trim().slice(0, 140)
+      if (!title) return Response.json({ error: 'Bitte einen Titel eingeben' }, { status: 400 })
+      let data = { status: 'offen', due: b.due || '', goal: String(b.desc || '').slice(0, 2000), steps: [], from: 'du', chat: [] }
+      if (b.plan) {
+        const p = await claraPlan(db, { title, goal: data.goal })
+        data = { ...data, goal: p.goal || data.goal, due: data.due || p.due || '', steps: p.steps }
+      }
+      await db.from('strategie').insert([{ type: 'task', title, data }])
+      return Response.json({ success: true })
+    }
+    if (b.action === 'task_from_suggestion') {
+      const { data: rep } = await db.from('strategie').select('*').eq('type', 'report').eq('key', String(b.key || '')).order('created_at', { ascending: false }).limit(1)
+      const r = rep?.[0]; const s = r && (r.data?.suggestions || [])[+b.i]
+      if (!s) return Response.json({ error: 'Vorschlag nicht gefunden' }, { status: 404 })
+      const p = await claraPlan(db, { title: s.title, what: s.what, why: s.why, result: s.result })
+      await db.from('strategie').insert([{ type: 'task', title: String(s.title || 'Aufgabe').slice(0, 140), data: { status: 'offen', due: p.due || '', goal: p.goal || s.why || '', steps: p.steps, from: 'david', chat: [], accepted: new Date().toISOString() } }])
+      await db.from('strategie').update({ data: { ...r.data, accepted: [...new Set([...(r.data?.accepted || []), +b.i])] } }).eq('id', r.id)
+      return Response.json({ success: true })
+    }
     const { data: r } = await db.from('strategie').select('*').eq('id', b.id).maybeSingle()
     if (!r) return Response.json({ error: 'Nicht gefunden' }, { status: 404 })
     if (b.action === 'goal_done') { await db.from('strategie').update({ data: { ...r.data, done: !r.data?.done } }).eq('id', r.id); return Response.json({ success: true }) }
@@ -184,6 +220,47 @@ export async function POST(req) {
       return Response.json({ success: true })
     }
     if (b.action === 'campaign_status') { await db.from('strategie').update({ data: { ...r.data, status: ['idee', 'planung', 'laeuft', 'fertig'].includes(b.status) ? b.status : 'idee' } }).eq('id', r.id); return Response.json({ success: true }) }
+    if (b.action === 'task_update') {
+      const d = { ...r.data }
+      if (b.status && ['offen', 'arbeit', 'erledigt'].includes(b.status)) d.status = b.status
+      if (b.due !== undefined) d.due = String(b.due || '')
+      if (b.desc !== undefined) d.goal = String(b.desc || '').slice(0, 2000)
+      const title = b.title !== undefined ? (String(b.title).trim().slice(0, 140) || r.title) : r.title
+      await db.from('strategie').update({ title, data: d }).eq('id', r.id)
+      return Response.json({ success: true })
+    }
+    if (b.action === 'step_add') {
+      const t = String(b.t || '').trim().slice(0, 300); if (!t) return Response.json({ error: 'Schritt ist leer' }, { status: 400 })
+      await db.from('strategie').update({ data: { ...r.data, steps: [...(r.data?.steps || []), { t, done: false }] } }).eq('id', r.id)
+      return Response.json({ success: true })
+    }
+    if (b.action === 'step_del') {
+      await db.from('strategie').update({ data: { ...r.data, steps: (r.data?.steps || []).filter((_, i) => i !== +b.i) } }).eq('id', r.id)
+      return Response.json({ success: true })
+    }
+    if (b.action === 'task_chat') {
+      // Mit David über die Aufgabe sprechen: er antwortet kurz und ändert Titel, Ziel, Fälligkeit oder Schritte
+      const text = String(b.text || '').trim().slice(0, 3000)
+      if (!text) return Response.json({ error: 'Nachricht ist leer' }, { status: 400 })
+      const chat = [...(r.data?.chat || [])].slice(-12)
+      const task = { title: r.title, ziel: r.data?.goal || '', faellig: r.data?.due || '', schritte: (r.data?.steps || []).map(s => ({ t: s.t, erledigt: !!s.done })) }
+      const out = await claude({
+        system: PERSONA.david + '\n\nDu besprichst mit Phillip EINE Aufgabe aus Claras Board und passt sie an. Antworte kurz und klar (max 60 Wörter). Ändere nur, was Phillip will oder was nötig ist, der Rest bleibt gleich.\n\n' + await context(db),
+        messages: [{ role: 'user', content: `Aufgabe jetzt:\n${JSON.stringify(task)}\n\nBisheriger Verlauf:\n${chat.map(m => (m.role === 'ai' ? 'David: ' : 'Phillip: ') + m.text).join('\n') || '(noch nichts)'}\n\nPhillip schreibt: ${text}\n\nAntworte NUR mit JSON: {"reply":"deine kurze Antwort, sag was du geändert hast","changed":true oder false,"title":"Titel","goal":"Ziel 1 bis 2 Sätze","due":"YYYY-MM-DD oder leer","steps":["Schritt 1", "..."]}` }],
+        json: true,
+      })
+      const d = { ...r.data, chat: [...chat, { role: 'me', text, at: new Date().toISOString() }, { role: 'ai', text: String(out.reply || 'Okay.'), at: new Date().toISOString() }] }
+      let title = r.title
+      if (out.changed) {
+        const was = new Map((r.data?.steps || []).map(s => [String(s.t).trim().toLowerCase(), !!s.done]))
+        if (Array.isArray(out.steps) && out.steps.length) d.steps = out.steps.slice(0, 20).map(t => ({ t: String(t), done: !!was.get(String(t).trim().toLowerCase()) }))
+        if (out.goal) d.goal = String(out.goal).slice(0, 2000)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(out.due || '')) d.due = out.due
+        if (out.title) title = String(out.title).slice(0, 140)
+      }
+      await db.from('strategie').update({ title, data: d }).eq('id', r.id)
+      return Response.json({ success: true, reply: out.reply })
+    }
     if (b.action === 'delete') { await db.from('strategie').delete().eq('id', r.id); return Response.json({ success: true }) }
     return Response.json({ error: 'Unbekannte Aktion' }, { status: 400 })
   } catch (e) { return fail(e) }
