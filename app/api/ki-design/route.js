@@ -11,7 +11,7 @@ export const maxDuration = 60
 // Env: GEMINI_API_KEY (Pflicht), GEMINI_IMAGE_MODEL (optional, Standard gemini-nano-banana-2.1)
 // Schutz: nur vom Shop aus, max. LIMIT Bilder pro IP und Tag (Tabelle ki_designs).
 const ORIGINS = ['https://neonframe.de', 'https://www.neonframe.de', 'https://atcbcn-sh.myshopify.com']
-const LIMIT = 30 // Schutz gegen Missbrauch: max. 30 Bilder (= 10 Generierungen) pro Tag und IP
+const LIMIT = 20 // max. 20 Bilder (= 5 Generierungen à 4 Entwürfe) pro Tag und IP
 const MODEL = () => process.env.GEMINI_IMAGE_MODEL || 'gemini-nano-banana-2.1'
 
 const COLORS = 'White #ffffff, Warm White #fff3cf, Yellow #f6ff2f, Soft Orange #ff9b2f, Orange #ff6a1f, Red #ff2b2b, Peachy Pink #ff8fa3, Pink #ff2f8f, Soft Pink #ff42d6, Purple #a94cff, Blue #304bff, Ice Blue #73f3ff, Lake Blue #57ffd6, Green #4cff73, Light Green #b7ff3f'
@@ -29,6 +29,7 @@ const STYLES = [
   'Version style: elegant, flowing script lettering where text appears.',
   'Version style: bold, modern and clean lettering where text appears.',
   'Version style: playful, creative layout with a strong eye-catching composition.',
+  'Version style: minimal and clean, few lines, very simple and timeless.',
 ]
 
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
@@ -54,7 +55,7 @@ export async function POST(req) {
   try { b = await req.json() } catch { return fail('Ungültige Anfrage') }
   const prompt = String(b.prompt || '').trim().slice(0, 1200)
   const change = String(b.change || '').trim().slice(0, 800)
-  const v = Math.max(0, Math.min(2, +b.v || 0))
+  const v = Math.max(0, Math.min(3, +b.v || 0))
   if (prompt.length < 3) return fail('Bitte beschreib dein Neonschild etwas genauer.')
 
   // Tageslimit pro Gerät (IP, gehasht gespeichert)
@@ -63,7 +64,7 @@ export async function POST(req) {
   const who = hash(ip)
   const since = new Date(Date.now() - 864e5).toISOString()
   const { count } = await sb.from('ki_designs').select('id', { count: 'exact', head: true }).eq('ip', who).gte('created_at', since)
-  if ((count || 0) >= LIMIT) return fail('Du hast heute schon viele Entwürfe erstellt. Wähl einfach deinen Lieblingsentwurf, unsere Designer passen ihn danach für dich an. 😊', 429)
+  if ((count || 0) >= LIMIT) return fail('Du hast dein Limit für heute erreicht. In 24 Stunden kannst du wieder neue Entwürfe erstellen. Wähl bis dahin einfach deinen Lieblingsentwurf, unsere Designer passen ihn danach für dich an. 😊', 429)
 
   // Anfrage an Gemini
   const parts = []
