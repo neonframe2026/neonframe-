@@ -212,9 +212,7 @@ async function waList() {
     if (!num || BOUGHT.includes(o.status) || o.unsubscribed) continue
     const item = (kind, d) => ({ id: `${o.id}:wa_${kind}`, offerId: o.id, nr: nr(o), name: o.project || 'ohne Projekt', label: WA_KIND[kind], when: when(t(d)), url: `https://wa.me/${num}?text=${encodeURIComponent(waText(o, kind))}` })
     if (t(o.created_at) >= t(since) && !skip.has(`${o.id}:wa_angebot`)) lisa.push(item('angebot', o.created_at))
-    const ev = [['rabatt', o.extra_discount_at], ['rabatt_erinnerung', o.discount_reminder_sent_at]]
-      .filter(([, d]) => d && t(d) >= t(since)).sort((a, b) => t(b[1]) - t(a[1]))[0] // nur die neueste Mail pro Angebot
-    if (ev && !skip.has(`${o.id}:wa_${ev[0]}`)) emma.push(item(ev[0], ev[1]))
+    // Rabatt-WhatsApps abgeschaltet: per WhatsApp nur noch "Angebot ist da"
   }
   return { lisa, emma }
 }
