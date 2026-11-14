@@ -11,7 +11,7 @@ export const maxDuration = 60
 // Env: GEMINI_API_KEY (Pflicht), GEMINI_IMAGE_MODEL (optional, Standard gemini-nano-banana-2.1)
 // Schutz: nur vom Shop aus, max. LIMIT Bilder pro IP und Tag (Tabelle ki_designs).
 const ORIGINS = ['https://neonframe.de', 'https://www.neonframe.de', 'https://atcbcn-sh.myshopify.com']
-const LIMIT = 18 // = 6 Generationen à 3 Bilder pro Tag und Gerät
+const LIMIT = 60 // Schutz gegen Missbrauch: max. 60 Bilder pro Tag und IP (geteilte WLANs)
 const MODEL = () => process.env.GEMINI_IMAGE_MODEL || 'gemini-nano-banana-2.1'
 
 const COLORS = 'White #ffffff, Warm White #fff3cf, Yellow #f6ff2f, Soft Orange #ff9b2f, Orange #ff6a1f, Red #ff2b2b, Peachy Pink #ff8fa3, Pink #ff2f8f, Soft Pink #ff42d6, Purple #a94cff, Blue #304bff, Ice Blue #73f3ff, Lake Blue #57ffd6, Green #4cff73, Light Green #b7ff3f'
