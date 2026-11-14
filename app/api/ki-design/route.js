@@ -23,7 +23,8 @@ const RULES = `Rules (very important):
 - Use ONLY these neon colors (choose 1 to 3 that fit best): ${COLORS}. No other colors, no gradients inside one tube.
 - Any text must be spelled exactly as the customer wrote it, every letter correct and readable.
 - Simple line art that can really be produced as a neon sign: no filled areas, no photos, no tiny details, no 3D letters.
-- No watermark, no extra words, no signature.`
+- No watermark, no extra words, no signature.
+- Exactly ONE single neon sign in the image. Never show several signs, variations, a grid or a collage, even if the customer asks for several designs.`
 
 const STYLES = [
   'Version style: elegant, flowing script lettering where text appears.',
