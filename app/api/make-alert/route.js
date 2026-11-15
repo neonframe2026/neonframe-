@@ -1,8 +1,12 @@
-import { sendPush } from '../../../lib/push'
+import { addAlert, getAlerts, dismissAlert } from '../../../lib/alerts'
+import { requireUser } from '../../../lib/api-auth'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 
-// Warnung aufs Handy, wenn eine Konfigurator-Anfrage nicht bei Make ankommt
+// POST  (vom Konfigurator)  -> Warnung: Anfrage nicht bei Make angekommen
+// GET   (Zentrale)          -> alle offenen Warnungen für die Glocke
+// PATCH ?id=... (Zentrale)  -> Warnung schließen
 const ORIGINS = ['https://neonframe.de', 'https://www.neonframe.de', 'https://atcbcn-sh.myshopify.com']
 const cors = req => {
   const o = req.headers.get('origin') || ''
@@ -20,6 +24,18 @@ export async function POST(req) {
   try { b = await req.json() } catch {}
   const c = s => String(s || '').slice(0, 120)
   const kunde = [c(b.name) || 'Unbekannt', c(b.email), c(b.telefon)].filter(Boolean).join(' · ')
-  await sendPush({ title: '⚠️ Make: Anfrage nicht angekommen', body: `${kunde}\n${c(b.why)} · Bitte Kunden direkt melden und Make prüfen.`, tag: 'make-alert-' + Date.now() }).catch(() => {})
+  await addAlert({ kind: 'make', title: '⚠️ Make: Anfrage nicht angekommen', body: `${kunde} · ${c(b.why)} · Bitte Kunden direkt melden und Make prüfen.` })
   return Response.json({ success: true }, { headers })
+}
+
+export async function GET(req) {
+  const no = await requireUser(req); if (no) return no
+  return Response.json(await getAlerts())
+}
+
+export async function PATCH(req) {
+  const no = await requireUser(req); if (no) return no
+  const id = new URL(req.url).searchParams.get('id')
+  if (id) await dismissAlert(id)
+  return Response.json({ success: true })
 }
