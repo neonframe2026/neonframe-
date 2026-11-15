@@ -8,6 +8,10 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
   const ref = useRef(null)
   const [tasks, setTasks] = useState([])
   const tasksRef = useRef([])
+  // System-Warnungen (Make / Google) für die Glocke
+  const [al, setAl] = useState([])
+  const alRef = useRef([])
+  const loadAl = async () => { try { const j = await (await fetch('/api/make-alert', { headers: await authHdr() })).json(); if (Array.isArray(j)) { alRef.current = j; setAl(j) } } catch {} }
   // Eingeloggter Benutzer (Name + Rolle für den Header)
   const [user, setUser] = useState(null)
   const userRef = useRef(null)
@@ -148,8 +152,8 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
   useEffect(() => {
     let alive = true
     const load = () => fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (alive && Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {})
-    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadSx(); loadAx()
-    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt() }, 120000)
+    load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadSx(); loadAx(); loadAl()
+    const t = setInterval(() => { load(); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadAl() }, 120000)
     const t2 = setInterval(loadAx, 600000) // Meta-Zahlen alle 10 Minuten
     return () => { alive = false; clearInterval(t); clearInterval(t2) }
   }, [])
@@ -176,6 +180,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
       jo: joRef.current || undefined,
       cr: crRef.current || undefined,
       st: stRef.current || undefined,
+      al: alRef.current,
       sx: sxRef.current || undefined,
       ax: axRef.current || undefined,
       due: fuRef.current ? fuRef.current.approve.map(a => ({ nr: a.nr, name: a.name, status: a.label, cls: 'wait' })) : [],
@@ -192,7 +197,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
       if (e.origin !== window.location.origin) return
       if (e.data?.type === 'nf-ready') send()
       if (e.data?.type === 'nf-nav') setTab(e.data.tab)
-      if (e.data?.type === 'nf-refresh') { fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {}); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); onRefresh && onRefresh() }
+      if (e.data?.type === 'nf-refresh') { fetch('/api/agent-tasks').then(r => r.json()).then(j => { if (Array.isArray(j)) { tasksRef.current = j; setTasks(j) } }).catch(() => {}); loadFu(); loadEk(); loadSh(); loadJo(); loadCr(); loadSt(); loadAl(); onRefresh && onRefresh() }
       if (e.data?.type === 'nf-logout') onLogout()
       if (e.data?.type === 'nf-open') {
         const t = tasksRef.current.find(x => x.id === e.data.id)
@@ -259,6 +264,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
           .catch(err => ref.current?.contentWindow?.postMessage({ type: 'nf-jo-res', id, action, ok: false, error: err.message }, window.location.origin))
           .finally(loadJo)
       }
+      if (e.data?.type === 'nf-alert-dismiss') { alRef.current = alRef.current.filter(x => x.id !== e.data.id); setAl(alRef.current); authHdr().then(h => fetch('/api/make-alert?id=' + encodeURIComponent(e.data.id), { method: 'PATCH', headers: h })).catch(() => {}) }
       if (e.data?.type === 'nf-dismiss') fetch('/api/agent-tasks?id=' + encodeURIComponent(e.data.id), { method: 'PATCH' }).then(() => {
         tasksRef.current = tasksRef.current.filter(x => x.id !== e.data.id); setTasks(tasksRef.current)
       })
@@ -267,7 +273,7 @@ export default function ZentraleFrame({ offers, setTab, onRefresh, onLogout, mIs
     return () => window.removeEventListener('message', onMsg)
   }, [offers])
 
-  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st, sx, ax])
+  useEffect(() => { send() }, [offers, tasks, fu, user, ek, sh, jo, cr, st, sx, ax, al])
 
   return (
     <>
