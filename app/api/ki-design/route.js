@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { sendPush } from '../../../lib/push'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -45,6 +46,21 @@ export async function OPTIONS(req) {
   return new Response(null, { status: 204, headers: cors(req) })
 }
 
+// Warnung aufs Handy, wenn Google streikt (höchstens 1x pro Stunde)
+async function kiAlert(sb, status, txt) {
+  try {
+    const { data } = await sb.from('settings').select('value').eq('key', 'ki_alert_at').maybeSingle()
+    if (data?.value && Date.now() - Number(data.value) < 36e5) return
+    await sb.from('settings').upsert({ key: 'ki_alert_at', value: String(Date.now()) }, { onConflict: 'key' })
+    const leer = status === 429 || /quota|billing|exhausted|credit/i.test(txt || '')
+    await sendPush({
+      title: leer ? '⚠️ KI-Designer: Google-Guthaben leer?' : '⚠️ KI-Designer gestört',
+      body: leer ? 'Google lehnt die Bilder ab (Limit/Guthaben). Bitte in Google AI Studio die Abrechnung prüfen.' : `Google meldet Fehler ${status}. Kunden können gerade keine KI-Designs erstellen.`,
+      tag: 'ki-alert',
+    })
+  } catch {}
+}
+
 export async function POST(req) {
   const headers = cors(req)
   const fail = (m, s = 400) => Response.json({ error: m }, { status: s, headers })
@@ -88,6 +104,7 @@ export async function POST(req) {
     const j = await r.json()
     if (!r.ok) {
       console.error('Gemini', r.status, JSON.stringify(j).slice(0, 500))
+      await kiAlert(sb, r.status, JSON.stringify(j))
       return fail('Das hat leider nicht geklappt. Versuch es bitte gleich nochmal.', 502)
     }
     const out = (j.candidates?.[0]?.content?.parts || []).find(p => p.inlineData?.data)
