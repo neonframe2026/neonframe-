@@ -1029,12 +1029,14 @@ function MOrderStatus({ o, onReload }) {
   const [date, setDate] = useState('')
   const [trk, setTrk] = useState(o.tracking_number || '')
   const [st, setSt] = useState('')
-  useEffect(() => { setSel(cur); setDate(cur >= 0 ? (ymd(o[M_STEPS[cur][2]]) || today()) : today()); setTrk(o.tracking_number || ''); setSt('') }, [o.id, o.status, o.label_at])
-  function pick(k) { setSel(k); setDate(ymd(o[M_STEPS[k][2]]) || today()); setSt('') }
+  const [noDate, setNoDate] = useState(false)
+  useEffect(() => { setSel(cur); setDate(cur >= 0 ? (ymd(o[M_STEPS[cur][2]]) || today()) : today()); setTrk(o.tracking_number || ''); setSt(''); setNoDate(false) }, [o.id, o.status, o.label_at])
+  function pick(k) { setSel(k); setDate(ymd(o[M_STEPS[k][2]]) || today()); setSt(''); setNoDate(false) }
   async function save() {
     if (sel < 0) return
     const body = { status: M_STEPS[sel][0] === 'packing' ? 'in_production' : M_STEPS[sel][0] }
-    body[M_STEPS[sel][2]] = date === today() ? new Date().toISOString() : new Date(date + 'T12:00:00').toISOString()
+    // "Ohne Datum" (nur In Produktion): Datum bleibt leer, die TNC-Automatik trägt es später nach
+    body[M_STEPS[sel][2]] = (noDate && sel === 1) ? null : (date === today() ? new Date().toISOString() : new Date(date + 'T12:00:00').toISOString())
     for (let j = sel + 1; j < M_STEPS.length; j++) body[M_STEPS[j][2]] = null
     if (sel >= 2) body.tracking_number = trk.trim() || null
     setSt('Speichert …')
@@ -1047,7 +1049,7 @@ function MOrderStatus({ o, onReload }) {
       onReload && onReload()
     } catch (e) { setSt('Fehler: ' + e.message) }
   }
-  const changed = sel !== cur || (sel >= 0 && date !== ymd(o[M_STEPS[sel][2]])) || (sel >= 2 && trk.trim() !== (o.tracking_number || ''))
+  const changed = sel !== cur || (noDate && sel === 1) || (sel >= 0 && date !== ymd(o[M_STEPS[sel][2]])) || (sel >= 2 && trk.trim() !== (o.tracking_number || ''))
   const inp = { width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text)', fontFamily: 'inherit', outline: 'none' }
   return (
     <div>
@@ -1065,7 +1067,8 @@ function MOrderStatus({ o, onReload }) {
       </div>
       {sel >= 0 && (
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-          <div style={{ flex: 1, minWidth: 150 }}><MLbl>Datum {M_STEPS[sel][1]}</MLbl><input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} /></div>
+          <div style={{ flex: 1, minWidth: 150 }}><MLbl>Datum {M_STEPS[sel][1]}</MLbl><input type="date" value={date} onChange={e => setDate(e.target.value)} disabled={noDate && sel === 1} style={{ ...inp, opacity: noDate && sel === 1 ? .4 : 1 }} />
+            {sel === 1 && <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 8, fontSize: 12.5, color: 'var(--text-muted)', cursor: 'pointer' }}><input type="checkbox" checked={noDate} onChange={e => setNoDate(e.target.checked)} />Ohne Datum (TNC trägt es später nach)</label>}</div>
           {sel >= 2 && <div style={{ flex: 2, minWidth: 200 }}><MLbl>DHL-Sendungsnummer</MLbl><input value={trk} onChange={e => setTrk(e.target.value)} placeholder="z. B. JVGL0627…" style={inp} /></div>}
         </div>
       )}
