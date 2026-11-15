@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
-import { sendPush } from '../../../lib/push'
+import { addAlert } from '../../../lib/alerts'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -53,7 +53,8 @@ async function kiAlert(sb, status, txt) {
     if (data?.value && Date.now() - Number(data.value) < 36e5) return
     await sb.from('settings').upsert({ key: 'ki_alert_at', value: String(Date.now()) }, { onConflict: 'key' })
     const leer = status === 429 || /quota|billing|exhausted|credit/i.test(txt || '')
-    await sendPush({
+    await addAlert({
+      kind: 'ki',
       title: leer ? '⚠️ KI-Designer: Google-Guthaben leer?' : '⚠️ KI-Designer gestört',
       body: leer ? 'Google lehnt die Bilder ab (Limit/Guthaben). Bitte in Google AI Studio die Abrechnung prüfen.' : `Google meldet Fehler ${status}. Kunden können gerade keine KI-Designs erstellen.`,
       tag: 'ki-alert',
