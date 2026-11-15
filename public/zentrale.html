@@ -85,7 +85,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-bloc
 .drop h4{margin:4px 8px 6px;font:500 11px var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
 .drop button{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:center;padding:8px;border-radius:8px}
 .drop button:hover{background:var(--surface-2)}
-.drop .empty{padding:8px;color:var(--muted);font-size:13px}
+.drop .empty{padding:8px;color:var(--muted);font-size:13px} .drop .alrt{display:grid;grid-template-columns:32px minmax(0,1fr) 24px;gap:10px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,77,94,.1);margin-bottom:6px} .drop .alx{all:unset;cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:6px;color:var(--muted)} .drop .alx:hover{background:var(--surface-2)}
 .av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font:700 12px var(--display);color:#04101f;flex:none}
 .drop b{display:block;font-size:13px}
 .drop small{color:var(--muted);font-size:12px}
@@ -1435,7 +1435,7 @@ function renderCard(){
 /* ================= Meldungen (echte fällige Angebote) ================= */
 const bellN=document.getElementById('bellN'), drop=document.getElementById('drop'), toast=document.getElementById('toast');
 function updateBadges(){
-  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, q=crQueue().length, dv=stNew().length, all=n+a+u+e+s2+j2+w+dv;
+  const n=DATA.due.length, a=offerTasks().length, u=updTasks().length, e=ekOpen().length, s2=shOpen().length, j2=joOpen().length, w=((DATA.fu&&DATA.fu.wa)||[]).length, q=crQueue().length, dv=stNew().length, al=(DATA.al||[]).length, all=n+a+u+e+s2+j2+w+dv+al;
   bellN.textContent=all; bellN.hidden=!all;
   const setB=(el,v)=>{ const b=el.querySelector('.badge'); b.textContent=v; b.hidden=!v; };
   setB(DEPTS[5]._lbl, n+w); setB(EMMA._tag, n+w);
@@ -1456,8 +1456,8 @@ function renderDrop(){
     ...ekOpen().map(t=>({p:ANNA,c:DEPTS[4].color,i:'AS',t:`TNC-Anfrage · ${t.name||'Kunde'}`,s:'Anna Schulz · Einkaufs-Agent'})),
     ...DATA.due.map(o=>({p:EMMA,c:DEPTS[5].color,i:'EK',t:`${o.nr} · ${o.name}`,s:o.status})),
   ];
-  drop.innerHTML=`<h4>Wartet auf dich</h4>`+(rows.length?rows.map((r,k)=>`<button data-k="${k}"><span class="av" style="background:${r.c}">${r.i}</span><span><b>${esc(r.t)}</b><small>${esc(r.s)}</small></span></button>`).join(''):`<div class="empty">Alles erledigt. Nichts offen.</div>`);
-  drop.querySelectorAll('button').forEach(b=>b.onclick=()=>{drop.hidden=true;openPerson(rows[+b.dataset.k].p);});
+  const als=DATA.al||[]; drop.innerHTML=(als.length?`<h4>Warnungen</h4>`+als.map(a=>`<div class="alrt"><span class="av" style="background:#ff4d5e;color:#fff">!</span><span><b>${esc(a.title)}</b><small>${esc(a.body)}</small></span><button class="alx" data-alx="${esc(a.id)}" aria-label="Schließen">✕</button></div>`).join(''):'')+`<h4>Wartet auf dich</h4>`+(rows.length?rows.map((r,k)=>`<button data-k="${k}"><span class="av" style="background:${r.c}">${r.i}</span><span><b>${esc(r.t)}</b><small>${esc(r.s)}</small></span></button>`).join(''):`<div class="empty">Alles erledigt. Nichts offen.</div>`);
+drop.querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{drop.hidden=true;openPerson(rows[+b.dataset.k].p);}); drop.querySelectorAll('[data-alx]').forEach(b=>b.onclick=ev=>{ev.stopPropagation(); post({ type:'nf-alert-dismiss', id:b.dataset.alx }); DATA.al=(DATA.al||[]).filter(x=>x.id!==b.dataset.alx); updateBadges(); renderDrop();});
 }
 document.getElementById('refBtn').onclick=()=>{ const b=document.getElementById('refBtn'); b.classList.add('spin'); post({ type:'nf-refresh' }); setTimeout(()=>b.classList.remove('spin'),1500); };
 document.getElementById('bell').onclick=e=>{e.stopPropagation(); drop.hidden=!drop.hidden; if(!drop.hidden) renderDrop();};
@@ -1481,7 +1481,7 @@ function showToast(title,sub,who,ini2){
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.data?.type !== 'nf-data') return;
   const before = new Set(DATA.tasks.map(t => t.id)), ekBefore = DATA.ek ? new Set(ekOpen().map(r => r.id)) : null, shBefore = DATA.sh ? new Set(shOpen().map(r => r.id)) : null, joBefore = DATA.jo ? new Set(joOpen().map(r => r.id)) : null;
-  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, sx: e.data.sx || DATA.sx, ax: e.data.ax || DATA.ax, st: e.data.st || DATA.st, stats: e.data.stats || DATA.stats };
+  renderUser(e.data.user); DATA = { orders: e.data.orders || [], due: e.data.due || [], tasks: e.data.tasks || [], fu: e.data.fu, ek: e.data.ek || DATA.ek, sh: e.data.sh || DATA.sh, jo: e.data.jo || DATA.jo, cr: e.data.cr || DATA.cr, sx: e.data.sx || DATA.sx, ax: e.data.ax || DATA.ax, st: e.data.st || DATA.st, al: e.data.al || [], stats: e.data.stats || DATA.stats };
   const ekNew = ekBefore ? ekOpen().filter(r => !ekBefore.has(r.id)) : [];
   const shNew = shBefore ? shOpen().filter(r => !shBefore.has(r.id)) : [];
   const joNew = joBefore ? joOpen().filter(r => !joBefore.has(r.id)) : [];
