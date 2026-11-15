@@ -45,11 +45,7 @@ export default function Bestellstatus({ offer: o }) {
   // Nach 3 Tagen ohne DHL-Scan zeigt der Kunde schon "Versendet" (Mail kommt trotzdem erst beim echten Scan)
   const packDays = o.label_at ? (Date.now() - new Date(o.label_at).getTime()) / 864e5 : 0
   const st = o.status === 'in_production' && o.label_at ? (packDays > 3 ? 'shipped' : 'packing') : o.status
-  const [n, label, title, sub0] = STATES[st] || STATES.confirmed
-  // TNC hat bezahlt, Produktion aber noch nicht gestartet -> "Produktions-Warteschlange"
-  const queued = st === 'confirmed' && !!o.tnc_paid_at
-  const sub = queued ? 'Dein Neonschild ist fest für die Produktion eingeplant.' : sub0
-  IC.wait = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12M6 22h12M7 2v4a5 5 0 0 0 10 0V2M7 22v-4a5 5 0 0 1 10 0v4"/></svg>'
+  const [n, label, title, sub] = STATES[st] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
   const ordered = o.ordered_at || (o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at) - 15 * 6e4).toISOString() : null)
   const steps = [['Bestellt', 'ok'], ['In Produktion', 'gear'], ['Prüfung & Verpackung', 'box'], ['Versendet', 'truck'], ['Zugestellt', 'home']]
@@ -65,8 +61,7 @@ export default function Bestellstatus({ offer: o }) {
   if (n >= 3) ups.push(['truck', 'Versendet', <>Dein Paket ist unterwegs{o.tracking_number && <><br /><a href={trackingLink(o)} target="_blank" rel="noopener noreferrer">Sendung verfolgen · {o.tracking_company || 'DHL'} {o.tracking_number} ↗</a></>}</>, (o.shipped_at || o.label_at) && dLong(o.shipped_at || o.label_at)])
   if (n >= 2) ups.push(['box', 'Prüfung & Verpackung', 'Dein Neonschild ist fertig und wird für den Versand vorbereitet', o.label_at && dLong(o.label_at)])
   if (n >= 1) ups.push(['gear', 'Produktion gestartet', 'Dein Neonschild wird jetzt für dich gefertigt', o.production_at && dLong(o.production_at)])
-  if (o.tnc_paid_at) ups.push(['wait', 'Produktion eingeplant', 'Dein Schild ist in der Produktions-Warteschlange', dTime(o.tnc_paid_at)])
-    if (o.payment_received !== false) ups.push(['ok', 'Zahlung erhalten', 'Danke für deine Zahlung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
+  if (o.payment_received !== false) ups.push(['ok', 'Zahlung erhalten', 'Danke für deine Zahlung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
   ups.push(['ok', 'Bestellung eingegangen', 'Danke für deine Bestellung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
 
   const colors = String(o.colors || '').split(',').map(c => c.trim()).filter(Boolean).join(', ')
@@ -89,15 +84,13 @@ export default function Bestellstatus({ offer: o }) {
         <div className="card"><div className="steps">
           <div className="fill" style={{ '--w': `${n * 20}%`, '--fd': `${Math.max(n, 1) * 0.35}s` }} />
           {steps.map(([t, k], i) => (
-            <div key={t} className={`s${i <= n ? ' on' : ''}${i === n && n < 4 ? ' cur' : ''}`} style={{ '--d': `${0.15 + i * 0.35}s`, '--k': `${i * 0.14}s` }}><i style={queued && i === 1 ? { border: '2px dashed #3aa8ff', color: '#3aa8ff' } : undefined}><Ic k={i < n || n === 4 ? 'ok' : (queued && i === 1 ? 'wait' : k)} /></i>{t}</div>
+            <div key={t} className={`s${i <= n ? ' on' : ''}${i === n && n < 4 ? ' cur' : ''}`} style={{ '--d': `${0.15 + i * 0.35}s`, '--k': `${i * 0.14}s` }}><i><Ic k={i < n || n === 4 ? 'ok' : k} /></i>{t}</div>
           ))}
         </div></div>
 
         <div className="card info">
-          <span className="bx"><Ic k={queued ? 'wait' : steps[n][1]} /></span>
-          {queued
-            ? <div><b>In der Produktions-Warteschlange</b><p>Dein Schild ist geprüft und an unsere Produktion übergeben. Sobald die Produktion startet, siehst du es hier.</p></div>
-            : <div><b>{INFO[st]?.[0] || INFO.confirmed[0]}</b><p>{INFO[st]?.[1] || INFO.confirmed[1]}</p></div>}
+          <span className="bx"><Ic k={steps[n][1]} /></span>
+          <div><b>{INFO[st]?.[0] || INFO.confirmed[0]}</b><p>{INFO[st]?.[1] || INFO.confirmed[1]}</p></div>
         </div>
 
         {n === 4 && (
