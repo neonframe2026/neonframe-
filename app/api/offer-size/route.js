@@ -8,23 +8,24 @@ export const maxDuration = 60
 
 // Kunde wählt auf der Angebotsseite eine andere Größe:
 // Preis + Maße im Angebot, im Shopify-Produkt und im vorhandenen Bestellentwurf ändern
-// Body: { offerId, width, express }  (express = Expresslieferung +30 %, kommt als eigene Position in den Checkout)
+// Body: { offerId, width, express, qty }  (express = Expresslieferung +30 %, kommt als eigene Position in den Checkout; qty = Anzahl 1 bis 20)
 export async function POST(req) {
   try {
-    const { offerId, width, express } = await req.json()
+    const { offerId, width, express, qty } = await req.json()
     const exp = !!express
+    const q = Math.min(20, Math.max(1, parseInt(qty) || 1))
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: o } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
 
     const w = Number(width)
     const W0 = parseFloat(o.width) || 0
-    if (w === W0 && exp === !!o.express && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
+    if (w === W0 && exp === !!o.express && q === (parseInt(o.qty) || 1) && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
 
-    // Nur Lieferart geändert (Größe gleich): Preis bleibt, Express kommt im Checkout dazu
+    // Nur Lieferart/Anzahl geändert (Größe gleich): Preis bleibt, Express kommt im Checkout dazu
     if (w === W0) {
-      const ids = await syncOfferShopify({ ...o, express: exp })
-      await supabase.from('offers').update({ express: exp, ...ids }).eq('id', o.id)
+      const ids = await syncOfferShopify({ ...o, express: exp, qty: q })
+      await supabase.from('offers').update({ express: exp, qty: q, ...ids }).eq('id', o.id)
       return Response.json({ checkoutUrl: ids.checkout_url })
     }
 
@@ -52,7 +53,7 @@ export async function POST(req) {
 
     const updated = {
       width: w, height: +row.h, base_price: base,
-      net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows, express: exp,
+      net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows, express: exp, qty: q,
       ek_net: Math.round(+row.vk / 1.35 * 100) / 100, // Einkaufspreis der gewählten Größe
     }
     const ids = await syncOfferShopify({ ...o, ...updated })
