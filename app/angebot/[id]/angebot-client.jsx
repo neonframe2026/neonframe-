@@ -813,6 +813,7 @@ export default function AngebotPage({ offer, bwEnd }) {
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
   const [express, setExpress] = useState(!!offer.express)
+  const [qty, setQty] = useState(Math.min(20, Math.max(1, parseInt(offer.qty) || 1)))
   const [accepting, setAccepting] = useState(false)
   const [step, setStep] = useState(0)
   const ctaRef = useRef(null)
@@ -842,8 +843,9 @@ const vatAmt = net * (vatPct / 100)
 const final0 = net + vatAmt
 // Expresslieferung: +30 % auf den Endpreis
 const EXPRESS_PCT = 30
-const expAmt = express ? Math.round(final0 * EXPRESS_PCT) / 100 : 0
-const final = final0 + expAmt
+const expAmt = express ? Math.round(final0 * EXPRESS_PCT) * qty / 100 : 0
+const unitPrice = final0 + (express ? Math.round(final0 * EXPRESS_PCT) / 100 : 0) // Preis pro Stück
+const final = final0 * qty + expAmt
   const discDisplay = discType === 'pct' ? `${discVal}%` : `€ ${discVal.toFixed(2)}`
   const colors = parseColors(offer.colors)
   const displayId = offer.offer_num || offer.custom_id || offer.id?.slice(0, 8)
@@ -860,12 +862,12 @@ const final = final0 + expAmt
   const backplateImg = offer.backplate ? backplateFormImageUrl : null
   const backplateColorImg = offer.backplate_color ? backplateColorImageUrl : null
   const usageImg = offer.usage ? '/email/verwendung.jpg' : null
-  const listBrutto = base * (1 + vatPct / 100)
-  const discBrutto = discAmt * (1 + vatPct / 100)
-  const extraBrutto = extraAmt * (1 + vatPct / 100)
+  const listBrutto = base * (1 + vatPct / 100) * qty
+  const discBrutto = discAmt * (1 + vatPct / 100) * qty
+  const extraBrutto = extraAmt * (1 + vatPct / 100) * qty
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
-  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express
+  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express || qty !== (parseInt(offer.qty) || 1)
 
   async function accept(e) {
     if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
@@ -878,7 +880,7 @@ const final = final0 + expAmt
     const t1 = setTimeout(() => setStep(s => Math.max(s, 1)), 450)
     const t2 = setTimeout(() => setStep(s => Math.max(s, 2)), 900)
     try {
-      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: sm.enabled ? selW : (parseFloat(offer.width) || 0), express }) })
+      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: sm.enabled ? selW : (parseFloat(offer.width) || 0), express, qty }) })
       const d = await r.json()
       if (d.checkoutUrl) {
         clearTimeout(t1); clearTimeout(t2)
@@ -942,6 +944,11 @@ const final = final0 + expAmt
         .cfg-label { display:flex !important; align-items:center; gap:6px; }
         .size-sel { appearance:none; -webkit-appearance:none; height:40px; padding:0 38px 0 14px; border:1.5px solid #d4d4d8; border-radius:10px; font-size:14px; font-weight:600; font-family:inherit; color:#111; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 13px center; cursor:pointer; max-width:100%; }
         .size-sel:focus { outline:none; border-color:#60c8f0; }
+        .qty-row { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+        .qty-step { display:inline-flex; align-items:center; height:40px; border:1.5px solid #d4d4d8; border-radius:10px; overflow:hidden; background:#fff; }
+        .qty-step button { width:38px; height:100%; border:0; background:#f4f4f6; font-size:18px; font-weight:700; color:#444; cursor:pointer; font-family:inherit; }
+        .qty-step button:disabled { color:#c4c4c8; cursor:default; }
+        .qty-step span { min-width:38px; text-align:center; font-size:14px; font-weight:700; }
         .multi-tip { flex-basis:100%; display:flex; align-items:center; gap:6px; margin-top:2px; font-size:12px; color:#888; line-height:1.4; } .mt-i { width:13px; height:13px; border-radius:50%; background:#b4b4bb; color:#fff; font-size:9px; font-weight:800; font-style:italic; font-family:Georgia,serif; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
         .oc-price { border-top:1px solid #f0f0f0; padding-top:12px; margin-bottom:14px; }
         .oc-row { display:flex; justify-content:space-between; gap:12px; font-size:14px; color:#555; padding:3px 0; }
@@ -1387,24 +1394,35 @@ const final = final0 + expAmt
                     <div className="cfg-pill" style={{ marginTop: 4 }}>{offer.usage}</div>
                   </div>
                 )}
-                <div>
-                  <span className="cfg-label">Lieferung <InfoTip text={"Standardversand beträgt 2 bis 3 Wochen.\nExpresslieferung (+30%) beträgt 7 bis 10 Werktage."} /></span>
-                  <div style={{ marginTop: 4 }}>
-                    <select className="size-sel" value={express ? 'express' : 'standard'} onChange={e => setExpress(e.target.value === 'express')}>
-                      <option value="standard">Standardversand</option>
-                      <option value="express">{express ? 'Expresslieferung' : 'Expresslieferung (+30%)'}</option>
-                    </select>
+                <div className="qty-row">
+                  <div>
+                    <span className="cfg-label">Lieferung <InfoTip text={"Standardversand beträgt 2 bis 3 Wochen.\nExpresslieferung (+30%) beträgt 7 bis 10 Werktage."} /></span>
+                    <div style={{ marginTop: 4 }}>
+                      <select className="size-sel" value={express ? 'express' : 'standard'} onChange={e => setExpress(e.target.value === 'express')}>
+                        <option value="standard">Standardversand</option>
+                        <option value="express">{express ? 'Expresslieferung' : 'Expresslieferung (+30%)'}</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="cfg-label">Anzahl</span>
+                    <div style={{ marginTop: 4 }} className="qty-step">
+                      <button type="button" aria-label="Weniger" disabled={qty <= 1} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+                      <span>{qty}</span>
+                      <button type="button" aria-label="Mehr" disabled={qty >= 20} onClick={() => setQty(q => Math.min(20, q + 1))}>+</button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="oc-price">
-                {discAmt > 0 && <div className="oc-row"><span>Listenpreis</span><s>{eur(listBrutto)}</s></div>}
+                {discAmt > 0 && <div className="oc-row"><span>Listenpreis{qty > 1 ? ` (${qty} Stück)` : ''}</span><s>{eur(listBrutto)}</s></div>}
                 {discAmt > 0 && (offer.black_week
                   ? <div className="oc-row bwrow"><span className="bw-pill"><i>BLACK WEEK</i><i>-{discDisplay}</i></span><b>− {eur(discBrutto)}</b></div>
                   : <div className="oc-row disc"><span>Dein Rabatt ({discDisplay})</span><span>− {eur(discBrutto)}</span></div>)}
                 {extraAmt > 0 && <div className="oc-row disc"><span>Extra-Rabatt ({extraPct}%)</span><span>− {eur(extraBrutto)}</span></div>}
                 {expAmt > 0 && <div className="oc-row exp"><span>Expresslieferung (+{EXPRESS_PCT}%)</span><span>+ {eur(expAmt)}</span></div>}
+                {qty > 1 && <div className="oc-row"><span>Preis pro Stück</span><span>{eur(unitPrice)}</span></div>}
                 <div className="oc-total"><span>Gesamtbetrag</span><b>{final > 0 ? eur(final) : '–'}</b></div>
                 <div className="oc-vat">inkl. {vatPct} % MwSt.</div>
               </div>
@@ -1597,7 +1615,7 @@ const final = final0 + expAmt
             <div className="ld-p">Wir bereiten deinen Checkout vor</div>
             <div className="ld-steps">
               {[
-                (sm.enabled && selW !== sm.W0) ? `${express ? 'Größe und Expresslieferung' : 'Größe'} übernommen (${selW} × ${selH} cm)` : (express ? 'Expresslieferung übernommen' : 'Standardversand übernommen'),
+                (sm.enabled && selW !== sm.W0) ? `${express ? 'Größe und Expresslieferung' : 'Größe'} übernommen (${selW} × ${selH} cm)` : (express ? 'Expresslieferung übernommen' : 'Standardversand übernommen') + (qty > 1 ? ` · ${qty} Stück` : ''),
                 `Preis berechnet (${eur(final)})`,
                 step >= 3 ? 'Checkout erstellt' : 'Checkout wird erstellt …',
                 'Weiterleitung zum Checkout',
