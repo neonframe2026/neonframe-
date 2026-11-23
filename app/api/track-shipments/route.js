@@ -86,15 +86,6 @@ export async function GET(request) {
       // Label erstellt, aber DHL hat das Paket noch nicht -> bleibt bei "Prüfung & Verpackung"
       const moving = code && code !== 'pre-transit' && code !== 'unknown'
       if (o.status === 'in_production' && !moving) {
-        // Länger als 5 Tage ohne DHL-Scan -> einmal Push an die Zentrale
-        if (o.label_at && Date.now() - new Date(o.label_at).getTime() > 5 * 864e5) {
-          const tag = 'stau-' + o.id
-          const { data: pw } = await supabase.from('agent_tasks').select('id').eq('type', 'push_sent').eq('tnc_id', tag).limit(1)
-          if (!pw?.length) {
-            await sendPush({ title: 'Paket hängt: #' + (o.offer_num || o.id), body: `${o.project || 'Bestellung'}: seit über 5 Tagen Label, aber noch kein DHL-Scan. Bitte bei TNC nachfragen.`, tag })
-            await supabase.from('agent_tasks').insert([{ type: 'push_sent', tnc_id: tag, status: 'log', done_at: new Date().toISOString() }])
-          }
-        }
         results.push({ id: o.id, status: 'Prüfung & Verpackung (wartet auf DHL)' })
         await new Promise(res => setTimeout(res, 5500))
         continue
