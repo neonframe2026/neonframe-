@@ -1,5 +1,6 @@
 // Bestellstatus-Seite: erscheint auf dem Angebots-Link, sobald der Kunde bestellt hat
-// Stand kommt automatisch: Shopify (Bestellt), TNC-Abgleich (In Produktion, Prüfung & Verpackung), DHL (Versendet, Zugestellt)
+// Stand kommt automatisch: Shopify (Bestellt), TNC-Abgleich (In Produktion), DHL (Versendet, Zugestellt)
+// Prüfung & Verpackung ist kein eigener Schritt, sondern Teil von In Produktion (Label erstellt oder im Admin manuell gesetzt)
 import { trackingLink } from '../../../lib/shipping-emails'
 import Feuerwerk from './feuerwerk'
 
@@ -22,9 +23,9 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const STATES = {
   confirmed: [0, 'Bestellt', <>Bestellung <em>eingegangen</em></>, 'Vielen Dank! Wir bereiten jetzt die Produktion deines Neonschildes vor.'],
   in_production: [1, 'In Produktion', <>Dein Neonschild wird <em>gefertigt</em></>, 'Es wird jetzt individuell für dich gefertigt und vor dem Versand getestet.'],
-  packing: [2, 'Prüfung & Verpackung', <>Dein Neonschild ist <em>fertig</em></>, 'Es wird jetzt geprüft, sicher verpackt und an DHL übergeben.'],
-  shipped: [3, 'Versendet', <>Dein Neonschild ist <em>unterwegs</em></>, 'Sicher verpackt auf dem Weg zu dir. Verfolge dein Paket mit einem Klick.'],
-  delivered: [4, 'Zugestellt', <>Dein Neonschild ist <em>angekommen</em></>, 'Wir hoffen, es leuchtet genau so, wie du es dir vorgestellt hast.'],
+  packing: [1, 'In Produktion', <>Dein Neonschild ist <em>fast fertig</em></>, 'Es wird jetzt geprüft, sicher verpackt und an DHL übergeben.'],
+  shipped: [2, 'Versendet', <>Dein Neonschild ist <em>unterwegs</em></>, 'Sicher verpackt auf dem Weg zu dir. Verfolge dein Paket mit einem Klick.'],
+  delivered: [3, 'Zugestellt', <>Dein Neonschild ist <em>angekommen</em></>, 'Wir hoffen, es leuchtet genau so, wie du es dir vorgestellt hast.'],
 }
 
 // Infobox je Stufe (kein "Als Nächstes", das sieht man oben)
@@ -44,22 +45,24 @@ export default function Bestellstatus({ offer: o }) {
   // Label erstellt, aber noch nicht bei DHL -> "Prüfung & Verpackung"
   // Nach 3 Tagen ohne DHL-Scan zeigt der Kunde schon "Versendet" (Mail kommt trotzdem erst beim echten Scan)
   const packDays = o.label_at ? (Date.now() - new Date(o.label_at).getTime()) / 864e5 : 0
-  const st = o.status === 'in_production' && o.label_at ? (packDays > 3 ? 'shipped' : 'packing') : o.status
+  const st = (o.status === 'confirmed' || o.status === 'in_production') && o.label_at ? (packDays > 3 ? 'shipped' : 'packing')
+    : (o.status === 'confirmed' || o.status === 'in_production') && o.packing ? 'packing' // im Admin manuell auf Prüfung & Verpackung gesetzt
+    : o.status
   const [n, label, title, sub] = STATES[st] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
   const ordered = o.ordered_at || (o.order_email_sent_at ? new Date(new Date(o.order_email_sent_at) - 15 * 6e4).toISOString() : null)
-  const steps = [['Bestellt', 'ok'], ['In Produktion', 'gear'], ['Prüfung & Verpackung', 'box'], ['Versendet', 'truck'], ['Zugestellt', 'home']]
+  const steps = [['Bestellt', 'ok'], ['In Produktion', 'gear'], ['Versendet', 'truck'], ['Zugestellt', 'home']]
 
   // Voraussichtliche Lieferung wie bei TNC: Zahlung bei TNC + 9 bis 16 Tage
   let eta = null
-  if (n < 4 && o.tnc_paid_at) {
+  if (n < 3 && o.tnc_paid_at) {
     eta = <span className="eta" style={{ color: '#6b7a93', fontWeight: 400, fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 7 }}><svg width="17" height="17" viewBox="0 0 24 24" fill="#3aa8ff" aria-hidden="true"><path d="M1 5.5A1.5 1.5 0 0 1 2.5 4h10A1.5 1.5 0 0 1 14 5.5V16H1z" /><path d="M15 8h3.6l4.4 4.6V16h-8z" /><circle cx="6" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /><circle cx="18" cy="17.5" r="2.4" stroke="#fff" strokeWidth="1.4" /></svg>Voraussichtl. Lieferung: <b style={{ color: '#0f1726', fontWeight: 700 }}>{dShort(addDays(o.tnc_paid_at, 9))} bis {dShort(addDays(o.tnc_paid_at, 16))}</b></span>
   }
 
   const ups = []
-  if (n >= 4) ups.push(['home', 'Zugestellt', 'Dein Paket ist angekommen', o.delivered_at && dLong(o.delivered_at)])
-  if (n >= 3) ups.push(['truck', 'Versendet', <>Dein Paket ist unterwegs{o.tracking_number && <><br /><a href={trackingLink(o)} target="_blank" rel="noopener noreferrer">Sendung verfolgen · {o.tracking_company || 'DHL'} {o.tracking_number} ↗</a></>}</>, (o.shipped_at || o.label_at) && dLong(o.shipped_at || o.label_at)])
-  if (n >= 2) ups.push(['box', 'Prüfung & Verpackung', 'Dein Neonschild ist fertig und wird für den Versand vorbereitet', o.label_at && dLong(o.label_at)])
+  if (n >= 3) ups.push(['home', 'Zugestellt', 'Dein Paket ist angekommen', o.delivered_at && dLong(o.delivered_at)])
+  if (n >= 2) ups.push(['truck', 'Versendet', <>Dein Paket ist unterwegs{o.tracking_number && <><br /><a href={trackingLink(o)} target="_blank" rel="noopener noreferrer">Sendung verfolgen · {o.tracking_company || 'DHL'} {o.tracking_number} ↗</a></>}</>, (o.shipped_at || o.label_at) && dLong(o.shipped_at || o.label_at)])
+  if (st === 'packing' || (n >= 2 && (o.label_at || o.packing))) ups.push(['box', 'Prüfung & Verpackung', 'Dein Neonschild ist fertig und wird für den Versand vorbereitet', (o.label_at || o.packing_at) && dLong(o.label_at || o.packing_at)])
   if (n >= 1) ups.push(['gear', 'Produktion gestartet', 'Dein Neonschild wird jetzt für dich gefertigt', o.production_at && dLong(o.production_at)])
   if (o.payment_received !== false) ups.push(['ok', 'Zahlung erhalten', 'Danke für deine Zahlung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
   ups.push(['ok', 'Bestellung eingegangen', 'Danke für deine Bestellung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
@@ -72,7 +75,6 @@ export default function Bestellstatus({ offer: o }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <style dangerouslySetInnerHTML={{ __html: '.steps{grid-template-columns:repeat(5,1fr)}.steps::before,.steps .fill{left:10%}.steps::before{right:10%}.s{padding:0 2px;line-height:1.25}' }} />
       <div className="band"><span className="logo" role="img" aria-label="NeonFrame" /></div>
       <div className="main">
         <div className="hero">
@@ -82,18 +84,18 @@ export default function Bestellstatus({ offer: o }) {
         </div>
 
         <div className="card"><div className="steps">
-          <div className="fill" style={{ '--w': `${n * 20}%`, '--fd': `${Math.max(n, 1) * 0.35}s` }} />
+          <div className="fill" style={{ '--w': `${n * 25}%`, '--fd': `${Math.max(n, 1) * 0.35}s` }} />
           {steps.map(([t, k], i) => (
-            <div key={t} className={`s${i <= n ? ' on' : ''}${i === n && n < 4 ? ' cur' : ''}`} style={{ '--d': `${0.15 + i * 0.35}s`, '--k': `${i * 0.14}s` }}><i><Ic k={i < n || n === 4 ? 'ok' : k} /></i>{t}</div>
+            <div key={t} className={`s${i <= n ? ' on' : ''}${i === n && n < 3 ? ' cur' : ''}`} style={{ '--d': `${0.15 + i * 0.35}s`, '--k': `${i * 0.14}s` }}><i><Ic k={i < n || n === 3 ? 'ok' : k} /></i>{t}</div>
           ))}
         </div></div>
 
         <div className="card info">
-          <span className="bx"><Ic k={steps[n][1]} /></span>
+          <span className="bx"><Ic k={st === 'packing' ? 'box' : steps[n][1]} /></span>
           <div><b>{INFO[st]?.[0] || INFO.confirmed[0]}</b><p>{INFO[st]?.[1] || INFO.confirmed[1]}</p></div>
         </div>
 
-        {n === 4 && (
+        {n === 3 && (
           <div className="confetti" aria-hidden="true">
             {ROCKETS.map(([x, by, dl], r) => (
               <span key={r}>
@@ -103,9 +105,9 @@ export default function Bestellstatus({ offer: o }) {
             ))}
           </div>
         )}
-        {n === 4 && <Feuerwerk rockets={ROCKETS.map(([x, by, dl]) => [parseFloat(x) / 100, parseFloat(by) / 100, dl])} />}
+        {n === 3 && <Feuerwerk rockets={ROCKETS.map(([x, by, dl]) => [parseFloat(x) / 100, parseFloat(by) / 100, dl])} />}
 
-        {n === 4 && (
+        {n === 3 && (
           <div className="hxw">
             <div className="hx">
               <div className="gl" />
