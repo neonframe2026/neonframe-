@@ -46,7 +46,7 @@ export default function Bestellstatus({ offer: o }) {
   // Nach 3 Tagen ohne DHL-Scan zeigt der Kunde schon "Versendet" (Mail kommt trotzdem erst beim echten Scan)
   const packDays = o.label_at ? (Date.now() - new Date(o.label_at).getTime()) / 864e5 : 0
   const st = (o.status === 'confirmed' || o.status === 'in_production') && o.label_at ? 'packing' // "Versendet" nur durch echten DHL-Scan
-    : (o.status === 'confirmed' || o.status === 'in_production') && (o.packing || (o.production_at && Date.now() - new Date(o.production_at).getTime() > 3 * 864e5)) ? 'packing' // 3 Tage nach Produktionsstart (TNC) oder im Admin gesetzt
+    : (o.status === 'confirmed' || o.status === 'in_production') && (o.packing || (o.production_at && Date.now() - new Date(o.production_at).getTime() > 5 * 864e5)) ? 'packing' // 5 Tage nach Produktionsstart (TNC) oder im Admin gesetzt
     : o.status
   const [n, label, title, sub] = STATES[st] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
