@@ -46,7 +46,7 @@ export default function Bestellstatus({ offer: o }) {
   // Nach 3 Tagen ohne DHL-Scan zeigt der Kunde schon "Versendet" (Mail kommt trotzdem erst beim echten Scan)
   const packDays = o.label_at ? (Date.now() - new Date(o.label_at).getTime()) / 864e5 : 0
   const st = (o.status === 'confirmed' || o.status === 'in_production') && o.label_at ? (packDays > 3 ? 'shipped' : 'packing')
-    : (o.status === 'confirmed' || o.status === 'in_production') && o.packing ? 'packing' // im Admin manuell auf Prüfung & Verpackung gesetzt
+    : (o.status === 'confirmed' || o.status === 'in_production') && (o.packing || (o.production_at && Date.now() - new Date(o.production_at).getTime() > 3 * 864e5)) ? 'packing' // 3 Tage nach Produktionsstart (TNC) oder im Admin gesetzt
     : o.status
   const [n, label, title, sub] = STATES[st] || STATES.confirmed
   const num = o.offer_num || o.custom_id || String(o.id).slice(0, 8)
@@ -62,7 +62,6 @@ export default function Bestellstatus({ offer: o }) {
   const ups = []
   if (n >= 3) ups.push(['home', 'Zugestellt', 'Dein Paket ist angekommen', o.delivered_at && dLong(o.delivered_at)])
   if (n >= 2) ups.push(['truck', 'Versendet', <>Dein Paket ist unterwegs{o.tracking_number && <><br /><a href={trackingLink(o)} target="_blank" rel="noopener noreferrer">Sendung verfolgen · {o.tracking_company || 'DHL'} {o.tracking_number} ↗</a></>}</>, (o.shipped_at || o.label_at) && dLong(o.shipped_at || o.label_at)])
-  if (st === 'packing' || (n >= 2 && (o.label_at || o.packing))) ups.push(['box', 'Prüfung & Verpackung', 'Dein Neonschild ist fertig und wird für den Versand vorbereitet', (o.label_at || o.packing_at) && dLong(o.label_at || o.packing_at)])
   if (n >= 1) ups.push(['gear', 'Produktion gestartet', 'Dein Neonschild wird jetzt für dich gefertigt', o.production_at && dLong(o.production_at)])
   if (o.payment_received !== false) ups.push(['ok', 'Zahlung erhalten', 'Danke für deine Zahlung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
   ups.push(['ok', 'Bestellung eingegangen', 'Danke für deine Bestellung!', ordered && (o.ordered_at ? dTime(ordered) : dLong(ordered))])
