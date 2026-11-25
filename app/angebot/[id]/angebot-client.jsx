@@ -1374,7 +1374,7 @@ const final = final0 * qty + expAmt
                     {vList.map((v, i) => {
                       const n = i + 1, on = vSel === n
                       return (
-                        <button key={n} type="button" onClick={() => pickVariant(n)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: on ? '#f0f9ff' : '#fff', border: on ? '2px solid #0ea5e9' : '2px solid #e5e7eb', borderRadius: 12, padding: '7px 13px 7px 7px', cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .15s, background .15s' }}>
+                        <button key={n} type="button" onClick={() => pickVariant(n)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: on ? '#f0f9ff' : '#fff', border: on ? '1.5px solid #0ea5e9' : '1.5px solid #e5e7eb', borderRadius: 12, padding: '7px 13px 7px 7px', cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .15s, background .15s' }}>
                           <img src={v.images?.[1] || v.images?.[0]} alt={`Variante ${n}`} style={{ width: 54, height: 54, borderRadius: 9, objectFit: 'cover', flexShrink: 0, background: '#f3f4f6', display: 'block' }} />
                           <span style={{ flex: 1, minWidth: 0 }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700, color: '#111' }}>
