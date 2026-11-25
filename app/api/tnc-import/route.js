@@ -100,6 +100,11 @@ export async function GET(req) {
       min: { w: minW, h: Number(sign.minSize?.value?.split('x')[1]) || Number(String(sign.sizes?.minSize?.value || '').split('x')[1]) || Number(sign.height) || 0 },
       design_image: file.permanent_url || file.webp_url || '', realistic_image: sign.realisticPreviewUrl || '',
       design_name: file.name || '',
+      // Alle Bilder von TNC: jede Variante (v1, v2, ...) und jede realistische Vorschau
+      images: (page.data.signs || []).flatMap(sg => [
+        ...(sg.realisticPreviewUrl ? [{ kind: 'real', url: sg.realisticPreviewUrl, name: '' }] : []),
+        ...(sg.files || []).map(f => ({ kind: 'design', url: f.permanent_url || f.webp_url || '', name: f.name || '' })).filter(f => f.url),
+      ]),
       size_options,
     })
   } catch (err) {
