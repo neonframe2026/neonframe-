@@ -225,10 +225,11 @@ function getTooltipImg(val, map) {
 }
 
 // ─── GALLERY ─────────────────────────────────────────────────────────────────
+let galleryJump = false // true, sobald die Kundin eine Variante antippt
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
-  // Andere Variante gewählt: wieder beim ersten Bild starten
-  useEffect(() => { setCurrent(0) }, [images.join('|')])
+  // Andere Variante gewählt: direkt das Design-Bild (Bild 2) zeigen, wie bei TNC
+  useEffect(() => { setCurrent(galleryJump && images.length > 1 ? 1 : 0) }, [images.join('|')])
   const [next, setNext] = useState(null)
   const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
@@ -824,7 +825,7 @@ export default function AngebotPage({ offer: rawOffer, bwEnd }) {
     backplate: vCur.backplate || rawOffer.backplate,
     usage: vCur.usage || rawOffer.usage,
   } : rawOffer
-  function pickVariant(n) { setVSel(n) } // gespeichert wird die Auswahl erst bei „Angebot annehmen“
+  function pickVariant(n) { galleryJump = true; setVSel(n) } // gespeichert wird die Auswahl erst bei „Angebot annehmen“
   const vDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }) : ''
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
@@ -1366,7 +1367,7 @@ const final = final0 * qty + expAmt
                       const n = i + 1, on = vSel === n
                       return (
                         <button key={n} type="button" onClick={() => pickVariant(n)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: on ? '#f0f9ff' : '#fff', border: on ? '2px solid #0ea5e9' : '2px solid #e5e7eb', borderRadius: 12, padding: '7px 13px 7px 7px', cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .15s, background .15s' }}>
-                          <img src={v.images?.[0]} alt={`Variante ${n}`} style={{ width: 54, height: 54, borderRadius: 9, objectFit: 'cover', flexShrink: 0, background: '#f3f4f6', display: 'block' }} />
+                          <img src={v.images?.[1] || v.images?.[0]} alt={`Variante ${n}`} style={{ width: 54, height: 54, borderRadius: 9, objectFit: 'cover', flexShrink: 0, background: '#f3f4f6', display: 'block' }} />
                           <span style={{ flex: 1, minWidth: 0 }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700, color: '#111' }}>
                               Variante {n}
