@@ -814,7 +814,7 @@ export default function AngebotPage({ offer: rawOffer, bwEnd }) {
   // Varianten: 1 = erste Version, 2 = neueste Version (nur wenn es eine Änderung gab)
   const nv = rawOffer.neon_variants
   const vList = nv?.versions?.length && nv.v2 != null ? [nv.versions[nv.v1 ?? 0], nv.versions[nv.v2]].filter(Boolean) : []
-  const [vSel, setVSel] = useState(rawOffer.variant_sel === 1 ? 1 : 2)
+  const [vSel, setVSel] = useState(2) // beim Öffnen immer die neueste Variante
   const vCur = vList.length === 2 ? vList[vSel - 1] : null
   const offer = vCur ? {
     ...rawOffer,
@@ -824,11 +824,7 @@ export default function AngebotPage({ offer: rawOffer, bwEnd }) {
     backplate: vCur.backplate || rawOffer.backplate,
     usage: vCur.usage || rawOffer.usage,
   } : rawOffer
-  function pickVariant(n) {
-    if (n === vSel) return
-    setVSel(n)
-    fetch('/api/offer-variant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: rawOffer.id, sel: n }) }).catch(() => {})
-  }
+  function pickVariant(n) { setVSel(n) } // gespeichert wird die Auswahl erst bei „Angebot annehmen“
   const vDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }) : ''
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
@@ -842,7 +838,7 @@ export default function AngebotPage({ offer: rawOffer, bwEnd }) {
   useEffect(() => {
     const el = ctaRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting), { threshold: 0 })
+    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 }) // Leiste erst, wenn man am Button vorbei nach unten gescrollt hat
     io.observe(el)
     return () => io.disconnect()
   }, [])
@@ -888,7 +884,7 @@ const final = final0 * qty + expAmt
   const extraBrutto = extraAmt * (1 + vatPct / 100) * qty
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
-  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express || qty !== (parseInt(offer.qty) || 1) || (vList.length === 2 && vSel !== (nv.shop ?? 2))
+  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express || qty !== (parseInt(offer.qty) || 1) || (vList.length === 2 && (vSel !== (nv.shop ?? 2) || vSel !== (rawOffer.variant_sel === 1 ? 1 : 2)))
 
   async function accept(e) {
     if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
