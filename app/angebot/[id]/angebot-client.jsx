@@ -225,11 +225,11 @@ function getTooltipImg(val, map) {
 }
 
 // ─── GALLERY ─────────────────────────────────────────────────────────────────
-let galleryJump = false // true, sobald die Kundin eine Variante antippt
+let galleryJump = 0 // Bild, das nach dem Antippen einer Variante gezeigt wird (Design-Bild)
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
   // Andere Variante gewählt: direkt das Design-Bild (Bild 2) zeigen, wie bei TNC
-  useEffect(() => { setCurrent(galleryJump && images.length > 1 ? 1 : 0) }, [images.join('|')])
+  useEffect(() => { setCurrent(Math.min(galleryJump, images.length - 1)) }, [images.join('|')])
   const [next, setNext] = useState(null)
   const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
@@ -814,7 +814,15 @@ function FaqSection() {
 export default function AngebotPage({ offer: rawOffer, bwEnd }) {
   // Varianten: 1 = erste Version, 2 = neueste Version (nur wenn es eine Änderung gab)
   const nv = rawOffer.neon_variants
-  const vList = nv?.versions?.length && nv.v2 != null ? [nv.versions[nv.v1 ?? 0], nv.versions[nv.v2]].filter(Boolean) : []
+  // TNC ändert oft nur das Design-Bild. Ist die realistische Vorschau älter als die Version davor,
+  // gehört sie nicht zu Variante 2 und wird dort weggelassen (sonst sieht man das alte Schild)
+  const tncTs = u => { const m = String(u || '').match(/3d-generations\/\d+\/(\d{4})-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)/); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null }
+  const v2raw = nv?.versions?.length && nv.v2 != null ? nv.versions[nv.v2] : null
+  const prevAt = v2raw ? nv.versions[nv.v2 - 1]?.at : null
+  const realTs = v2raw ? tncTs(v2raw.src?.[0]) : null
+  const staleReal = !!(v2raw && v2raw.images?.length > 1 && realTs && prevAt && realTs <= new Date(prevAt).getTime() + 3600000)
+  const v2v = staleReal ? { ...v2raw, images: v2raw.images.slice(1) } : v2raw
+  const vList = v2v ? [nv.versions[nv.v1 ?? 0], v2v].filter(Boolean) : []
   const [vSel, setVSel] = useState(2) // beim Öffnen immer die neueste Variante
   const vCur = vList.length === 2 ? vList[vSel - 1] : null
   const offer = vCur ? {
@@ -825,7 +833,7 @@ export default function AngebotPage({ offer: rawOffer, bwEnd }) {
     backplate: vCur.backplate || rawOffer.backplate,
     usage: vCur.usage || rawOffer.usage,
   } : rawOffer
-  function pickVariant(n) { galleryJump = true; setVSel(n) } // gespeichert wird die Auswahl erst bei „Angebot annehmen“
+  function pickVariant(n) { galleryJump = (vList[n - 1]?.images?.length || 0) > 1 ? 1 : 0; setVSel(n) } // gespeichert wird die Auswahl erst bei „Angebot annehmen“
   const vDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }) : ''
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
