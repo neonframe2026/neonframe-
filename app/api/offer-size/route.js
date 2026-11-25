@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { syncOfferShopify } from '../../../lib/shopify-admin'
+import { syncOfferShopify, withVariant } from '../../../lib/shopify-admin'
 import { markupFactor } from '../../../lib/pricing'
 
 export const dynamic = 'force-dynamic'
@@ -8,24 +8,33 @@ export const maxDuration = 60
 
 // Kunde wählt auf der Angebotsseite eine andere Größe:
 // Preis + Maße im Angebot, im Shopify-Produkt und im vorhandenen Bestellentwurf ändern
-// Body: { offerId, width, express, qty }  (express = Expresslieferung +30 %, kommt als eigene Position in den Checkout; qty = Anzahl 1 bis 20)
+// Body: { offerId, width, express, qty, variant }  (variant = gewählte Variante 1 oder 2; express = Expresslieferung +30 %, kommt als eigene Position in den Checkout; qty = Anzahl 1 bis 20)
 export async function POST(req) {
   try {
-    const { offerId, width, express, qty } = await req.json()
+    const { offerId, width, express, qty, variant } = await req.json()
     const exp = !!express
     const q = Math.min(20, Math.max(1, parseInt(qty) || 1))
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,    (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY))
     const { data: o } = await supabase.from('offers').select('*').eq('id', offerId).maybeSingle()
     if (!o) return Response.json({ error: 'Angebot nicht gefunden' }, { status: 404 })
 
+    // Variante (1 oder 2): Auswahl speichern, Shopify-Bild nur tauschen, wenn sie sich geändert hat
+    const hasV = o.neon_variants?.v2 != null
+    const vSel = hasV && [1, 2].includes(Number(variant)) ? Number(variant) : (o.variant_sel === 1 ? 1 : 2)
+    const vChanged = hasV && vSel !== (o.neon_variants.shop ?? 2)
+    if (hasV) o.variant_sel = vSel
+    const vUpd = hasV ? { variant_sel: vSel, neon_variants: { ...o.neon_variants, shop: vSel } } : {}
+    const vImg = vChanged ? withVariant(o)._vimg : null
+    const vOpts = vImg ? { imageUrl: vImg, refreshImage: true } : {}
+
     const w = Number(width)
     const W0 = parseFloat(o.width) || 0
-    if (w === W0 && exp === !!o.express && q === (parseInt(o.qty) || 1) && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
+    if (w === W0 && exp === !!o.express && q === (parseInt(o.qty) || 1) && !vChanged && o.checkout_url) return Response.json({ checkoutUrl: o.checkout_url })
 
     // Nur Lieferart/Anzahl geändert (Größe gleich): Preis bleibt, Express kommt im Checkout dazu
     if (w === W0) {
-      const ids = await syncOfferShopify({ ...o, express: exp, qty: q })
-      await supabase.from('offers').update({ express: exp, qty: q, ...ids }).eq('id', o.id)
+      const ids = await syncOfferShopify({ ...o, express: exp, qty: q }, vOpts)
+      await supabase.from('offers').update({ express: exp, qty: q, ...vUpd, ...ids }).eq('id', o.id)
       return Response.json({ checkoutUrl: ids.checkout_url })
     }
 
@@ -56,8 +65,8 @@ export async function POST(req) {
       net_price: Math.round(net * 100) / 100, final_price: final, size_options: newRows, express: exp, qty: q,
       ek_net: Math.round(+row.vk / 1.35 * 100) / 100, // Einkaufspreis der gewählten Größe
     }
-    const ids = await syncOfferShopify({ ...o, ...updated })
-    await supabase.from('offers').update({ ...updated, ...ids }).eq('id', o.id)
+    const ids = await syncOfferShopify({ ...o, ...updated }, vOpts)
+    await supabase.from('offers').update({ ...updated, ...vUpd, ...ids }).eq('id', o.id)
     return Response.json({ checkoutUrl: ids.checkout_url })
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 })
