@@ -346,7 +346,7 @@ function CropModal({ src, onDone, onClose }) {
   )
 }
 // Feld für das Checkout-Bild (1:1)
-function CheckoutImageField({ src, onChange, inputId, dark, cropSrc, cropSrcs }) {
+function CheckoutImageField({ src, onChange, inputId, dark, cropSrc, cropSrcs, noUpload, title }) {
   const [crop, setCrop] = useState(false)
   const [cropFrom, setCropFrom] = useState(null)
   return (
@@ -355,10 +355,10 @@ function CheckoutImageField({ src, onChange, inputId, dark, cropSrc, cropSrcs })
         {src ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 26 }}>🛒</span>}
       </label>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>Checkout-Bild (1:1)</div>
-        <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>Wird im Shopify-Checkout angezeigt. Quadratisch hochladen. Ohne Bild wird automatisch Bild 2 genommen.</div>
+        <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text)' }}>{title || 'Checkout-Bild (1:1)'}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 3, lineHeight: 1.45 }}>{noUpload ? 'Wird im Shopify-Checkout angezeigt. Ohne Zuschnitt wird automatisch Bild 2 genommen.' : 'Wird im Shopify-Checkout angezeigt. Quadratisch hochladen. Ohne Bild wird automatisch Bild 2 genommen.'}</div>
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-          <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>
+          {!noUpload && <label htmlFor={inputId} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>{src ? 'Ändern' : 'Hochladen'}</label>}
           {src && <span onClick={() => onChange(null)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#ef4444', border: '1px solid #ef444466', borderRadius: 8, padding: '5px 10px' }}>Entfernen</span>}
                       {cropSrc && <span onClick={() => setCrop(true)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild 1 zuschneiden</span>}
           {cropSrcs && cropSrcs.map((c, i) => c ? <span key={i} onClick={() => setCropFrom(c)} style={{ cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#22d3ee', border: '1px solid #22d3ee', borderRadius: 8, padding: '5px 10px' }}>✂ Aus Bild {i + 1}</span> : null)}
