@@ -8,6 +8,20 @@ const GOLD = '#e8b130'
 const r2 = n => Math.round(n * 100) / 100
 const num = v => { const t = String(v ?? '').trim(); if (!t) return NaN; return t.includes(',') ? parseFloat(t.replace(/\./g, '').replace(',', '.')) : parseFloat(t) }
 const eur = n => (Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
+const vName = (n = '') => { const m = String(n).match(/[-_ ]v(\d+)\b/i); return m ? 'Variante v' + m[1] : 'Design' }
+const tncTs = u => { const m = String(u || '').match(/3d-generations\/\d+\/(\d{4})-(\d\d)-(\d\d)-(\d\d)-(\d\d)-(\d\d)/); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null }
+const proxy = u => /tnc-app\.dev/.test(u || '') ? '/api/tnc-image?url=' + encodeURIComponent(u) : u
+
+// Was die Kundin am Ende zahlt (gleiche Rechnung wie im Server, inkl. Black Week)
+function custPrice(o, fin) {
+  const dType = o.disc_type || 'pct', dVal = parseFloat(o.disc_val) || 0
+  const lDisc = o.black_week ? (parseFloat(o.bw_prev?.disc_val) || 20) : dVal
+  const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
+  const ex = (parseFloat(o.extra_disc_pct) || 0) / 100
+  const base = Math.round((dType === 'pct' ? fin / vat / (1 - lDisc / 100) : fin / vat + dVal) * 10000) / 10000
+  const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
+  return { base, net: r2(net), final: r2(net * vat), rrp: r2(base * vat) }
+}
 
 // Eigenes Bild verkleinern (max. 2560 px), damit der Upload schnell geht
 function shrink(file) {
@@ -36,6 +50,10 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
   const [notify, setNotify] = useState(true)
   const [checkoutImg, setCheckoutImg] = useState(null)
   const [own, setOwn] = useState([null, null]) // eigene Bilder 1 und 2 (data-URL)
+  const [pick, setPick] = useState([null, null]) // über „Bild auswählen“ gewählt (URL)
+  const [rm, setRm] = useState([false, false]) // Bild entfernt (✕)
+  const [chooser, setChooser] = useState(null) // { slot: 0|1, sel: url }
+  const [pricesOpen, setPricesOpen] = useState(false)
   const [sheet, setSheet] = useState(false)
   const [small, setSmall] = useState(false)
   const prevRef = useRef(null)
@@ -65,25 +83,38 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
     if (r) setF(p => ({ ...p, width: String(r.w), height: String(r.h), final: String(r2(r.vk * 1.10)).replace('.', ',') }))
   }
   const tncImgs = d ? [d.after.realistic_image || '', d.after.design_image || ''] : ['', '']
-  const imgs = [own[0] || tncImgs[0] || d?.before.images[0], own[1] || tncImgs[1] || d?.before.images[1]]
+  const oldImgs = d ? [d.before.offer.preview_image || null, d.before.offer.preview_image_2 || null] : [null, null]
+  const imgs = [0, 1].map(i => rm[i] ? null : (own[i] || pick[i] || tncImgs[i] || oldImgs[i] || null))
+  const slotSet = (i, o, p, r) => { setOwn(x => { const n = [...x]; n[i] = o; return n }); setPick(x => { const n = [...x]; n[i] = p; return n }); setRm(x => { const n = [...x]; n[i] = r; return n }) }
+
+  // Alle Bilder zum Auswählen: alles, was TNC hochgeladen hat (alle Varianten + Vorschau), dazu die Bilder im Angebot
+  const library = []
+  if (d) {
+    const lastV = d.before.offer.neon_variants?.versions?.slice(-1)[0]
+    const prevSrc = lastV?.src || []
+    const created = new Date(d.before.offer.created_at || 0).getTime()
+    const isNeu = (x) => prevSrc.length ? !prevSrc.includes(x.url) : x.kind === 'real' ? (tncTs(x.url) || 0) > created : x.url === tncImgs[1]
+    const add = (url, label, neu) => { if (url && !library.some(x => x.url === url)) library.push({ url, label, neu }) }
+    for (const x of d.after.images || []) add(x.url, x.kind === 'real' ? 'Vorschau' : vName(x.name), isNeu(x))
+    add(tncImgs[0], 'Vorschau', false); add(tncImgs[1], 'Design', false)
+    oldImgs.forEach((u, i) => add(u, `Bisher Bild ${i + 1}`, false))
+  }
 
   // Angebot so zusammenbauen, wie es nach dem Übernehmen gespeichert wird (gleiche Rechnung wie im Server)
   let preview = null
   if (d && f) {
     const o = d.before.offer
     const fin = num(f.final) > 0 ? num(f.final) : d.after.final
-    const dType = o.disc_type || 'pct', dVal = parseFloat(o.disc_val) || 0
-    const vat = 1 + (parseFloat(o.vat_pct) || 19) / 100
-    const ex = (parseFloat(o.extra_disc_pct) || 0) / 100
-    const base = Math.round((dType === 'pct' ? fin / vat / (1 - dVal / 100) : fin / vat + dVal) * 10000) / 10000
-    const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
+    const cp = custPrice(o, fin)
+    const pv = imgs.filter(Boolean)
     const w = num(f.width) > 0 ? num(f.width) : d.after.width
     preview = {
       ...o, width: String(w), height: String(num(f.height) > 0 ? num(f.height) : d.after.height),
       colors: f.colors, backplate: f.backplate, usage: f.usage,
-      base_price: base, net_price: r2(net), final_price: r2(net * vat), rrp_price: r2(base * vat),
+      base_price: cp.base, net_price: cp.net, final_price: cp.final, rrp_price: cp.rrp,
       size_options: all.filter(r => r.w !== w),
-      preview_image: imgs[0] || o.preview_image, preview_image_2: imgs[1] || o.preview_image_2,
+      preview_image: pv[0] || o.preview_image, preview_image_2: pv[1] || null,
+      neon_variants: null, // Vorschau zeigt, wie die neue Variante aussieht
       customer_note: f.note.trim() || null,
     }
   }
@@ -91,7 +122,7 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
   // Was hat sich geändert?
   const b = d?.before
   const ch = d && f && preview ? {
-    img1: !!(own[0] || tncImgs[0]), img2: !!(own[1] || tncImgs[1]),
+    img1: imgs[0] !== oldImgs[0], img2: imgs[1] !== oldImgs[1],
     size: String(preview.width) !== String(b.width) || String(preview.height) !== String(b.height),
     price: Math.abs(preview.final_price - (parseFloat(b.final) || 0)) > 0.009,
     colors: (f.colors || '') !== (b.colors || ''),
@@ -124,7 +155,7 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
 
   async function addOwn(i, file) {
     if (!file) return
-    try { const u = await shrink(file); setOwn(p => { const n = [...p]; n[i] = u; return n }) } catch (e) { alert('Bild konnte nicht geladen werden: ' + e.message) }
+    try { const u = await shrink(file); slotSet(i, u, null, false) } catch (e) { alert('Bild konnte nicht geladen werden: ' + e.message) }
   }
 
   async function apply() {
@@ -137,13 +168,13 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
       }
       const up = []
       for (const i of [0, 1]) {
-        if (!own[i]) { up[i] = null; continue }
+        if (!own[i]) { up[i] = rm[i] ? null : (pick[i] || null); continue }
         up[i] = await uploadCheckoutImage(own[i], b.id)
         if (!up[i]) throw new Error(`Bild ${i + 1} konnte nicht hochgeladen werden`)
       }
       const j = await (await fetch('/api/tnc-update', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, notify, edit: { width: f.width, height: f.height, final: f.final, colors: f.colors, backplate: f.backplate, usage: f.usage, checkout_image, img1: up[0], img2: up[1], customer_note: f.note } }),
+        body: JSON.stringify({ id, notify, edit: { width: f.width, height: f.height, final: f.final, colors: f.colors, backplate: f.backplate, usage: f.usage, checkout_image, img1: up[0], img2: up[1], rm1: rm[0], rm2: rm[1], customer_note: f.note } }),
       })).json()
       if (j.error) throw new Error(j.error)
       setDone(j); setSheet(false)
@@ -177,18 +208,29 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
       <div>
         <div style={h4}>Bilder {(ch.img1 || ch.img2) && gtag(`${(ch.img1 ? 1 : 0) + (ch.img2 ? 1 : 0)} geändert`)}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[0, 1].map(i => (
-            <div key={i} style={{ position: 'relative', minWidth: 0 }}>
-              {imgs[i] ? <img src={imgs[i]} alt="" style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 8, display: 'block', border: `2px solid ${ch['img' + (i + 1)] ? GOLD : '#2a2d36'}` }} />
-                : <div style={{ height: 80, borderRadius: 8, border: '1px dashed #2a2d36' }} />}
-              <span style={{ position: 'absolute', left: 5, top: 5, background: 'rgba(0,0,0,.7)', fontSize: 10, padding: '1px 6px', borderRadius: 99 }}>Bild {i + 1}{own[i] ? ' · eigenes' : tncImgs[i] ? ' · neu von TNC' : ''}</span>
-              <label style={obtn}>⬆ Eigenes Bild<input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { addOwn(i, e.target.files[0]); e.target.value = '' }} /></label>
-              {own[i] && <div onClick={() => setOwn(p => { const n = [...p]; n[i] = null; return n })} style={{ ...obtn, borderColor: '#2a2d36', color: '#8a8f9c', fontWeight: 500 }}>↺ TNC-Bild zurück</div>}
-            </div>
-          ))}
+          {[0, 1].map(i => {
+            const file = <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { addOwn(i, e.target.files[0]); e.target.value = '' }} />
+            return (
+              <div key={i} style={{ minWidth: 0 }}>
+                <div style={{ position: 'relative' }}>
+                  {imgs[i] ? (
+                    <label title="Antippen = eigenes Bild hochladen" style={{ display: 'block', cursor: 'pointer' }}>
+                      <img src={imgs[i]} alt={`Bild ${i + 1}`} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 8, display: 'block', border: `2px solid ${ch['img' + (i + 1)] ? GOLD : '#2a2d36'}` }} />{file}
+                    </label>
+                  ) : (
+                    <label style={{ height: 80, borderRadius: 8, border: '2px dashed #3a3e48', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, color: '#8a8f9c', fontSize: 11.5, cursor: 'pointer', boxSizing: 'border-box' }}>
+                      <span style={{ fontSize: 18 }}>＋</span>Bild {i + 1} hochladen{file}
+                    </label>
+                  )}
+                  {imgs[i] && <span onClick={() => slotSet(i, null, null, true)} title="Bild entfernen" style={{ position: 'absolute', right: 5, top: 5, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,.8)', border: '1px solid #555', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, cursor: 'pointer' }}>✕</span>}
+                </div>
+                <div onClick={() => setChooser({ slot: i, sel: imgs[i] || null })} style={obtn}>🖼 Bild {i + 1} auswählen</div>
+              </div>
+            )
+          })}
         </div>
         <div style={{ marginTop: 10 }}>
-          <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="update-checkout-img" dark cropSrcs={[0, 1].map(i => !imgs[i] ? null : own[i] ? own[i] : /tnc-app\.dev/.test(imgs[i]) ? '/api/tnc-image?url=' + encodeURIComponent(imgs[i]) : imgs[i])} />
+          <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="update-checkout-img" dark noUpload title="Checkout-Bild (1:1) · Variante 2" cropSrcs={[0, 1].map(i => !imgs[i] ? null : own[i] ? own[i] : proxy(imgs[i]))} />
         </div>
       </div>
 
@@ -201,28 +243,47 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
             </select>
           : <div style={{ display: 'flex', gap: 6 }}><input style={inp(ch.size)} value={f.width} onChange={e => set('width', e.target.value)} inputMode="numeric" /><input style={inp(ch.size)} value={f.height} onChange={e => set('height', e.target.value)} inputMode="numeric" /></div>,
           ch.size ? `${b.width} × ${b.height} cm` : '')}
-        {row('Endpreis (€)', <input style={inp(ch.price)} value={f.final} onChange={e => set('final', e.target.value)} inputMode="decimal" />, ch.price ? eur(b.final) : '')}
+        {row(b.offer.black_week ? 'Preis vor BW' : 'Endpreis (€)', <input style={inp(ch.price)} value={f.final} onChange={e => set('final', e.target.value)} inputMode="decimal" />, ch.price ? `${eur(b.final)} · Kunde zahlt jetzt ${eur(preview.final_price)}` : '')}
+        {b.offer.black_week && !ch.price && <div style={{ color: '#8a8f9c', fontSize: 11.5, margin: '-3px 0 7px 98px' }}>Kunde zahlt {eur(preview.final_price)} (Black Week)</div>}
         {row('Farbe', <input style={inp(ch.colors)} value={f.colors} onChange={e => set('colors', e.target.value)} />, ch.colors ? b.colors : '')}
         {row('Rückwand', <select style={inp(ch.backplate)} value={f.backplate} onChange={e => set('backplate', e.target.value)}>{['Ausgeschnitten', 'Quadratisch', 'Ohne'].map(o => <option key={o}>{o}</option>)}</select>, ch.backplate ? b.backplate : '')}
         {row('Verwendung', <select style={inp(ch.usage)} value={f.usage} onChange={e => set('usage', e.target.value)}>{['Innen', 'Außen IP65'].map(o => <option key={o}>{o}</option>)}</select>, ch.usage ? b.usage : '')}
       </div>
 
-      {all.length > 0 && (
-        <div>
-          <div style={h4}>Alle Größen von TNC {gtag('neu geladen')}</div>
-          <div style={{ border: '1px solid #2a2d36', borderRadius: 10, overflow: 'hidden' }}>
-            {all.map((r, i) => {
-              const cur = String(r.w) === f.width
-              return (
-                <div key={r.w} onClick={() => pickSize(r.w)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 10px', borderTop: i ? '1px solid #1f2229' : 0, cursor: 'pointer', background: cur ? 'rgba(232,177,48,.08)' : 'none', color: cur ? GOLD : '#f1f2f5', fontWeight: cur ? 700 : 400 }}>
-                  <span>{r.w} × {r.h} cm</span><span>{cur && preview ? eur(preview.final_price) : eur(r.vk * 1.10)}</span>
-                </div>
-              )
-            })}
+      {all.length > 0 && (() => {
+        // Preisliste: standardmäßig zu, nur bei Änderungen gelb markiert
+        const oldRows = Array.isArray(b.offer.size_options) ? b.offer.size_options : []
+        const oldVk = w => { const r = oldRows.find(x => +x.w === +w); return r ? +r.vk : null }
+        const pay = vk => custPrice(b.offer, r2(vk * 1.10)).final
+        const changed = ch.price || ch.size || all.some(r => { const o = oldVk(r.w); return o != null && Math.abs(o - r.vk) > 0.009 })
+        return (
+          <div>
+            <div onClick={() => setPricesOpen(v => !v)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: pricesOpen ? '10px 10px 0 0' : 10, border: `1px solid ${changed ? GOLD : '#2a2d36'}`, background: changed ? 'rgba(232,177,48,.07)' : '#0b0c10', cursor: 'pointer' }}>
+              <span style={{ minWidth: 0 }}>
+                {changed
+                  ? <><b style={{ color: GOLD }}>Preise geändert</b>{ch.price && <span style={{ color: '#8a8f9c', fontSize: 12 }}> · {f.width} cm: {eur(b.final)} → {eur(preview.final_price)}</span>}</>
+                  : <span style={{ color: '#8a8f9c' }}>Alle Größen von TNC <span style={{ marginLeft: 4, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: '#14532d', color: '#86efac' }}>unverändert</span></span>}
+              </span>
+              <span style={{ color: '#8a8f9c' }}>{pricesOpen ? '▴' : '▾'}</span>
+            </div>
+            {pricesOpen && (
+              <div style={{ border: `1px solid ${changed ? GOLD : '#2a2d36'}`, borderTop: 0, borderRadius: '0 0 10px 10px', overflow: 'hidden' }}>
+                {all.map((r, i) => {
+                  const cur = String(r.w) === f.width
+                  const o = oldVk(r.w)
+                  const diff = o != null && Math.abs(o - r.vk) > 0.009
+                  return (
+                    <div key={r.w} onClick={() => pickSize(r.w)} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 10px', borderTop: i ? '1px solid #1f2229' : 0, cursor: 'pointer', background: cur ? 'rgba(232,177,48,.08)' : 'none', color: cur ? GOLD : '#f1f2f5', fontWeight: cur ? 700 : 400 }}>
+                      <span>{r.w} × {r.h} cm</span>
+                      <span>{diff && <s style={{ color: '#6b7080', marginRight: 6, fontWeight: 400 }}>{eur(pay(o))}</s>}{cur && preview ? eur(preview.final_price) : eur(pay(r.vk))}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
-          <div style={{ color: '#34d399', fontSize: 12, marginTop: 6 }}>✓ Größen und Preise frisch von der TNC-Seite</div>
-        </div>
-      )}
+        )
+      })()}
 
       <div>
         <div style={h4}>Notizen für den Kunden {ch.note && gtag('geändert')}</div>
@@ -244,6 +305,44 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
     </div>
   )
 
+  const chooserBox = chooser && d && (() => {
+    const slot = chooser.slot
+    const take = () => {
+      const u = chooser.sel
+      if (u) slotSet(slot, null, u === tncImgs[slot] ? null : u, false)
+      setChooser(null)
+    }
+    return (
+      <div onClick={() => setChooser(null)} style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: small ? 'flex-end' : 'center', justifyContent: 'center' }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: '#15171d', color: '#f1f2f5', border: '1px solid #2a2d36', width: small ? '100%' : 620, maxHeight: small ? '86vh' : '84vh', overflowY: 'auto', borderRadius: small ? '18px 18px 0 0' : 16, padding: small ? '10px 14px 16px' : 18, boxSizing: 'border-box', fontSize: 13 }}>
+          {small && <div onClick={() => setChooser(null)} style={{ width: 40, height: 4, borderRadius: 9, background: '#3a3e48', margin: '0 auto 10px' }} />}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <b style={{ fontSize: 15 }}>Bild {slot + 1} wählen · Bilder von TNC</b>
+            <span onClick={() => setChooser(null)} style={{ color: '#8a8f9c', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}>✕</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: small ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10 }}>
+            {library.map(x => {
+              const sel = chooser.sel === x.url, now = imgs[slot] === x.url
+              return (
+                <div key={x.url} onClick={() => setChooser(c => ({ ...c, sel: x.url }))} style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', cursor: 'pointer', background: '#000', border: `2px solid ${sel ? '#22c55e' : now ? GOLD : '#2a2d36'}`, boxShadow: sel ? '0 0 0 3px rgba(34,197,94,.25)' : 'none' }}>
+                  <img src={x.url} alt="" style={{ width: '100%', height: small ? 92 : 110, objectFit: 'cover', display: 'block' }} />
+                  {sel && <span style={{ position: 'absolute', right: 6, top: 6, width: 20, height: 20, borderRadius: '50%', background: '#22c55e', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</span>}
+                  {now && <span style={{ position: 'absolute', left: 6, top: 6, fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 99, background: GOLD, color: '#1d1400' }}>jetzt drin</span>}
+                  <div style={{ padding: '5px 8px', fontSize: 11.5, color: '#c9ccd4', background: '#0b0c10' }}>{x.label}{x.neu && <b style={{ color: '#1a9bff' }}> · neu</b>}</div>
+                </div>
+              )
+            })}
+          </div>
+          {!library.length && <div style={{ color: '#8a8f9c' }}>Keine Bilder gefunden.</div>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+            {!small && <button onClick={() => setChooser(null)} style={cbtn}>Abbrechen</button>}
+            <button onClick={take} disabled={!chooser.sel} style={{ ...pbtn, flex: small ? 1 : 'none', opacity: chooser.sel ? 1 : .5 }}>Als Bild {slot + 1} nehmen</button>
+          </div>
+        </div>
+      </div>
+    )
+  })()
+
   const SIDE = 370
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#fff', fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif' }}>
@@ -256,6 +355,7 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
         .nf-prev a,.nf-prev button,.nf-prev select,.nf-prev textarea{pointer-events:none}
       `}</style>
 
+      {chooserBox}
       {/* Leiste oben */}
       <div style={{ position: 'fixed', left: 0, right: 0, top: 0, height: small ? 52 : 58, background: '#0c0d10', borderBottom: `2px solid ${GOLD}`, zIndex: 1000, display: 'flex', alignItems: 'center', gap: 14, padding: small ? '0 12px' : '0 20px', color: '#f1f2f5', fontSize: 14 }}>
         <span onClick={onBack} style={{ cursor: 'pointer', color: '#8a8f9c', fontSize: 18 }} title="Zurück">←</span>
