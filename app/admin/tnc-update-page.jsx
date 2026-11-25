@@ -188,7 +188,7 @@ export default function TncUpdatePage2({ id, onBack, CheckoutImageField, uploadC
           ))}
         </div>
         <div style={{ marginTop: 10 }}>
-          <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="update-checkout-img" dark cropSrc={!imgs[0] ? null : own[0] ? own[0] : /tnc-app\.dev/.test(imgs[0]) ? '/api/tnc-image?url=' + encodeURIComponent(imgs[0]) : imgs[0]} />
+          <CheckoutImageField src={checkoutImg} onChange={setCheckoutImg} inputId="update-checkout-img" dark cropSrcs={[0, 1].map(i => !imgs[i] ? null : own[i] ? own[i] : /tnc-app\.dev/.test(imgs[i]) ? '/api/tnc-image?url=' + encodeURIComponent(imgs[i]) : imgs[i])} />
         </div>
       </div>
 
