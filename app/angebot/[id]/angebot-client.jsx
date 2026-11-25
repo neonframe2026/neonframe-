@@ -888,7 +888,7 @@ const final = final0 * qty + expAmt
   const extraBrutto = extraAmt * (1 + vatPct / 100) * qty
   const eur = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
   const multiPart = (sm.enabled ? selW : (parseFloat(offer.width) || 0)) > 100
-  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express || qty !== (parseInt(offer.qty) || 1)
+  const sizeChanged = (sm.enabled && selW !== sm.W0) || express !== !!offer.express || qty !== (parseInt(offer.qty) || 1) || (vList.length === 2 && vSel !== (nv.shop ?? 2))
 
   async function accept(e) {
     if (!sizeChanged) return // gleiche Größe: normaler Checkout-Link
@@ -901,7 +901,7 @@ const final = final0 * qty + expAmt
     const t1 = setTimeout(() => setStep(s => Math.max(s, 1)), 450)
     const t2 = setTimeout(() => setStep(s => Math.max(s, 2)), 900)
     try {
-      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: sm.enabled ? selW : (parseFloat(offer.width) || 0), express, qty }) })
+      const r = await fetch('/api/offer-size', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: offer.id, width: sm.enabled ? selW : (parseFloat(offer.width) || 0), express, qty, variant: vSel }) })
       const d = await r.json()
       if (d.checkoutUrl) {
         clearTimeout(t1); clearTimeout(t2)
