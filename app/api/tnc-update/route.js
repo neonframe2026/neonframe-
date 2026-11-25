@@ -29,7 +29,7 @@ async function load(req, id) {
   const next = {
     width: row.w, height: row.h, vk: row.vk, final: r2(row.vk * markupFactor(offer)), ek: row.partner || r2(row.vk / 1.35),
     colors: tnc.colors || offer.colors, backplate: tnc.backplate || offer.backplate, usage: tnc.usage || offer.usage,
-    realistic_image: tnc.realistic_image || '', design_image: tnc.design_image || '',
+    realistic_image: tnc.realistic_image || '', design_image: tnc.design_image || '', images: tnc.images || [],
     size_options: rows.filter(r => r.w !== row.w).map(r => ({ w: r.w, h: r.h, vk: r.vk })),
     all: rows.map(r => ({ w: r.w, h: r.h, vk: r.vk })),
   }
@@ -93,8 +93,10 @@ export async function POST(req) {
     const base = Math.round((dType === 'pct' ? next.final / vat / (1 - lDisc / 100) : next.final / vat + dVal) * 10000) / 10000
     const net = (dType === 'pct' ? base * (1 - dVal / 100) : Math.max(0, base - dVal)) * (1 - ex)
 
-    const img1 = ed.img1 || await copyImage(next.realistic_image, o.id, 1)
-    const img2 = ed.img2 || await copyImage(next.design_image, o.id, 2)
+    // Bilder: entfernt (rm1/rm2) / eigenes oder aus TNC gewählt (tnc-app.dev wird kopiert) / sonst neu von TNC
+    const own = async (u, n) => /tnc-app\.dev/.test(u) ? await copyImage(u, o.id, n) : u
+    const img1 = ed.rm1 ? null : ed.img1 ? await own(ed.img1, 1) : await copyImage(next.realistic_image, o.id, 1)
+    const img2 = ed.rm2 ? null : ed.img2 ? await own(ed.img2, 2) : await copyImage(next.design_image, o.id, 2)
     const imgs = [img1, img2].filter(Boolean)
 
     const updated = {
@@ -103,20 +105,20 @@ export async function POST(req) {
       base_price: base, net_price: r2(net), final_price: r2(net * vat), rrp_price: r2(base * vat), ek_net: next.ek,
       size_options: next.size_options.length ? next.size_options : null,
       ...(imgs[0] ? { preview_image: imgs[0] } : {}),
-      ...(imgs[1] ? { preview_image_2: imgs[1] } : {}),
+      ...(imgs[1] ? { preview_image_2: imgs[1] } : (ed.rm1 || ed.rm2) ? { preview_image_2: null } : {}),
       ...(ed.checkout_image ? { checkout_image: ed.checkout_image } : imgs.length ? { checkout_image: null } : {}),
       ...(typeof ed.customer_note === 'string' ? { customer_note: ed.customer_note.trim() || null } : {}),
     }
 
     // Varianten: 1 = erste Version, 2 = neueste Version, alle Versionen bleiben gespeichert
     const srcNow = [next.realistic_image, next.design_image].filter(Boolean)
-    const snap = (x, src) => ({ at: new Date().toISOString(), images: [x.preview_image, x.preview_image_2].filter(Boolean), colors: x.colors || '', backplate: x.backplate || '', usage: x.usage || '', src: src || [] })
+    const snap = (x, src) => ({ at: new Date().toISOString(), images: [x.preview_image, x.preview_image_2].filter(Boolean), checkout: x.checkout_image || null, colors: x.colors || '', backplate: x.backplate || '', usage: x.usage || '', src: src || [] })
     const nv = o.neon_variants?.versions?.length
       ? { ...o.neon_variants, versions: [...o.neon_variants.versions] }
       : { versions: [{ ...snap(o), at: o.created_at || new Date().toISOString() }], v1: 0, v2: null }
     const lastIdx = nv.v2 ?? nv.v1
     const last = nv.versions[lastIdx]
-    const isNew = ed.img1 || ed.img2 || !last.src?.length || JSON.stringify(last.src) !== JSON.stringify(srcNow)
+    const isNew = ed.img1 || ed.img2 || ed.rm1 || ed.rm2 || !last.src?.length || JSON.stringify(last.src) !== JSON.stringify(srcNow)
     if (isNew) { nv.versions.push(snap({ ...o, ...updated }, srcNow)); nv.v2 = nv.versions.length - 1 }
     else nv.versions[lastIdx] = { ...snap({ ...o, ...updated }, srcNow), at: last.at }
     nv.shop = 2 // Shopify-Produkt hat jetzt das Bild der neuesten Variante
