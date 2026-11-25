@@ -119,6 +119,7 @@ export async function POST(req) {
     const isNew = ed.img1 || ed.img2 || !last.src?.length || JSON.stringify(last.src) !== JSON.stringify(srcNow)
     if (isNew) { nv.versions.push(snap({ ...o, ...updated }, srcNow)); nv.v2 = nv.versions.length - 1 }
     else nv.versions[lastIdx] = { ...snap({ ...o, ...updated }, srcNow), at: last.at }
+    nv.shop = 2 // Shopify-Produkt hat jetzt das Bild der neuesten Variante
     updated.neon_variants = nv
     updated.variant_sel = nv.v2 != null ? 2 : 1
 
