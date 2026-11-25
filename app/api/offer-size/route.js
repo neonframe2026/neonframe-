@@ -22,6 +22,7 @@ export async function POST(req) {
     const hasV = o.neon_variants?.v2 != null
     const vSel = hasV && [1, 2].includes(Number(variant)) ? Number(variant) : (o.variant_sel === 1 ? 1 : 2)
     const vChanged = hasV && vSel !== (o.neon_variants.shop ?? 2)
+    if (hasV && !vChanged && vSel !== (o.variant_sel === 1 ? 1 : 2)) await supabase.from('offers').update({ variant_sel: vSel }).eq('id', o.id)
     if (hasV) o.variant_sel = vSel
     const vUpd = hasV ? { variant_sel: vSel, neon_variants: { ...o.neon_variants, shop: vSel } } : {}
     const vImg = vChanged ? withVariant(o)._vimg : null
