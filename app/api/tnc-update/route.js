@@ -108,6 +108,20 @@ export async function POST(req) {
       ...(typeof ed.customer_note === 'string' ? { customer_note: ed.customer_note.trim() || null } : {}),
     }
 
+    // Varianten: 1 = erste Version, 2 = neueste Version, alle Versionen bleiben gespeichert
+    const srcNow = [next.realistic_image, next.design_image].filter(Boolean)
+    const snap = (x, src) => ({ at: new Date().toISOString(), images: [x.preview_image, x.preview_image_2].filter(Boolean), colors: x.colors || '', backplate: x.backplate || '', usage: x.usage || '', src: src || [] })
+    const nv = o.neon_variants?.versions?.length
+      ? { ...o.neon_variants, versions: [...o.neon_variants.versions] }
+      : { versions: [{ ...snap(o), at: o.created_at || new Date().toISOString() }], v1: 0, v2: null }
+    const lastIdx = nv.v2 ?? nv.v1
+    const last = nv.versions[lastIdx]
+    const isNew = ed.img1 || ed.img2 || !last.src?.length || JSON.stringify(last.src) !== JSON.stringify(srcNow)
+    if (isNew) { nv.versions.push(snap({ ...o, ...updated }, srcNow)); nv.v2 = nv.versions.length - 1 }
+    else nv.versions[lastIdx] = { ...snap({ ...o, ...updated }, srcNow), at: last.at }
+    updated.neon_variants = nv
+    updated.variant_sel = nv.v2 != null ? 2 : 1
+
     let ids = {}
     let shopifyError = null
     try {
