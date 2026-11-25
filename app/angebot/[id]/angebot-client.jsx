@@ -227,6 +227,8 @@ function getTooltipImg(val, map) {
 // ─── GALLERY ─────────────────────────────────────────────────────────────────
 function Gallery({ images }) {
   const [current, setCurrent] = useState(0)
+  // Andere Variante gewählt: wieder beim ersten Bild starten
+  useEffect(() => { setCurrent(0) }, [images.join('|')])
   const [next, setNext] = useState(null)
   const [slideDir, setSlideDir] = useState(null)
   const [animating, setAnimating] = useState(false)
@@ -808,7 +810,26 @@ function FaqSection() {
 }
 
 // ─── MAIN PAGE ───────────────────────────────────────────────────────────────
-export default function AngebotPage({ offer, bwEnd }) {
+export default function AngebotPage({ offer: rawOffer, bwEnd }) {
+  // Varianten: 1 = erste Version, 2 = neueste Version (nur wenn es eine Änderung gab)
+  const nv = rawOffer.neon_variants
+  const vList = nv?.versions?.length && nv.v2 != null ? [nv.versions[nv.v1 ?? 0], nv.versions[nv.v2]].filter(Boolean) : []
+  const [vSel, setVSel] = useState(rawOffer.variant_sel === 1 ? 1 : 2)
+  const vCur = vList.length === 2 ? vList[vSel - 1] : null
+  const offer = vCur ? {
+    ...rawOffer,
+    preview_image: vCur.images?.[0] || rawOffer.preview_image,
+    preview_image_2: vCur.images?.[1] || null,
+    colors: vCur.colors || rawOffer.colors,
+    backplate: vCur.backplate || rawOffer.backplate,
+    usage: vCur.usage || rawOffer.usage,
+  } : rawOffer
+  function pickVariant(n) {
+    if (n === vSel) return
+    setVSel(n)
+    fetch('/api/offer-variant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offerId: rawOffer.id, sel: n }) }).catch(() => {})
+  }
+  const vDate = d => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Berlin' }) : ''
   const [descOpen, setDescOpen] = useState(false)
   const sm = sizeModel(offer)
   const [selW, setSelW] = useState(sm.W0)
@@ -1341,6 +1362,29 @@ const final = final0 * qty + expAmt
               </div>
             )}
             <div className="oc-body">
+              {vList.length === 2 && (
+                <div style={{ marginBottom: 18 }}>
+                  <span className="cfg-label">Wähle deine Variante</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+                    {vList.map((v, i) => {
+                      const n = i + 1, on = vSel === n
+                      return (
+                        <button key={n} type="button" onClick={() => pickVariant(n)} style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: on ? '#f0f9ff' : '#fff', border: on ? '2px solid #0ea5e9' : '2px solid #e5e7eb', borderRadius: 12, padding: '7px 13px 7px 7px', cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color .15s, background .15s' }}>
+                          <img src={v.images?.[0]} alt={`Variante ${n}`} style={{ width: 54, height: 54, borderRadius: 9, objectFit: 'cover', flexShrink: 0, background: '#f3f4f6', display: 'block' }} />
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700, color: '#111' }}>
+                              Variante {n}
+                              {n === 2 && <span style={{ background: '#1a9bff', color: '#fff', fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 99, letterSpacing: '.03em', lineHeight: '14px' }}>NEU</span>}
+                            </span>
+                            <span style={{ display: 'block', fontSize: 12.5, color: '#64748b', marginTop: 2 }}>{n === 1 ? 'Erste' : 'Neueste'} Version vom {vDate(v.at)}</span>
+                          </span>
+                          <span style={{ width: 22, height: 22, borderRadius: '50%', boxSizing: 'border-box', border: on ? '7px solid #0ea5e9' : '2px solid #cbd5e1', flexShrink: 0, background: '#fff' }} />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
               <div className="cfg-grid">
                 {(offer.width || offer.height) && (
                   <div style={{ gridColumn: '1 / -1' }}>
